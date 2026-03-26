@@ -69,9 +69,7 @@
         .flex-row button { flex: 1; }
 
         /* Lobby Display */
-        .link-display-container {
-            display: flex; gap: 8px; margin-bottom: 20px;
-        }
+        .link-display-container { display: flex; gap: 8px; margin-bottom: 20px; }
         .link-display-container input {
             margin-bottom: 0; padding: 12px 16px; font-size: 14px; color: var(--accent);
             background: rgba(0, 0, 0, 0.2); border: 1px solid var(--glass-border);
@@ -84,16 +82,40 @@
             animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         
-        /* Floating Lobby Emojis */
-        .floating-emojis { font-size: 24px; text-align: center; margin-bottom: 15px; animation: float 3s ease-in-out infinite; }
-        
         /* Game Zones */
         .emoji-showcase { font-size: 90px; text-align: center; margin: 10px 0; text-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .mini-emojis { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; font-size: 20px; opacity: 0.8; margin-bottom: 15px; }
         
+        /* Enlarged Emoji List */
+        .mini-emojis { 
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; 
+            font-size: 32px; /* Made emojis significantly larger */
+            opacity: 0.95; margin-bottom: 15px; 
+            text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        
+        /* Dynamic Player Roster */
+        .roster-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 15px; }
+        .roster-card { 
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); 
+            border: 1px solid var(--glass-border); border-radius: 12px; 
+            padding: 8px 12px; font-size: 13px; font-weight: 600; 
+            display: flex; align-items: center; gap: 6px;
+            animation: popIn 0.3s ease;
+        }
+        .roster-card.main-player { 
+            border-color: var(--primary); background: rgba(255, 59, 48, 0.2); 
+            box-shadow: 0 0 12px rgba(255, 59, 48, 0.4); color: #fff;
+        }
+        .roster-color-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+        /* Chat System */
         .chat-container { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; padding-right: 5px; scroll-behavior: smooth; }
-        .chat-msg { background: rgba(150, 150, 150, 0.2); padding: 12px 16px; border-radius: 20px 20px 20px 6px; font-size: 15px; width: fit-content; max-width: 85%; animation: slideUp 0.3s ease; line-height: 1.4; }
-        .chat-msg b { color: var(--accent); font-weight: 700; }
+        .chat-msg { 
+            padding: 10px 14px; font-size: 15px; width: fit-content; max-width: 85%; 
+            animation: slideUp 0.3s ease; line-height: 1.4; backdrop-filter: blur(10px);
+            border-radius: 18px;
+        }
+        .chat-system { margin: 0 auto; font-size: 12px; color: var(--text-muted); background: transparent !important; border: none !important; font-style: italic; }
         
         /* Music Toggle */
         .music-toggle { position: absolute; top: 20px; right: 20px; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; z-index: 100; transition: 0.3s; }
@@ -109,7 +131,7 @@
 <body>
 
 <audio id="bgMusic" loop>
-    <source src="https://assets.mixkit.co/active_storage/sfx/135/135-preview.mp3" type="audio/mpeg">
+    <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3" type="audio/mpeg">
 </audio>
 <div class="music-toggle" onclick="toggleMusic()" id="musicBtn">🎵</div>
 
@@ -133,7 +155,7 @@
         </div>
         
         <div class="glass-card">
-            <div class="floating-emojis">🍿 🎮 🚀 🎸 🎬</div>
+            <div class="floating-emojis" style="font-size: 24px; text-align: center; margin-bottom: 15px; animation: float 3s infinite;">🍿 🎮 🚀 🎸 🎬</div>
             <h2 id="lobbyStatusText" style="font-size: 18px; margin-bottom: 15px; text-align: center;">Waiting in Lobby...</h2>
             <div class="player-grid" id="lobbyPlayers"></div>
             
@@ -146,6 +168,8 @@
             <div id="gameStatus" style="text-align: center; font-weight: 700; color: var(--accent); margin-bottom: 10px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">System Ready</div>
             
             <div class="mini-emojis" id="emojiVaultDisplay"></div>
+            
+            <div id="gameRoster" class="roster-container hidden"></div>
             
             <div id="zone-secret" class="hidden" style="margin: auto 0;">
                 <div class="emoji-showcase" id="bigEmoji">❓</div>
@@ -174,7 +198,7 @@
             </div>
 
             <div id="zone-result" class="hidden" style="text-align: center; margin: auto 0;">
-                <div style="font-size: 70px; margin-bottom: 15px; animation: float 2s infinite;">🏆</div>
+                <div id="resultEmoji" style="font-size: 70px; margin-bottom: 15px; animation: float 2s infinite;">🏆</div>
                 <h2 id="resultText" style="margin-bottom: 25px; font-size: 26px; font-weight: 800; letter-spacing: -1px;"></h2>
                 <button id="btnPlayAgain" class="btn-disabled" onclick="hostStartGame()">Waiting for Host...</button>
             </div>
@@ -206,10 +230,10 @@
 
     document.getElementById('emojiVaultDisplay').innerText = items.map(i => i.e).join(' ');
 
-    // --- AUDIO & MUSIC ENGINE ---
+    // --- ENHANCED AUDIO & MUSIC ENGINE ---
     let musicPlaying = false;
     const bgm = document.getElementById('bgMusic');
-    bgm.volume = 0.3; 
+    bgm.volume = 0.15; 
 
     function toggleMusic() {
         if (musicPlaying) { bgm.pause(); document.getElementById('musicBtn').innerText = "🔇"; } 
@@ -219,11 +243,14 @@
 
     const sfx = {
         pop: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
-        swoosh: new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3'),
+        send: new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3'),     
+        receive: new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3'),   
         chime: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'),
-        fanfare: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
-        start: new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3') 
+        start: new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3'), 
+        win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),       
+        lose: new Audio('https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3')       
     };
+    Object.values(sfx).forEach(sound => sound.volume = 0.6);
     const playSfx = (sound) => { sound.currentTime = 0; sound.play().catch(()=>{}); };
 
     // --- GAME VARIABLES ---
@@ -231,6 +258,16 @@
     if (!window.location.search.includes('room')) window.history.pushState({}, '', `?room=${roomId}`);
     
     let myKey, myName, amIHost = false;
+    let globalPlayers = {}; // Keep track of everyone for the roster/colors
+    let lastPhase = '';
+    let lastChatCount = 0;
+
+    // --- UTILITY: Generate Unique Color based on Username ---
+    function getUserColor(name) {
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        return `hsl(${Math.abs(hash) % 360}, 85%, 65%)`;
+    }
 
     // --- CORE FUNCTIONS ---
     function copyInviteLink(btn) { 
@@ -272,20 +309,19 @@
 
     function listenToLobby() {
         db.ref(`rooms/${roomId}/players`).on('value', snap => {
-            const players = snap.val() || {};
-            const keys = Object.keys(players);
+            globalPlayers = snap.val() || {};
+            const keys = Object.keys(globalPlayers);
             amIHost = (myKey === keys[0]);
             
             const grid = document.getElementById('lobbyPlayers');
             grid.innerHTML = "";
             keys.forEach((id) => {
-                grid.innerHTML += `<div class="p-badge">${players[id].name} ${id === keys[0] ? '👑' : ''}</div>`;
+                grid.innerHTML += `<div class="p-badge">${globalPlayers[id].name} ${id === keys[0] ? '👑' : ''}</div>`;
             });
 
             const btnStart = document.getElementById('btnStartGame');
             const lobbyStatus = document.getElementById('lobbyStatusText');
             
-            // LOGIC FOR START GAME BUTTON VISIBILITY
             if(amIHost) {
                 lobbyStatus.innerText = "You are the Host! 👑";
                 btnStart.className = "btn-primary";
@@ -294,7 +330,6 @@
             } else {
                 lobbyStatus.innerText = "Waiting for Host to start...";
                 btnStart.className = "btn-disabled";
-                // Show the start game button to everyone, but lock it for non-hosts
                 btnStart.innerText = "Start Game 🔒"; 
                 btnStart.disabled = true;
             }
@@ -306,7 +341,7 @@
     }
 
     function hostStartGame() {
-        if(!amIHost) return; // Failsafe: only host can actually trigger this
+        if(!amIHost) return; 
         playSfx(sfx.start);
         db.ref(`rooms/${roomId}/players`).once('value', pSnap => {
             const keys = Object.keys(pSnap.val());
@@ -328,15 +363,67 @@
         const isSubject = (myKey === state.subject);
         const status = document.getElementById('gameStatus');
         const chatBox = document.getElementById('zone-chat');
+        const rosterBox = document.getElementById('gameRoster');
         
         ['zone-secret', 'zone-chat', 'zone-controls', 'voteSection', 'zone-result'].forEach(id => document.getElementById(id).classList.add('hidden'));
 
+        // BUILD DYNAMIC PLAYER ROSTER
+        if (state.phase !== 'finished') {
+            rosterBox.classList.remove('hidden');
+            rosterBox.innerHTML = "";
+            Object.entries(globalPlayers).forEach(([pid, pData]) => {
+                const isMainPlayer = (pid === state.subject);
+                const pColor = getUserColor(pData.name);
+                rosterBox.innerHTML += `
+                    <div class="roster-card ${isMainPlayer ? 'main-player' : ''}">
+                        <div class="roster-color-dot" style="background: ${pColor};"></div>
+                        ${pData.name} ${isMainPlayer ? '🎯' : ''}
+                    </div>
+                `;
+            });
+        } else {
+            rosterBox.classList.add('hidden');
+        }
+
+        // CHAT RENDER & AUDIO LOGIC
+        const chatValues = Object.values(state.chat || {});
         chatBox.innerHTML = "";
-        (Object.values(state.chat || {})).forEach(msg => {
-            chatBox.innerHTML += `<div class="chat-msg"><b>${msg.u}:</b> ${msg.m}</div>`;
+        
+        chatValues.forEach(msg => {
+            if (msg.u === 'System') {
+                chatBox.innerHTML += `<div class="chat-msg chat-system">${msg.m}</div>`;
+            } else {
+                // Determine user's unique color and if they are the target
+                const pColor = getUserColor(msg.u);
+                const isMainPlayer = globalPlayers[state.subject] && msg.u === globalPlayers[state.subject].name;
+                
+                // Styling: Right-align my messages, Left-align others. Give unique border color.
+                const align = (msg.u === myName) 
+                    ? 'margin-left: auto; border-bottom-right-radius: 4px;' 
+                    : 'margin-right: auto; border-bottom-left-radius: 4px;';
+                    
+                const bgStyle = `background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.1); border-left: 4px solid ${pColor};`;
+                const mainBadge = isMainPlayer ? `<span style="color: var(--primary); font-size: 11px; margin-left: 5px; vertical-align: middle;">[Target 🎯]</span>` : '';
+                
+                chatBox.innerHTML += `
+                    <div class="chat-msg" style="${align} ${bgStyle}">
+                        <b style="color: ${pColor};">${msg.u}${mainBadge}</b><br>
+                        <span style="color: var(--text-main); font-size: 14px;">${msg.m}</span>
+                    </div>`;
+            }
         });
         chatBox.scrollTop = chatBox.scrollHeight;
 
+        if (chatValues.length < lastChatCount) lastChatCount = 0;
+        if (chatValues.length > lastChatCount) {
+            const lastMsg = chatValues[chatValues.length - 1];
+            if (lastMsg.u !== myName && lastMsg.u !== 'System' && lastChatCount !== 0) {
+                playSfx(sfx.receive);
+            }
+            lastChatCount = chatValues.length;
+        }
+
+        // PHASE RENDER LOGIC
         if (state.phase === 'choosing') {
             if (isSubject) {
                 status.innerText = "Your Secret Item";
@@ -364,6 +451,17 @@
             document.getElementById('zone-result').classList.remove('hidden');
             document.getElementById('resultText').innerText = state.winner;
             
+            if (lastPhase !== 'finished') {
+                const iWon = (isSubject && state.winnerRole === 'imposter') || (!isSubject && state.winnerRole === 'cousins');
+                if (iWon) {
+                    playSfx(sfx.win);
+                    document.getElementById('resultEmoji').innerText = "🏆";
+                } else {
+                    playSfx(sfx.lose);
+                    document.getElementById('resultEmoji').innerText = "💀";
+                }
+            }
+            
             const btnReplay = document.getElementById('btnPlayAgain');
             if(amIHost) {
                 btnReplay.className = "btn-primary";
@@ -375,6 +473,8 @@
                 btnReplay.disabled = true;
             }
         }
+        
+        lastPhase = state.phase;
     }
 
     function lockStance(stance) {
@@ -387,7 +487,7 @@
     function sendChatMessage() {
         const input = document.getElementById('chatInput');
         if(!input.value.trim()) return;
-        playSfx(sfx.swoosh);
+        playSfx(sfx.send); 
         db.ref(`rooms/${roomId}/state/chat`).push({u: myName, m: input.value.trim()});
         input.value = "";
     }
@@ -420,11 +520,14 @@
         votes.forEach(v => { if(v === state.secretStance) correctGuesses++; });
         
         const majorityCorrect = correctGuesses > (votes.length / 2);
-        const winText = majorityCorrect ? "Cousins Caught the Lie! 🎉" : "The Imposter Won! 😈";
+        const winText = majorityCorrect ? "The Interrogators Won! 🎉" : "The Target Fooled Everyone! 😈";
+        const winnerRole = majorityCorrect ? 'cousins' : 'imposter';
         
-        playSfx(sfx.fanfare);
-        db.ref(`rooms/${roomId}/state/phase`).set('finished');
-        db.ref(`rooms/${roomId}/state/winner`).set(winText);
+        db.ref(`rooms/${roomId}/state`).update({
+            phase: 'finished',
+            winner: winText,
+            winnerRole: winnerRole
+        });
     }
 </script>
 </body>
