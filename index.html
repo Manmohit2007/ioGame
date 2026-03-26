@@ -3,107 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ioGame Pro | Interrogation</title>
+    <title>ioGame | Pro</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
-        :root { --primary: #FF3B30; --success: #34C759; --accent: #007AFF; --glass: rgba(255, 255, 255, 0.12); }
+        :root {
+            --primary: #FF3B30; --success: #34C759; --accent: #007AFF;
+            --glass: rgba(255, 255, 255, 0.1); --border: rgba(255, 255, 255, 0.2);
+            --text: #fff;
+        }
+
+        /* Light Mode Adaptive Styling */
+        @media (prefers-color-scheme: light) {
+            :root {
+                --glass: rgba(255, 255, 255, 0.6); --border: rgba(0, 0, 0, 0.1);
+                --text: #000;
+            }
+            body { color: #000; }
+        }
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body { 
-            margin: 0; font-family: -apple-system, sans-serif; color: #fff; height: 100vh; overflow: hidden;
+            margin: 0; font-family: -apple-system, sans-serif; color: var(--text); 
+            height: 100dvh; overflow: hidden; display: flex; justify-content: center;
             background: #000 url('desk.png') no-repeat center center fixed; background-size: cover;
         }
         @media (max-width: 768px) { body { background-image: url('vert.png'); } }
 
-        .container { position: relative; z-index: 1; width: 100%; max-width: 500px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; padding: 15px; }
+        .container { position: relative; z-index: 1; width: 100%; max-width: 600px; height: 100%; display: flex; flex-direction: column; padding: 15px; }
         
-        /* Copy Link Box */
-        .copy-box { background: #1c1c1e; border: 1px solid #3a3a3c; border-radius: 12px; padding: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .copy-btn { background: var(--accent); color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px; }
-
-        /* Glass Cards Grid */
-        .player-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
-        .p-card { 
-            background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 15px; text-align: center; position: relative; transition: 0.3s;
+        /* Glass Components */
+        .glass { 
+            background: var(--glass); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--border); border-radius: 24px; padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
         }
-        .p-card.main-player { border: 2px solid var(--success); background: rgba(52, 199, 89, 0.15); box-shadow: 0 0 15px rgba(52, 199, 89, 0.3); }
-        .p-card.blurred { filter: blur(10px); opacity: 0.5; }
-        
-        /* Game Zones */
-        .action-zone { background: rgba(0,0,0,0.6); backdrop-filter: blur(30px); border-radius: 25px; padding: 20px; border: 1px solid var(--glass); flex-grow: 1; display: flex; flex-direction: column; }
-        .emoji-list { font-size: 22px; letter-spacing: 8px; margin: 10px 0; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 12px; }
-        
-        /* Input & Buttons */
-        input { width: 100%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 14px; border-radius: 15px; color: #fff; margin-bottom: 10px; outline: none; }
-        button { border-radius: 15px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; padding: 14px; text-transform: uppercase; }
-        .btn-green { background: var(--success); color: #fff; }
-        .btn-choice { flex: 1; margin: 5px; }
 
-        .chat-area { flex-grow: 1; overflow-y: auto; margin: 10px 0; text-align: left; font-size: 13px; }
-        .msg-bubble { background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 12px; margin-bottom: 8px; border-left: 3px solid var(--accent); }
+        .player-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
+        .p-card { 
+            background: var(--glass); border-radius: 18px; padding: 12px; text-align: center;
+            border: 1px solid var(--border); transition: 0.4s;
+        }
+        .p-card.main-player { border: 2px solid var(--success); transform: scale(1.05); background: rgba(52, 199, 89, 0.2); }
+        .p-card.blurred { filter: blur(10px); opacity: 0.4; }
+
+        .action-zone { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; margin-top: 10px; }
+        .chat-box { flex-grow: 1; overflow-y: auto; padding: 10px; margin: 10px 0; border-radius: 15px; background: rgba(0,0,0,0.1); }
+        
+        /* UI Elements */
+        .copy-banner { background: var(--accent); color: white; padding: 10px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        input { width: 100%; background: var(--glass); border: 1px solid var(--border); padding: 14px; border-radius: 15px; color: var(--text); outline: none; margin-bottom: 10px; }
+        button { border-radius: 15px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; padding: 14px; text-transform: uppercase; }
+        .btn-green { background: var(--success); color: #fff; width: 100%; }
+        
+        .msg { background: var(--glass); padding: 8px 12px; border-radius: 12px; margin-bottom: 8px; border-left: 4px solid var(--accent); animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
         
         .hidden { display: none !important; }
-        .trophy-anim { font-size: 60px; animation: bounce 1s infinite; }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        .emoji-hint { font-size: 20px; text-align: center; letter-spacing: 5px; opacity: 0.6; margin: 5px 0; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="loginScreen" style="text-align:center; margin-top:25%;">
-        <h1 style="font-size:40px; letter-spacing:-2px;">ioGame</h1>
-        <div class="p-card">
-            <input type="text" id="userName" placeholder="YOUR NICKNAME" maxlength="10">
-            <button class="btn-green" style="width:100%" onclick="joinGame()">ENTER ROOM</button>
+    <div id="loginScreen" style="text-align:center; margin-top:30%;">
+        <h1 style="font-size:42px; letter-spacing:-2px; margin:0;">ioGame</h1>
+        <p style="opacity:0.6; margin-bottom:30px;">Cousins Interrogation</p>
+        <div class="glass">
+            <input type="text" id="userName" placeholder="ENTER NAME" maxlength="12">
+            <button class="btn-green" onclick="joinRoom()">START PLAYING</button>
         </div>
     </div>
 
     <div id="gameBoard" class="hidden">
-        <div class="copy-box">
-            <span style="font-size:11px; opacity:0.6;">Invite Cousins:</span>
-            <button class="copy-btn" onclick="copyInvite()">COPY LINK</button>
+        <div class="copy-banner" onclick="copyURL()">
+            <span>🔗 INVITE YOUR COUSINS</span>
+            <span style="font-size:10px; background:rgba(0,0,0,0.2); padding:4px 8px; border-radius:5px;">COPY</span>
         </div>
 
         <div class="player-grid" id="pGrid"></div>
 
-        <div class="action-zone">
-            <div id="statusHeader" style="font-size:14px; font-weight:bold; color:var(--success); margin-bottom:10px;">LOBBY</div>
+        <div class="glass action-zone">
+            <div id="statusHeader" style="font-weight:bold; font-size:13px; text-align:center;">LOBBY</div>
+            <div class="emoji-hint">🍎 🚗 👟 🍕 📱 ⌚</div>
             
-            <div class="emoji-list">🍎 🚗 👟 🍕 📱 ⌚</div>
+            <div class="chat-box" id="chatDisplay"></div>
 
-            <div class="chat-area" id="convoBox"></div>
-
-            <div id="controlPanel">
-                <button id="startBtn" class="btn-green hidden" onclick="triggerRound()">START ROUND</button>
+            <div id="gameControls">
+                <button id="hostStart" class="btn-green hidden" onclick="newRound()">NEW ROUND</button>
                 
-                <div id="stanceBox" class="hidden">
-                    <p style="font-size:12px;">Choose your secret stance:</p>
-                    <div style="display:flex;">
-                        <button class="btn-choice btn-green" onclick="setSecretStance('truth')">TRUTH</button>
-                        <button class="btn-choice" style="background:var(--primary)" onclick="setSecretStance('lie')">LIE</button>
-                    </div>
+                <div id="inputArea" class="hidden">
+                    <input type="text" id="gameInput" placeholder="Type message...">
+                    <button class="btn-green" id="sendBtn">SEND</button>
                 </div>
 
-                <div id="inputBox" class="hidden">
-                    <input type="text" id="gameInput" placeholder="Type here...">
-                    <button id="sendBtn" class="btn-green" style="width:100%">SEND</button>
-                </div>
-
-                <div id="voteBox" class="hidden">
-                    <p style="font-size:12px;">Is the Main Player lying?</p>
-                    <div style="display:flex;">
-                        <button class="btn-choice btn-green" onclick="submitVote('truth')">TRUTH</button>
-                        <button class="btn-choice" style="background:var(--primary)" onclick="submitVote('lie')">LIE</button>
-                    </div>
+                <div id="voteButtons" class="hidden" style="display:flex; gap:10px;">
+                    <button class="btn-green" style="flex:1" onclick="submitVote('truth')">TRUTH</button>
+                    <button class="btn-green" style="flex:1; background:var(--primary)" onclick="submitVote('lie')">LIE</button>
                 </div>
             </div>
 
-            <div id="resultScreen" class="hidden" style="text-align:center;">
-                <div class="trophy-anim">🏆</div>
-                <h2 id="winnerText">CREWMATES WON!</h2>
-                <button class="btn-green" style="width:100%" onclick="triggerRound()">PLAY AGAIN</button>
+            <div id="victoryBox" class="hidden" style="text-align:center;">
+                <h2 id="winMsg" style="font-size:24px;"></h2>
+                <button class="btn-green" onclick="newRound()">NEXT ROUND</button>
             </div>
         </div>
     </div>
@@ -123,7 +126,14 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const sfxWin = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
+    
+    // SFX Engine
+    const play = (url) => { new Audio(url).play().catch(()=>{}); };
+    const sounds = {
+        pop: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
+        win: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3',
+        msg: 'https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3'
+    };
 
     let roomId = new URLSearchParams(window.location.search).get('room') || Math.random().toString(36).substring(7);
     if (!window.location.search.includes('room')) window.history.pushState({}, '', `?room=${roomId}`);
@@ -131,17 +141,18 @@
     let myKey, myName, amIHost = false;
     const items = [{e:"🍎", n:"Apple"}, {e:"🚗", n:"Tesla"}, {e:"👟", n:"Nike"}, {e:"🍕", n:"Pizza"}, {e:"📱", n:"iPhone"}, {e:"⌚", n:"Rolex"}];
 
-    function copyInvite() { navigator.clipboard.writeText(window.location.href); alert("Copied!"); }
+    function copyURL() { navigator.clipboard.writeText(window.location.href); alert("Link Copied!"); }
 
-    function joinGame() {
+    function joinRoom() {
         myName = document.getElementById('userName').value.trim().toUpperCase();
         if(!myName) return;
+        play(sounds.pop);
         const ref = db.ref(`rooms/${roomId}/players`).push();
         myKey = ref.key;
-        ref.set({ name: myName, joinedAt: firebase.database.ServerValue.TIMESTAMP }).then(initGame);
+        ref.set({ name: myName, joinedAt: firebase.database.ServerValue.TIMESTAMP }).then(init);
     }
 
-    function initGame() {
+    function init() {
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('gameBoard').classList.remove('hidden');
 
@@ -153,134 +164,109 @@
             grid.innerHTML = "";
             keys.forEach((id, i) => {
                 grid.innerHTML += `<div id="card-${id}" class="p-card">
-                    <div style="font-size:10px; opacity:0.5;">P${i+1}</div>
-                    <div style="font-weight:bold; font-size:14px;">${players[id].name}</div>
-                    ${id === keys[0] ? '<div style="font-size:9px; color:var(--accent)">HOST</div>' : ''}
+                    <div style="font-size:9px; opacity:0.5;">PLAYER ${i+1}</div>
+                    <div style="font-weight:bold; font-size:13px;">${players[id].name}</div>
                 </div>`;
             });
-            if(amIHost) document.getElementById('startBtn').classList.remove('hidden');
+            if(amIHost) document.getElementById('hostStart').classList.remove('hidden');
         });
 
-        db.ref(`rooms/${roomId}/state`).on('value', snap => { if(snap.val()) syncGame(snap.val()); });
+        db.ref(`rooms/${roomId}/state`).on('value', snap => { if(snap.val()) render(snap.val()); });
     }
 
-    function triggerRound() {
+    function newRound() {
         db.ref(`rooms/${roomId}/players`).once('value', pSnap => {
             const keys = Object.keys(pSnap.val());
             const subject = keys[Math.floor(Math.random() * keys.length)];
             const item = items[Math.floor(Math.random() * items.length)];
+            const stance = Math.random() > 0.5 ? 'truth' : 'lie';
+            
             db.ref(`rooms/${roomId}/state`).set({
-                phase: 'stance_select',
+                phase: 'interrogation',
                 subject: subject,
                 item: item,
-                history: [],
-                votes: {},
+                secretStance: stance,
+                history: [{u:'SYSTEM', m:'Round Started!'}],
                 voterIndex: 0
             });
-            document.getElementById('resultScreen').classList.add('hidden');
-            document.getElementById('controlPanel').classList.remove('hidden');
         });
     }
 
-    function syncGame(state) {
+    function render(state) {
         const isSubject = (myKey === state.subject);
         const status = document.getElementById('statusHeader');
-        const convo = document.getElementById('convoBox');
+        const chat = document.getElementById('chatDisplay');
         
-        // Update Grid
         document.querySelectorAll('.p-card').forEach(c => c.className = 'p-card');
         document.getElementById(`card-${state.subject}`).classList.add('main-player');
 
-        // Render History
-        convo.innerHTML = "";
-        (Object.values(state.history || {})).forEach(h => {
-            convo.innerHTML += `<div class="msg-bubble"><b>${h.u}:</b> ${h.m}</div>`;
+        chat.innerHTML = "";
+        Object.values(state.history || {}).forEach(h => {
+            chat.innerHTML += `<div class="msg"><b>${h.u}:</b> ${h.m}</div>`;
         });
-        convo.scrollTop = convo.scrollHeight;
+        chat.scrollTop = chat.scrollHeight;
 
-        // Hide all panels initially
-        ['stanceBox', 'inputBox', 'voteBox', 'startBtn'].forEach(id => document.getElementById(id).classList.add('hidden'));
-
-        if(state.phase === 'stance_select') {
-            if(isSubject) {
-                status.innerHTML = `YOUR SECRET EMOJI: ${state.item.e} ${state.item.n}`;
-                document.getElementById('stanceBox').classList.remove('hidden');
-            } else {
-                status.innerText = "WAITING FOR MAIN PLAYER...";
-            }
-        }
+        // Reset UI visibility
+        ['inputArea', 'voteButtons', 'hostStart', 'victoryBox'].forEach(id => document.getElementById(id).classList.add('hidden'));
 
         if(state.phase === 'interrogation') {
-            const players = Object.keys(document.querySelectorAll('.p-card'));
-            const voterKeys = Object.keys(state.votes || {});
-            
             db.ref(`rooms/${roomId}/players`).once('value', snap => {
-                const keys = Object.keys(snap.val()).filter(k => k !== state.subject);
-                const currentVoter = keys[state.voterIndex];
-                const isMyTurnToAsk = (myKey === currentVoter);
-
-                if(isMyTurnToAsk) {
+                const voterKeys = Object.keys(snap.val()).filter(k => k !== state.subject);
+                const currentVoter = voterKeys[state.voterIndex];
+                
+                if(isSubject) {
+                    status.innerHTML = `YOUR MISSION: <span style="color:var(--primary)">ACT LIKE YOU HAVE ${state.item.e}</span> (MODE: ${state.secretStance.toUpperCase()})`;
+                    document.getElementById('inputArea').classList.remove('hidden');
+                    document.getElementById('sendBtn').onclick = sendMessage;
+                } else if(myKey === currentVoter) {
                     status.innerText = "YOUR TURN TO ASK & VOTE!";
-                    document.getElementById('inputBox').classList.remove('hidden');
-                    document.getElementById('voteBox').classList.remove('hidden');
-                    document.getElementById('sendBtn').onclick = () => {
-                        const m = document.getElementById('gameInput').value;
-                        if(!m) return;
-                        db.ref(`rooms/${roomId}/state/history`).push({u: myName, m: m});
-                        document.getElementById('gameInput').value = "";
-                    };
-                } else if (isSubject) {
-                    status.innerText = "ANswering QUESTIONS...";
-                    document.getElementById('inputBox').classList.remove('hidden');
-                    document.getElementById('sendBtn').onclick = () => {
-                        const m = document.getElementById('gameInput').value;
-                        if(!m) return;
-                        db.ref(`rooms/${roomId}/state/history`).push({u: myName, m: m});
-                        document.getElementById('gameInput').value = "";
-                    };
+                    document.getElementById('inputArea').classList.remove('hidden');
+                    document.getElementById('voteButtons').classList.remove('hidden');
+                    document.getElementById('sendBtn').onclick = sendMessage;
                 } else {
-                    status.innerText = "INTERROGATION IN PROGRESS...";
+                    status.innerText = "WAITING FOR TURN...";
                 }
             });
         }
 
-        if(state.phase === 'results') {
-            document.getElementById('controlPanel').classList.add('hidden');
-            document.getElementById('resultScreen').classList.remove('hidden');
-            document.getElementById('winnerText').innerText = state.winner;
-            if(state.winner.includes("WON")) sfxWin.play();
+        if(state.phase === 'done') {
+            play(sounds.win);
+            document.getElementById('victoryBox').classList.remove('hidden');
+            document.getElementById('winMsg').innerText = state.result;
+            if(amIHost) document.getElementById('hostStart').classList.remove('hidden');
         }
     }
 
-    function setSecretStance(type) {
-        db.ref(`rooms/${roomId}/state/secretStance`).set(type);
-        db.ref(`rooms/${roomId}/state/phase`).set('interrogation');
+    function sendMessage() {
+        const txt = document.getElementById('gameInput').value;
+        if(!txt) return;
+        play(sounds.msg);
+        db.ref(`rooms/${roomId}/state/history`).push({u: myName, m: txt});
+        document.getElementById('gameInput').value = "";
     }
 
-    function submitVote(vote) {
-        db.ref(`rooms/${roomId}/state/votes/${myKey}`).set(vote);
+    function submitVote(v) {
+        db.ref(`rooms/${roomId}/state/votes/${myKey}`).set(v);
         db.ref(`rooms/${roomId}/state`).once('value', snap => {
-            const state = snap.val();
+            const s = snap.val();
             db.ref(`rooms/${roomId}/players`).once('value', pSnap => {
-                const players = Object.keys(pSnap.val()).filter(k => k !== state.subject);
-                if(state.voterIndex + 1 < players.length) {
-                    db.ref(`rooms/${roomId}/state/voterIndex`).set(state.voterIndex + 1);
+                const voters = Object.keys(pSnap.val()).filter(k => k !== s.subject);
+                if(s.voterIndex + 1 < voters.length) {
+                    db.ref(`rooms/${roomId}/state/voterIndex`).set(s.voterIndex + 1);
                 } else {
-                    calculateFinal(state);
+                    finishRound(s);
                 }
             });
         });
     }
 
-    function calculateFinal(state) {
-        const votes = Object.values(state.votes || {});
-        let correctGuesses = 0;
-        votes.forEach(v => { if(v === state.secretStance) correctGuesses++; });
-
-        const majority = (correctGuesses > votes.length / 2);
-        const winner = majority ? "CREWMATES WON! 🎉" : "IMPOSTER WON! 😈";
-        db.ref(`rooms/${roomId}/state/phase`).set('results');
-        db.ref(`rooms/${roomId}/state/winner`).set(winner);
+    function finishRound(s) {
+        const votes = Object.values(s.votes || {});
+        let correct = 0;
+        votes.forEach(v => { if(v === s.secretStance) correct++; });
+        const res = (correct > votes.length/2) ? "CREWMATES CAUGHT THE LIE! 🎉" : "IMPOSTER FOOLED EVERYONE! 😈";
+        db.ref(`rooms/${roomId}/state/phase`).set('done');
+        db.ref(`rooms/${roomId}/state/result`).set(res);
     }
 </script>
 </body>
