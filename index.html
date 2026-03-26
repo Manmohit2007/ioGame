@@ -88,7 +88,7 @@
         /* Enlarged Emoji List */
         .mini-emojis { 
             display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; 
-            font-size: 32px; /* Made emojis significantly larger */
+            font-size: 32px; 
             opacity: 0.95; margin-bottom: 15px; 
             text-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
@@ -100,12 +100,19 @@
             border: 1px solid var(--glass-border); border-radius: 12px; 
             padding: 8px 12px; font-size: 13px; font-weight: 600; 
             display: flex; align-items: center; gap: 6px;
+            transition: all 0.3s ease;
             animation: popIn 0.3s ease;
         }
         .roster-card.main-player { 
             border-color: var(--primary); background: rgba(255, 59, 48, 0.2); 
             box-shadow: 0 0 12px rgba(255, 59, 48, 0.4); color: #fff;
         }
+        /* NEW: Voted State for Players */
+        .roster-card.has-voted { 
+            border-color: var(--success); background: rgba(52, 199, 89, 0.2); 
+            box-shadow: 0 0 12px rgba(52, 199, 89, 0.3); color: #fff;
+        }
+        
         .roster-color-dot { width: 10px; height: 10px; border-radius: 50%; }
 
         /* Chat System */
@@ -258,7 +265,7 @@
     if (!window.location.search.includes('room')) window.history.pushState({}, '', `?room=${roomId}`);
     
     let myKey, myName, amIHost = false;
-    let globalPlayers = {}; // Keep track of everyone for the roster/colors
+    let globalPlayers = {}; 
     let lastPhase = '';
     let lastChatCount = 0;
 
@@ -353,7 +360,7 @@
                 subject: subject,
                 item: item,
                 chat: [{u: 'System', m: '🤫 The Main Player is making their secret choice...'}],
-                votes: {}
+                votes: {} // Clear votes for new round
             });
         });
     }
@@ -371,13 +378,25 @@
         if (state.phase !== 'finished') {
             rosterBox.classList.remove('hidden');
             rosterBox.innerHTML = "";
+            const currentVotes = state.votes || {};
+
             Object.entries(globalPlayers).forEach(([pid, pData]) => {
                 const isMainPlayer = (pid === state.subject);
+                const hasVoted = currentVotes[pid] ? true : false;
                 const pColor = getUserColor(pData.name);
+                
+                // Assign classes based on state
+                let cardClass = "roster-card";
+                if (isMainPlayer) {
+                    cardClass += " main-player";
+                } else if (hasVoted) {
+                    cardClass += " has-voted";
+                }
+
                 rosterBox.innerHTML += `
-                    <div class="roster-card ${isMainPlayer ? 'main-player' : ''}">
+                    <div class="${cardClass}">
                         <div class="roster-color-dot" style="background: ${pColor};"></div>
-                        ${pData.name} ${isMainPlayer ? '🎯' : ''}
+                        ${pData.name} ${isMainPlayer ? '🎯' : (hasVoted ? '✅' : '')}
                     </div>
                 `;
             });
@@ -393,11 +412,9 @@
             if (msg.u === 'System') {
                 chatBox.innerHTML += `<div class="chat-msg chat-system">${msg.m}</div>`;
             } else {
-                // Determine user's unique color and if they are the target
                 const pColor = getUserColor(msg.u);
                 const isMainPlayer = globalPlayers[state.subject] && msg.u === globalPlayers[state.subject].name;
                 
-                // Styling: Right-align my messages, Left-align others. Give unique border color.
                 const align = (msg.u === myName) 
                     ? 'margin-left: auto; border-bottom-right-radius: 4px;' 
                     : 'margin-right: auto; border-bottom-left-radius: 4px;';
@@ -443,7 +460,12 @@
                 status.innerText = "Interrogation Active - Defend Yourself!";
             } else {
                 status.innerText = "Interrogation Active - Ask & Vote!";
-                document.getElementById('voteSection').classList.remove('hidden');
+                // Ensure vote buttons disappear if the user already voted
+                if (!state.votes || !state.votes[myKey]) {
+                    document.getElementById('voteSection').classList.remove('hidden');
+                } else {
+                    document.getElementById('voteSection').classList.add('hidden');
+                }
             }
         }
 
@@ -501,13 +523,18 @@
 
     function castVote(vote) {
         playSfx(sfx.chime);
+        // Save the vote
         db.ref(`rooms/${roomId}/state/votes/${myKey}`).set(vote);
+        
+        // Temporarily hide the voting section so they know it registered locally
+        document.getElementById('voteSection').classList.add('hidden');
         
         db.ref(`rooms/${roomId}`).once('value', snap => {
             const data = snap.val();
             const totalPlayers = Object.keys(data.players).length;
             const currentVotes = Object.keys(data.state.votes || {}).length;
             
+            // Total players minus 1 (the Main Player doesn't vote)
             if (currentVotes >= totalPlayers - 1) { 
                 calculateWinner(data.state);
             }
