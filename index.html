@@ -28,6 +28,8 @@
             background: #000 url('desk.png') no-repeat center center fixed; background-size: cover;
             transition: background 0.5s ease;
         }
+        
+        /* UPDATED: Now triggers on any vertical screen (Phone, Tablet, or rotated Desktop) */
         @media (orientation: portrait) { body { background-image: url('vert.png'); } }
 
         .app-container { width: 100%; max-width: 500px; height: 100%; display: flex; flex-direction: column; padding: 20px; position: relative; z-index: 1; }
@@ -53,6 +55,7 @@
         }
         input:focus { border-color: var(--accent); background: rgba(150, 150, 150, 0.25); transform: translateY(-2px); }
         
+        /* Set placeholder text to a bright light-white */
         input::placeholder { color: rgba(255, 255, 255, 0.8); opacity: 1; }
         
         button { 
@@ -109,6 +112,7 @@
             border-color: var(--primary); background: rgba(255, 59, 48, 0.2); 
             box-shadow: 0 0 12px rgba(255, 59, 48, 0.4); color: #fff;
         }
+        /* Voted State for Players */
         .roster-card.has-voted { 
             border-color: var(--success); background: rgba(52, 199, 89, 0.2); 
             box-shadow: 0 0 12px rgba(52, 199, 89, 0.3); color: #fff;
@@ -123,6 +127,7 @@
             animation: slideUp 0.3s ease; line-height: 1.4; backdrop-filter: blur(10px);
             border-radius: 18px;
         }
+        /* Enlarged System Message styling */
         .chat-system { 
             margin: 10px auto; 
             font-size: 15px; 
@@ -134,14 +139,9 @@
             text-align: center;
         }
         
-        /* Utility Toggles (Music & Leave Room) */
+        /* Music Toggle */
         .music-toggle { position: absolute; top: 20px; right: 20px; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; z-index: 100; transition: 0.3s; }
         .music-toggle:active { transform: scale(0.9); }
-
-        .leave-btn { position: absolute; top: 20px; left: 20px; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 12px; padding: 10px 15px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; transition: 0.3s; color: var(--text-main); }
-        .leave-btn.host-active { background: var(--primary); color: #fff; border: none; box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4); }
-        .leave-btn.host-active:active { transform: scale(0.9); }
-        .leave-btn.disabled { opacity: 0.6; cursor: not-allowed; }
 
         .hidden { display: none !important; }
 
@@ -155,8 +155,6 @@
 <audio id="bgMusic" loop>
     <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3" type="audio/mpeg">
 </audio>
-
-<div class="leave-btn disabled hidden" id="leaveRoomBtn" onclick="hostCloseRoom()">🚪 End Room 🔒</div>
 <div class="music-toggle" onclick="toggleMusic()" id="musicBtn">🎵</div>
 
 <div class="app-container">
@@ -323,16 +321,8 @@
         
         if(!musicPlaying) { toggleMusic(); }
         
-        // Unhide the leave button once logged in (Lobby view)
-        document.getElementById('leaveRoomBtn').classList.remove('hidden');
-        
         const ref = db.ref(`rooms/${roomId}/players`).push();
         myKey = ref.key;
-        
-        // --- AUTO-CLEANUP ---
-        ref.onDisconnect().remove();
-        db.ref(`rooms/${roomId}/state/votes/${myKey}`).onDisconnect().remove();
-
         ref.set({ name: myName, joinedAt: firebase.database.ServerValue.TIMESTAMP }).then(() => {
             document.getElementById('lobbyLinkInput').value = window.location.href;
             switchView('view-lobby');
@@ -344,15 +334,6 @@
         db.ref(`rooms/${roomId}/players`).on('value', snap => {
             globalPlayers = snap.val() || {};
             const keys = Object.keys(globalPlayers);
-            
-            // --- KICK PLAYERS IF ROOM DESTROYED ---
-            if (keys.length === 0 && myName) {
-                alert("The Host has ended the game and closed the room.");
-                window.location.href = window.location.origin + window.location.pathname;
-                return;
-            }
-            
-            // Automatically assign host
             amIHost = (myKey === keys[0]);
             
             const grid = document.getElementById('lobbyPlayers');
@@ -363,56 +344,23 @@
 
             const btnStart = document.getElementById('btnStartGame');
             const lobbyStatus = document.getElementById('lobbyStatusText');
-            const leaveBtn = document.getElementById('leaveRoomBtn');
             
             if(amIHost) {
                 lobbyStatus.innerText = "You are the Host! 👑";
                 btnStart.className = "btn-primary";
                 btnStart.innerText = "Start Game 🚀";
                 btnStart.disabled = false;
-                
-                // Activate the End Room button for the host
-                leaveBtn.classList.add('host-active');
-                leaveBtn.classList.remove('disabled');
-                leaveBtn.innerText = "🚪 End Room";
             } else {
                 lobbyStatus.innerText = "Waiting for Host to start...";
                 btnStart.className = "btn-disabled";
                 btnStart.innerText = "Start Game 🔒"; 
                 btnStart.disabled = true;
-                
-                // Lock the End Room button for normal players
-                leaveBtn.classList.remove('host-active');
-                leaveBtn.classList.add('disabled');
-                leaveBtn.innerText = "🚪 End Room 🔒";
-            }
-            
-            // --- ANTI-FREEZE LOGIC ---
-            if (amIHost && lastPhase === 'interrogation') {
-                db.ref(`rooms/${roomId}/state`).once('value', sSnap => {
-                    const st = sSnap.val();
-                    if(st && st.phase === 'interrogation') {
-                        const totalActive = keys.length;
-                        const vCount = Object.keys(st.votes || {}).length;
-                        if(vCount >= totalActive - 1 && totalActive > 1) {
-                            calculateWinner(st);
-                        }
-                    }
-                });
             }
         });
 
         db.ref(`rooms/${roomId}/state`).on('value', snap => {
             if(snap.val()) handleGameState(snap.val());
         });
-    }
-
-    // --- HOST END ROOM FUNCTION ---
-    function hostCloseRoom() {
-        if(!amIHost) return;
-        if(confirm("Are you sure you want to completely end the game and remove everyone from the room?")) {
-            db.ref(`rooms/${roomId}`).remove();
-        }
     }
 
     function hostStartGame() {
@@ -439,14 +387,11 @@
         const status = document.getElementById('gameStatus');
         const chatBox = document.getElementById('zone-chat');
         const rosterBox = document.getElementById('gameRoster');
-        const leaveBtn = document.getElementById('leaveRoomBtn');
         
         ['zone-secret', 'zone-chat', 'zone-controls', 'voteSection', 'zone-result'].forEach(id => document.getElementById(id).classList.add('hidden'));
 
-        // --- DYNAMIC ROSTER AND LEAVE BUTTON VISIBILITY ---
+        // BUILD DYNAMIC PLAYER ROSTER
         if (state.phase !== 'finished') {
-            // HIDE the End Room button during active gameplay
-            leaveBtn.classList.add('hidden');
             rosterBox.classList.remove('hidden');
             rosterBox.innerHTML = "";
             const currentVotes = state.votes || {};
@@ -471,8 +416,6 @@
                 `;
             });
         } else {
-            // SHOW the End Room button again on the results screen
-            leaveBtn.classList.remove('hidden');
             rosterBox.classList.add('hidden');
         }
 
@@ -502,6 +445,7 @@
             }
         });
         
+        // Timeout ensures DOM fully renders before scrolling down
         setTimeout(() => {
             chatBox.scrollTop = chatBox.scrollHeight;
         }, 50);
@@ -546,6 +490,7 @@
         if (state.phase === 'finished') {
             document.getElementById('zone-result').classList.remove('hidden');
             
+            // Allow result text to accept HTML (so the break tags work properly)
             document.getElementById('resultText').innerHTML = state.winner;
             
             if (lastPhase !== 'finished') {
