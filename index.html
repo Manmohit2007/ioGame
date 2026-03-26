@@ -3,21 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ioGame - Family Multiplayer</title>
+    <title>ioGame - Family Edition</title>
     <style>
         :root {
             --primary: #FF3B30; --success: #34C759; --accent: #007AFF;
             --glass-bg: rgba(255, 255, 255, 0.15); --glass-border: rgba(255, 255, 255, 0.25);
-            --text-main: #E5E5EA; 
-            --text-muted: #AEAEB2;
+            --text-main: #E5E5EA; --text-muted: #AEAEB2;
             --text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85), 0 0 2px rgba(0, 0, 0, 0.5);
         }
 
         @media (prefers-color-scheme: light) {
             :root {
                 --glass-bg: rgba(255, 255, 255, 0.6); --glass-border: rgba(0, 0, 0, 0.1);
-                --text-main: #2C2C2E; 
-                --text-muted: #48484A;
+                --text-main: #2C2C2E; --text-muted: #48484A;
                 --text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9), 0 0 2px rgba(255, 255, 255, 0.5);
             }
         }
@@ -25,85 +23,130 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, sans-serif;
-            color: var(--text-main); 
-            text-shadow: var(--text-shadow);
-            min-height: 100dvh;
-            overflow-x: hidden; 
-            overflow-y: auto;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+            color: var(--text-main); text-shadow: var(--text-shadow);
+            height: 100dvh; overflow: hidden;
             display: flex; justify-content: center;
             background: #000 url('desk.png') no-repeat center center fixed; background-size: cover;
             transition: background 0.5s ease;
         }
+        @media (orientation: portrait) { body { background-image: url('vert.png'); } }
 
         .app-container { 
-            width: 100%; max-width: 500px; 
-            min-height: 100dvh;
-            display: flex; flex-direction: column; padding: 20px; position: relative; z-index: 1; 
+            width: 100%; max-width: 1200px; height: 100%; 
+            display: flex; flex-direction: column; padding: 15px; 
+            position: relative; z-index: 1; margin: 0 auto;
+            overflow-y: auto; overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
         }
         
+        @media (min-width: 768px) { .app-container { padding: 30px; } }
+
+        .view-centered { max-width: 500px; width: 100%; margin: 0 auto; }
+        .view-centered-wide { max-width: 700px; width: 100%; margin: 0 auto; }
+
         .glass-card { 
-            background: var(--glass-bg); 
-            backdrop-filter: blur(40px) saturate(200%); -webkit-backdrop-filter: blur(40px) saturate(200%);
-            border: 1px solid var(--glass-border); border-radius: 32px; padding: 24px;
+            background: var(--glass-bg); backdrop-filter: blur(40px) saturate(200%); -webkit-backdrop-filter: blur(40px) saturate(200%);
+            border: 1px solid var(--glass-border); border-radius: 24px; padding: 20px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.15); 
             transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
         }
+        @media (min-width: 768px) { .glass-card { border-radius: 32px; padding: 28px; } }
 
-        h1 { font-size: 46px; font-weight: 800; letter-spacing: -2px; text-align: center; margin-bottom: 4px; }
+        h1 { font-size: 42px; font-weight: 800; letter-spacing: -2px; text-align: center; margin-bottom: 4px; }
         .subtitle { font-size: 15px; font-weight: 500; color: var(--text-muted); text-align: center; margin-bottom: 25px; }
+        @media (min-width: 768px) { h1 { font-size: 52px; } .subtitle { font-size: 18px; } }
         
         input { 
             width: 100%; background: rgba(150, 150, 150, 0.15); border: 1.5px solid transparent; 
-            padding: 18px; border-radius: 20px; color: #fff; outline: none; text-shadow: none;
-            font-size: 16px; font-weight: 500; margin-bottom: 16px; transition: 0.3s ease; 
+            padding: 16px; border-radius: 16px; color: #fff; outline: none; text-shadow: none;
+            font-size: 16px; font-weight: 500; margin-bottom: 12px; transition: 0.3s ease; 
         }
         @media (prefers-color-scheme: light) { input { color: #000; } }
-        
         input:focus { border-color: var(--accent); background: rgba(150, 150, 150, 0.25); transform: translateY(-2px); }
-        input::placeholder { color: rgba(255, 255, 255, 0.8); opacity: 1; }
+        input::placeholder { color: rgba(255, 255, 255, 0.8); }
         @media (prefers-color-scheme: light) { input::placeholder { color: rgba(0, 0, 0, 0.5); } }
         
         button { 
-            width: 100%; padding: 18px; border-radius: 20px; border: none; font-weight: 700; font-size: 16px; 
-            cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            text-transform: uppercase; letter-spacing: 0.8px; text-shadow: none;
+            width: 100%; padding: 16px; border-radius: 16px; border: none; font-weight: 700; font-size: 16px; 
+            cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.8px; text-shadow: none;
         }
-        button:active { transform: scale(0.94); }
-        button:disabled { background: rgba(150, 150, 150, 0.3); color: rgba(255,255,255,0.5); cursor: not-allowed; box-shadow: none; transform: none; }
-        
+        button:active { transform: scale(0.96); }
         .btn-primary { background: var(--success); color: #fff; box-shadow: 0 8px 20px rgba(52, 199, 89, 0.3); }
         .btn-danger { background: var(--primary); color: #fff; box-shadow: 0 8px 20px rgba(255, 59, 48, 0.3); }
         .btn-accent { background: var(--accent); color: #fff; box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3); }
-        
+        .btn-disabled { background: rgba(150, 150, 150, 0.3); color: rgba(255,255,255,0.5); cursor: not-allowed; box-shadow: none; }
+
         .link-display-container { display: flex; gap: 8px; margin-bottom: 20px; }
-        .link-display-container input {
-            margin-bottom: 0; padding: 12px 16px; font-size: 14px; color: var(--accent);
-            background: rgba(150, 150, 150, 0.15); border: 1px solid var(--glass-border); text-shadow: none;
-        }
+        .link-display-container input { margin-bottom: 0; padding: 12px 16px; color: var(--accent); } 
         
-        .player-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+        .player-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        @media (min-width: 768px) { .player-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 1024px) { .player-grid { grid-template-columns: repeat(4, 1fr); } }
+
         .p-badge { 
-            background: rgba(150, 150, 150, 0.15); border: 1px solid var(--glass-border); border-radius: 18px; 
-            padding: 14px; text-align: center; font-weight: 600; font-size: 15px; 
+            background: rgba(150, 150, 150, 0.15); border: 1px solid var(--glass-border); border-radius: 14px; 
+            padding: 12px; text-align: center; font-weight: 600; font-size: 14px; 
             animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         
-        .mini-emojis { 
-            display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; 
-            font-size: 32px; opacity: 0.95; margin-bottom: 15px; text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        #view-game { flex: 1; display: flex; flex-direction: column; }
+        #view-game > .glass-card { flex: 1; display: flex; flex-direction: column; padding: 15px; }
+        @media (min-width: 768px) { #view-game > .glass-card { padding: 24px; } }
+
+        .game-content-split { display: flex; flex-direction: column; flex: 1; gap: 12px; }
+        @media (min-width: 768px) { .game-content-split { flex-direction: row; gap: 20px; } }
+
+        .board-section {
+            flex: 1; position: relative; display: flex; align-items: center; justify-content: center; min-height: 320px; 
+        }
+        @media (min-width: 768px) { .board-section { flex: 1.5; min-height: 400px; } }
+        @media (min-width: 1024px) { .board-section { flex: 2; } }
+
+        .chat-section {
+            display: flex; flex-direction: column; min-height: 300px; 
+            background: rgba(0,0,0,0.15); border-radius: 20px; border: 1px solid var(--glass-border);
+            overflow: hidden; flex-shrink: 0;
+        }
+        @media (min-width: 768px) { .chat-section { width: 320px; height: 100%; min-height: auto; } }
+        @media (min-width: 1024px) { .chat-section { width: 380px; } }
+
+        .chat-scroll {
+            flex: 1; padding: 15px; overflow-y: auto; scroll-behavior: smooth;
+            display: flex; flex-direction: column; gap: 8px; scrollbar-width: none;
+        }
+        .chat-scroll::-webkit-scrollbar { display: none; }
+
+        .chat-msg { 
+            padding: 8px 12px; font-size: 13px; width: fit-content; max-width: 90%; 
+            animation: slideUp 0.3s ease; line-height: 1.3; backdrop-filter: blur(10px);
+            border-radius: 16px; touch-action: pan-y; will-change: transform; transition: transform 0.2s;
+        }
+        @media (hover: hover) {
+            .chat-msg:not(.chat-system):hover { transform: translateX(3px); cursor: grab; }
+            .chat-msg:not(.chat-system):active { cursor: grabbing; }
+        }
+        
+        .chat-reply-quote {
+            background: rgba(0,0,0,0.2); border-left: 3px solid var(--accent); padding: 4px 8px;
+            border-radius: 4px; margin-bottom: 4px; font-size: 11px; color: var(--text-muted); text-shadow: none;
+        }
+        .chat-system { 
+            margin: 4px auto; font-size: 11px; font-weight: 600; color: var(--text-muted); 
+            background: transparent !important; border: none !important; font-style: italic; text-align: center;
         }
 
+        .chat-input-area { padding: 12px; background: rgba(0,0,0,0.2); border-top: 1px solid var(--glass-border); }
+        .chat-input-area input { margin-bottom: 0; padding: 12px; font-size: 14px; border-radius: 12px; }
+        .chat-input-area button { padding: 12px 18px; font-size: 14px; border-radius: 12px; }
+
+        #status-container { text-align: center; min-height: 40px; margin-bottom: 8px; }
         .fruit-btn {
-            width: 40px; height: 40px; border-radius: 50%;
-            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px);
-            border: 2px solid var(--glass-border);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px; cursor: pointer; transition: 0.2s;
-            text-shadow: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            flex-shrink: 0;
+            width: 36px; height: 36px; border-radius: 50%; background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px); border: 2px solid var(--glass-border); display: flex; align-items: center; justify-content: center;
+            font-size: 18px; cursor: pointer; transition: 0.2s; text-shadow: none; flex-shrink: 0;
         }
+        @media (min-width: 768px) { .fruit-btn { width: 44px; height: 44px; font-size: 22px; } }
         .fruit-btn:active { transform: scale(0.9); }
         .fruit-btn.active-vote { 
             border-color: var(--success); background: rgba(52, 199, 89, 0.3); 
@@ -111,91 +154,59 @@
         }
 
         .player-node {
-            position: absolute; width: 65px; height: 65px; border-radius: 50%;
+            position: absolute; width: 55px; height: 55px; border-radius: 50%;
             background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 2px solid var(--glass-border);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transform: translate(-50%, -50%); z-index: 5;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            transition: border-color 0.4s ease, box-shadow 0.4s ease, left 0.5s ease, top 0.5s ease;
+            border: 2px solid var(--glass-border); display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transform: translate(-50%, -50%); z-index: 5; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transition: border-color 0.4s ease, box-shadow 0.4s ease, width 0.3s, height 0.3s;
         }
+        @media (min-width: 768px) { .player-node { width: 65px; height: 65px; } }
+        @media (min-width: 1024px) { .player-node { width: 75px; height: 75px; } }
 
         .score-badge {
-            position: absolute; top: -6px; right: -6px;
-            background: var(--accent); color: #fff; text-shadow: none;
-            font-size: 11px; font-weight: bold; width: 22px; height: 22px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            border: 2px solid rgba(0,0,0,0.4); box-shadow: 0 2px 5px rgba(0,0,0,0.5); z-index: 6;
+            position: absolute; top: -6px; right: -6px; background: var(--accent); color: #fff; text-shadow: none;
+            font-size: 11px; font-weight: bold; width: 22px; height: 22px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; border: 2px solid rgba(0,0,0,0.4); z-index: 6;
         }
+        @media (min-width: 768px) { .score-badge { width: 26px; height: 26px; font-size: 13px; top: -4px; right: -4px; } }
         
-        .player-node.active-target-glow {
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 20px 5px rgba(255, 59, 48, 0.6), inset 0 0 10px rgba(255, 59, 48, 0.4) !important;
-        }
+        .player-node.active-target-glow { border-color: var(--primary) !important; box-shadow: 0 0 20px 5px rgba(255, 59, 48, 0.6), inset 0 0 10px rgba(255, 59, 48, 0.4) !important; }
+        .player-node.voted-glow { border-color: var(--success) !important; box-shadow: 0 0 20px 5px rgba(52, 199, 89, 0.6), inset 0 0 10px rgba(52, 199, 89, 0.4) !important; }
 
-        .player-node.voted-glow {
-            border-color: var(--success) !important;
-            box-shadow: 0 0 20px 5px rgba(52, 199, 89, 0.6), inset 0 0 10px rgba(52, 199, 89, 0.4) !important;
-        }
-
-        .node-color { width: 14px; height: 14px; border-radius: 50%; margin-bottom: 4px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.4), 0 0 8px rgba(255,255,255,0.2); }
+        .node-color { width: 12px; height: 12px; border-radius: 50%; margin-bottom: 2px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.4); }
+        @media (min-width: 768px) { .node-color { width: 16px; height: 16px; margin-bottom: 4px; } }
+        
         .node-name {
-            font-size: 10px; font-weight: 800; color: #fff; text-align: center; white-space: nowrap; 
-            overflow: hidden; text-overflow: ellipsis; max-width: 55px; text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+            font-size: 10px; font-weight: 800; color: #fff; text-align: center; white-space: nowrap; overflow: hidden; 
+            text-overflow: ellipsis; max-width: 90%; text-shadow: 0 1px 3px rgba(0,0,0,0.8);
         }
+        @media (min-width: 768px) { .node-name { font-size: 12px; } }
 
-        @keyframes countdownBlink {
-            0% { border-color: var(--glass-border); box-shadow: 0 10px 25px rgba(0,0,0,0.2); transform: translate(-50%, -50%) scale(1); }
-            50% { border-color: rgba(255, 255, 255, 0.8); box-shadow: 0 0 25px rgba(255,255,255,0.6); transform: translate(-50%, -50%) scale(1.05); }
-            100% { border-color: var(--glass-border); box-shadow: 0 10px 25px rgba(0,0,0,0.2); transform: translate(-50%, -50%) scale(1); }
-        }
+        @keyframes countdownBlink { 0%, 100% { border-color: var(--glass-border); box-shadow: 0 10px 25px rgba(0,0,0,0.2); transform: translate(-50%, -50%) scale(1); } 50% { border-color: rgba(255, 255, 255, 0.8); box-shadow: 0 0 25px rgba(255,255,255,0.6); transform: translate(-50%, -50%) scale(1.05); } }
         .node-blink { animation: countdownBlink 1s ease-in-out infinite !important; }
-
-        @keyframes votePopAnim {
-            0% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.2); }
-            100% { transform: translate(-50%, -50%) scale(1); }
-        }
+        @keyframes votePopAnim { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.2); } }
 
         .center-orb {
-            position: relative; width: 230px; height: 230px; border-radius: 50%;
-            background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-            border: 1px solid var(--glass-border); z-index: 10;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2);
-            overflow: hidden; pointer-events: auto; animation: popIn 0.5s ease;
+            position: relative; width: 140px; height: 140px; border-radius: 50%; background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid var(--glass-border);
+            z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2); overflow: hidden; 
+            animation: popIn 0.5s ease; transition: width 0.3s, height 0.3s;
         }
+        @media (min-width: 768px) { .center-orb { width: 180px; height: 180px; } }
+        @media (min-width: 1024px) { .center-orb { width: 220px; height: 220px; } }
 
-        .countdown-view { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; text-align: center; }
+        .countdown-view { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; text-align: center; padding: 10px; }
 
-        .chat-scroll {
-            width: 100%; height: 100%; padding: 30px 18px; overflow-y: auto; scroll-behavior: smooth;
-            display: flex; flex-direction: column; gap: 8px; -ms-overflow-style: none; scrollbar-width: none;
-        }
-        .chat-scroll::-webkit-scrollbar { display: none; }
-
-        .chat-msg { 
-            padding: 8px 12px; font-size: 13px; width: fit-content; max-width: 95%; 
-            animation: slideUp 0.3s ease; line-height: 1.3; backdrop-filter: blur(10px);
-            border-radius: 16px; touch-action: pan-y; will-change: transform;
-        }
-
-        .chat-system { 
-            margin: 6px auto; font-size: 12px; font-weight: 600; 
-            color: var(--text-muted); background: transparent !important; 
-            border: none !important; font-style: italic; text-align: center;
-        }
-        
-        .music-toggle { position: absolute; top: 20px; right: 20px; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; z-index: 100; transition: 0.3s; }
+        .music-toggle { position: absolute; top: 15px; right: 15px; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; z-index: 100; transition: 0.3s; }
+        @media (min-width: 768px) { .music-toggle { top: 25px; right: 25px; width: 50px; height: 50px; font-size: 22px; } }
         .music-toggle:active { transform: scale(0.9); }
 
         .hidden { display: none !important; }
 
-        @keyframes confettiFall {
-            0% { transform: translateY(-10vh) rotate(0deg) scale(1); opacity: 1; }
-            100% { transform: translateY(110vh) rotate(720deg) scale(0.5); opacity: 0; }
-        }
+        @keyframes confettiFall { 0% { transform: translateY(-10vh) rotate(0deg) scale(1); opacity: 1; } 100% { transform: translateY(110vh) rotate(720deg) scale(0.5); opacity: 0; } }
         .confetti { position: absolute; width: 12px; height: 12px; z-index: 9999; pointer-events: none; border-radius: 2px; animation: confettiFall linear forwards; }
+
         @keyframes popIn { 0% { opacity: 0; transform: scale(0.5); } 100% { opacity: 1; transform: scale(1); } }
         @keyframes popInNode { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
         @keyframes slideUp { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
@@ -211,17 +222,16 @@
 <div class="music-toggle" onclick="toggleMusic()" id="musicBtn">🎵</div>
 
 <div class="app-container">
-    <div id="view-login" style="margin-top: 15vh;">
+    <div id="view-login" class="view-centered" style="margin-top: 20vh;">
         <h1>ioGame</h1>
-        <div class="subtitle">Multiplayer Fruit Guesser 🎲</div>
+        <div class="subtitle">Family Game Night 🎲</div>
         <div class="glass-card">
-            <p id="roomJoinAlert" class="hidden" style="color: var(--accent); font-weight: bold; text-align: center; margin-bottom: 10px;">You are joining an existing room!</p>
-            <input type="text" id="userName" placeholder="Enter your nickname" maxlength="12">
+            <input type="text" id="userName" placeholder="Enter Your Nickname" maxlength="12">
             <button class="btn-primary" onclick="joinGame()">Enter Lobby</button>
         </div>
     </div>
 
-    <div id="view-lobby" class="hidden">
+    <div id="view-lobby" class="view-centered-wide hidden" style="margin-top: 10vh;">
         <div class="glass-card" style="margin-bottom: 15px;">
             <p style="font-size: 14px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; text-align: center;">🔗 Invite Friends & Family</p>
             <div class="link-display-container">
@@ -231,64 +241,85 @@
         </div>
         
         <div class="glass-card">
-            <div class="floating-emojis" style="font-size: 24px; text-align: center; margin-bottom: 15px; animation: float 3s infinite; text-shadow:none;">🍎 🥭 🍉 🍇 🍓 🍊</div>
-            <h2 id="lobbyStatusText" style="font-size: 18px; margin-bottom: 15px; text-align: center;">Waiting in Lobby...</h2>
+            <div id="lobbyEmojiDisplay" style="font-size: 32px; letter-spacing: 5px; text-align: center; margin-bottom: 10px; animation: float 3s infinite; text-shadow:none;"></div>
+            <h2 id="lobbyStatusText" style="font-size: 18px; margin-bottom: 20px; text-align: center;">Waiting in Lobby...</h2>
             <div class="player-grid" id="lobbyPlayers"></div>
             
-            <button id="btnStartGame" class="btn-primary hidden" onclick="hostStartGame()">Start Game 🚀</button>
-            <p id="waitingForHostMsg" class="hidden" style="text-align:center; font-weight:bold; color:var(--text-muted); font-size:14px; margin-top:10px;">Waiting for Host to start...</p>
+            <button id="btnStartGame" class="btn-disabled" onclick="hostStartGame()" disabled>Waiting for Host...</button>
             <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room</button>
         </div>
     </div>
 
-    <div id="view-game" class="hidden" style="display: flex; flex-direction: column; flex-grow: 1; min-height: 700px;">
-        <div class="glass-card" style="flex-grow: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; padding-bottom: 15px;">
-            <div id="status-container" style="text-align: center; min-height: 45px;">
-                <div id="gameStatus" class="hidden" style="font-weight: 700; color: var(--accent); margin-bottom: 5px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">System Ready</div>
-                <div id="voting-header" class="hidden" style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:5px;">
+    <div id="view-game" class="hidden">
+        <div class="glass-card">
+            
+            <div id="status-container">
+                <div id="gameStatus" class="hidden" style="font-weight: 700; color: var(--accent); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">System Ready</div>
+                
+                <div id="voting-header" class="hidden" style="display:flex; align-items:center; justify-content:center; gap:8px;">
                     <div id="voting-fruits" style="display:flex; gap:6px; flex-wrap:nowrap;"></div>
                     <button id="btnSubmitVote" class="btn-accent" style="padding: 10px 14px; font-size:12px; width:auto; border-radius: 12px; display:none; flex-shrink:0;" onclick="submitVote()">VOTE</button>
                 </div>
-                <div id="target-message" class="hidden" style="color:var(--primary); font-weight:bold; font-size:14px; margin-bottom:5px;">
-                    🎯 You are the Target! Answer their questions.
-                </div>
+                
+                <div id="target-message" class="hidden" style="color:var(--primary); font-weight:bold; font-size:15px;">🎯 You are the Target! Answer their questions.</div>
             </div>
             
-            <div class="mini-emojis" id="emojiVaultDisplay" style="text-shadow: none;"></div>
+            <div id="emojiVaultDisplay" style="text-align:center; font-size: 32px; letter-spacing: 5px; text-shadow:none; margin-bottom:10px; opacity:0.9;"></div>
 
-            <div id="zone-circular-board" class="hidden" style="position: relative; flex-grow: 1; width: 100%; margin: 10px 0; display: flex; align-items: center; justify-content: center;">
-                <div id="player-nodes-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>
-                <div id="center-glass-orb" class="center-orb">
-                    <div id="center-countdown" class="countdown-view hidden">
-                        <p style="font-weight: 600; font-size: 14px; margin-bottom: 5px; color: var(--text-muted);">Your Fruit</p>
-                        <div id="bigEmoji" style="font-size: 65px; margin-bottom: 8px; line-height: 1.1; text-shadow: 0 5px 15px rgba(0,0,0,0.3);">❓</div>
-                        <div id="countdownDisplay" style="font-size: 18px; font-weight: bold; color: var(--accent);">Starts in 5...</div>
+            <div id="game-content-split" class="game-content-split hidden">
+                
+                <div class="board-section" id="zone-circular-board">
+                    <div id="player-nodes-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>
+                    
+                    <div id="center-glass-orb" class="center-orb">
+                        <div id="center-countdown" class="countdown-view hidden">
+                            <p style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase;">Your Fruit</p>
+                            <div id="bigEmoji" style="font-size: 55px; line-height: 1.1; text-shadow: 0 5px 15px rgba(0,0,0,0.3);">❓</div>
+                            <div id="countdownDisplay" style="font-size: 16px; font-weight: bold; color: var(--accent); margin-top:5px;">5...</div>
+                        </div>
+
+                        <div id="center-transition" class="countdown-view hidden">
+                            <p style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase;">Next Turn</p>
+                            <div id="transitionPlayerName" style="font-size: 22px; font-weight: 900; color: var(--accent); text-shadow: 0 0 15px rgba(0,122,255,0.5); text-transform: uppercase;">Player</div>
+                        </div>
+
+                        <div id="center-playing" class="countdown-view hidden">
+                            <p style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase;">Current Target</p>
+                            <div id="playingTargetName" style="font-size: 22px; font-weight: 900; color: var(--accent); text-shadow: 0 0 15px rgba(0,122,255,0.5); text-transform: uppercase;">Name</div>
+                        </div>
                     </div>
-                    <div id="center-transition" class="countdown-view hidden">
-                        <p style="font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 10px;">Now it's the turn of</p>
-                        <div id="transitionPlayerName" style="font-size: 32px; font-weight: 900; color: var(--accent); text-shadow: 0 0 15px rgba(0,122,255,0.5); text-transform: uppercase;">Player</div>
-                    </div>
-                    <div id="center-chat" class="chat-scroll hidden"></div>
                 </div>
+
+                <div class="chat-section" id="chat-panel-container">
+                    <div id="center-chat" class="chat-scroll"></div>
+                    
+                    <div class="chat-input-area">
+                        <div id="reply-indicator" class="hidden" style="background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); padding: 5px 10px; margin-bottom: 8px; border-radius: 6px; display:flex; justify-content:space-between; align-items:center; font-size: 11px; text-shadow: none;">
+                            <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:85%;">
+                                <b id="reply-user" style="color:var(--accent);"></b><br>
+                                <span id="reply-text" style="color:#aaa;"></span>
+                            </div>
+                            <button onclick="clearReply()" style="background:none; border:none; color:white; width:auto; padding:0; font-size:18px; text-shadow:none;">×</button>
+                        </div>
+
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="chatInput" placeholder="Message..." autocomplete="off">
+                            <button class="btn-primary" style="width: auto;" onclick="sendChatMessage()">Send</button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
-            <div id="zone-controls" class="hidden" style="margin-top: auto; padding-top: 10px;">
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="chatInput" placeholder="Type a message..." style="margin-bottom: 0;">
-                    <button class="btn-primary" style="width: auto; padding: 0 24px;" onclick="sendChatMessage()">Send</button>
-                </div>
-            </div>
-
-            <div id="zone-result" class="hidden" style="text-align: center; margin: auto 0; animation: popIn 0.5s ease; width:100%;">
+            <div id="zone-result" class="hidden" style="text-align: center; margin: auto 0; animation: popIn 0.5s ease; width:100%; max-width: 600px; margin: 0 auto;">
                 <div id="resultEmoji" style="font-size: 70px; margin-bottom: 10px; animation: float 2s infinite;">🎉</div>
-                <h2 id="resultText" style="margin-bottom: 20px; font-size: 24px; font-weight: 800; letter-spacing: -1px; line-height: 1.2;"></h2>
+                <h2 id="resultText" style="margin-bottom: 20px; font-size: 24px; font-weight: 800; line-height: 1.2;"></h2>
+                
                 <div id="host-controls" class="hidden">
                     <button id="btnPlayAgain" class="btn-primary" onclick="hostStartGame()">Play Again 🚀</button>
                     <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room</button>
                 </div>
-                <div id="non-host-message" class="hidden" style="color:var(--text-muted); font-weight:bold;">
-                    Waiting for the Host to restart...
-                </div>
+                <div id="non-host-message" class="hidden" style="color:var(--text-muted); font-weight:bold;">Waiting for Host...</div>
             </div>
         </div>
     </div>
@@ -296,574 +327,537 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, onDisconnect, remove, update, push, get } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // Applying your precise Firebase Configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyAVREmzFgrnE_1NP9Ke-Ybtyn1S1Ka-HNk",
-      authDomain: "iogame-145c9.firebaseapp.com",
-      databaseURL: "https://iogame-145c9-default-rtdb.firebaseio.com",
-      projectId: "iogame-145c9",
-      storageBucket: "iogame-145c9.firebasestorage.app",
-      messagingSenderId: "1024963573565",
-      appId: "1:1024963573565:web:907f671f3fad2c56443754",
-      measurementId: "G-N1J57G3WS6"
+    // Replaced hardcoded config with injected environment configuration variables to fix Auth error
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'default-iogame'; 
+
+    let user = null;
+    let myUid = null;
+    let isConnected = false;
+    let heartbeatInterval = null;
+    let playersUnsub = null;
+    let stateUnsub = null;
+
+    window.localDB = { state: { phase: 'lobby', chat: [], votes: {}, scores: {}, turnIndex: 0, turnOrder: [] } };
+    window.globalPlayers = {};
+    window.amIHost = false;
+    let hostUid = null;
+
+    // RULE 3 COMPLIANCE: Init Auth First & Wait via Custom Token properly
+    const initAuth = async () => {
+        try {
+            let credential;
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                credential = await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                credential = await signInAnonymously(auth);
+            }
+            user = credential.user;
+            myUid = user.uid;
+        } catch (error) {
+            console.error("Auth error:", error);
+        }
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    initAuth().then(() => {
+        onAuthStateChanged(auth, (u) => {
+            user = u;
+            if (u) myUid = u.uid;
+        });
+    });
 
-    // Make state global so inline onclick functions can access it
-    window.localDB = { state: { phase: 'login', chat: [], votes: {}, scores: {}, turnOrder: [], turnIndex: 0 } };
-    window.globalPlayers = {};
-    window.myKey = null;
-    window.myName = null;
-    window.amIHost = false;
-    window.roomId = new URLSearchParams(window.location.search).get("room");
-
-    if (window.roomId) {
-        document.getElementById('roomJoinAlert').classList.remove('hidden');
-    }
-
-    const items = [
-        {e:"🍎", n:"Apple"}, {e:"🥭", n:"Mango"}, {e:"🍉", n:"Watermelon"}, 
-        {e:"🍇", n:"Grapes"}, {e:"🍓", n:"Strawberry"}, {e:"🍊", n:"Orange"}
-    ];
+    const items = [ {e:"🍎", n:"Apple"}, {e:"🥭", n:"Mango"}, {e:"🍉", n:"Watermelon"}, {e:"🍇", n:"Grapes"}, {e:"🍓", n:"Strawberry"}, {e:"🍊", n:"Orange"} ];
     document.getElementById('emojiVaultDisplay').innerText = items.map(i => i.e).join(' ');
+    document.getElementById('lobbyEmojiDisplay').innerText = items.map(i => i.e).join(' ');
 
     let musicPlaying = false;
     const bgm = document.getElementById('bgMusic'); bgm.volume = 0.15; 
     const sfx = {
         pop: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'), 
-        circlePop: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
-        vote: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'),
+        circlePop: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'), 
+        vote: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'),      
         send: new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3'),     
         receive: new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3'),   
         start: new Audio('https://assets.mixkit.co/active_storage/sfx/2586/2586-preview.mp3'), 
         win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),       
         cheer: new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3'),
         tick: new Audio('https://assets.mixkit.co/active_storage/sfx/2574/2574-preview.mp3'), 
-        tickFinal: new Audio('https://assets.mixkit.co/active_storage/sfx/2574/2574-preview.mp3'), 
-        alert: new Audio('https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3'),
-        animPop: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
-        chime: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3')
+        alert: new Audio('https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3')
     };
     Object.values(sfx).forEach(sound => sound.volume = 0.6);
-    
-    window.playSfx = (sound) => { 
-        if(!sound) return;
-        const clone = sound.cloneNode(); clone.volume = sound.volume; clone.play().catch(()=>{}); 
-    };
+    const playSfx = (sound) => { if(sound) { const c = sound.cloneNode(); c.volume = sound.volume; c.play().catch(()=>{}); } };
 
     window.toggleMusic = function() {
         playSfx(sfx.pop); 
         if (musicPlaying) { bgm.pause(); document.getElementById('musicBtn').innerText = "🔇"; } 
         else { bgm.play().catch(()=>{}); document.getElementById('musicBtn').innerText = "🎵"; }
         musicPlaying = !musicPlaying;
-    };
+    }
 
-    let lastPhase = ''; let lastChatCount = 0; let pendingVoteFruit = null; let hostInterval = null;
+    let myName, lastPhase = '', lastChatCount = 0, pendingVoteFruit = null, activeReply = null; 
 
-    window.getUserColorByName = function(name) {
-        let hash = 0;
-        for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-        return `hsl(${Math.abs(hash) % 360}, 85%, 65%)`;
-    };
+    function getUserColorByName(name) {
+        const keys = Object.keys(window.globalPlayers);
+        const index = keys.findIndex(k => window.globalPlayers[k].name === name);
+        if (index === -1) { let h = 0; for(let i=0; i<name.length; i++) h=name.charCodeAt(i)+((h<<5)-h); return `hsl(${Math.abs(h)%360}, 85%, 65%)`; }
+        return `hsl(${index * (360 / keys.length)}, 85%, 65%)`;
+    }
 
     window.copyInviteLink = function(btn) { 
-        const linkInput = document.getElementById('lobbyLinkInput');
-        linkInput.select(); linkInput.setSelectionRange(0, 99999);
-        navigator.clipboard.writeText(linkInput.value); 
-        playSfx(sfx.pop); 
-        const originalText = btn.innerText; btn.innerText = "Copied!"; btn.style.background = "var(--success)";
+        const linkInput = document.getElementById('lobbyLinkInput'); linkInput.select(); navigator.clipboard.writeText(linkInput.value); 
+        playSfx(sfx.pop); const originalText = btn.innerText; btn.innerText = "Copied!"; btn.style.background = "var(--success)";
         setTimeout(() => { btn.innerText = originalText; btn.style.background = "var(--accent)"; }, 1500);
-    };
+    }
 
-    window.switchView = function(viewId) {
+    function switchView(viewId) {
         ['view-login', 'view-lobby', 'view-game'].forEach(id => document.getElementById(id).classList.add('hidden'));
         document.getElementById(viewId).classList.remove('hidden');
-    };
+        if(viewId === 'view-game') setTimeout(() => window.renderBoardNodes(false), 100); 
+    }
 
-    window.leaveRoom = function() {
-        playSfx(sfx.pop);
-        if (window.myKey) {
-            remove(ref(db, `rooms/${window.roomId}/players/${window.myKey}`));
+    function createConfetti() {
+        const colors = ['#FF3B30', '#34C759', '#007AFF', '#FFD700', '#FF9500', '#AF52DE'];
+        for (let i = 0; i < 80; i++) {
+            let conf = document.createElement('div'); conf.className = 'confetti';
+            conf.style.left = Math.random() * 100 + 'vw'; conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            conf.style.animationDuration = (Math.random() * 2 + 2) + 's'; conf.style.animationDelay = (Math.random() * 0.5) + 's';
+            document.body.appendChild(conf); setTimeout(() => conf.remove(), 5000); 
         }
-        setTimeout(() => { window.location.href = window.location.pathname; }, 200);
+    }
+
+    // FIREBASE SYNC IMPLEMENTATION
+    
+    // Core game state mutator
+    window.updateState = async function(newState) { 
+        if (!user || !isConnected) return;
+        const stateRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'state', 'main');
+        try {
+            await setDoc(stateRef, newState, { merge: true });
+        } catch(e) { console.error("Error updating state", e); }
+    }
+
+    function determineHost(playersData) {
+        const sorted = Object.entries(playersData).sort((a, b) => a[1].joinedAt - b[1].joinedAt);
+        if (sorted.length > 0) {
+            hostUid = sorted[0][0];
+            window.amIHost = (hostUid === myUid);
+        } else {
+            window.amIHost = false;
+        }
+    }
+
+    function setupListeners() {
+        if (!user) return;
+        
+        // Track Players collection
+        playersUnsub = onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'players'), (snap) => {
+            const playersData = {};
+            snap.forEach(document => { playersData[document.id] = document.data(); });
+            window.globalPlayers = playersData;
+            determineHost(playersData);
+
+            if (window.localDB.state.phase === 'lobby') renderLobby();
+            window.renderBoardNodes(false); 
+        }, (error) => console.error(error));
+
+        // Track Game State Document
+        stateUnsub = onSnapshot(doc(db, 'artifacts', APP_ID, 'public', 'data', 'state', 'main'), (snap) => {
+            if (snap.exists()) {
+                const newState = snap.data();
+                const oldVotesLength = Object.keys(window.localDB.state.votes || {}).length;
+                const newVotesLength = Object.keys(newState.votes || {}).length;
+
+                window.localDB.state = newState;
+                handleGameState(newState);
+
+                // Host determines game logic advances
+                if (window.amIHost && newVotesLength > oldVotesLength) checkTurnResolution();
+            }
+        }, (error) => console.error(error));
+    }
+
+    function startHeartbeat() {
+        heartbeatInterval = setInterval(async () => {
+            if (!myUid || !isConnected || !user) return;
+            try {
+                const playerRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'players', myUid);
+                await updateDoc(playerRef, { lastActive: Date.now() });
+
+                // Host cleans up abruptly disconnected players
+                if (window.amIHost) {
+                    const now = Date.now();
+                    Object.keys(window.globalPlayers).forEach(async (pid) => {
+                        if (pid !== myUid && window.globalPlayers[pid].lastActive && (now - window.globalPlayers[pid].lastActive > 12000)) {
+                            await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'players', pid));
+                        }
+                    });
+                }
+            } catch(e){}
+        }, 4000);
+    }
+
+    // Departure logic for swiping away / leaving
+    window.leaveGame = async function() {
+        if (!myUid || !isConnected) return;
+        isConnected = false;
+        try {
+            await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'players', myUid));
+        } catch(e) {}
     };
+    
+    window.leaveRoom = async function() {
+        playSfx(sfx.pop);
+        await window.leaveGame();
+        window.location.reload();
+    }
+
+    window.addEventListener('beforeunload', window.leaveGame);
+    window.addEventListener('pagehide', window.leaveGame);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') window.leaveGame(); });
+
 
     window.joinGame = async function() {
-        window.myName = document.getElementById('userName').value.trim();
-        if(!window.myName) return;
-        playSfx(sfx.chime);
-        if(!musicPlaying) toggleMusic();
+        let rawName = document.getElementById('userName').value.trim(); 
+        if(!rawName) return;
         
-        window.myKey = "user_" + Math.random().toString(36).substr(2, 9);
-        
-        if (!window.roomId) {
-            window.roomId = Math.random().toString(36).substr(2, 5).toUpperCase();
-            window.amIHost = true;
-            await set(ref(db, `rooms/${window.roomId}/state`), { phase: 'lobby' });
+        if (!user) await initAuth();
+        if (!user) return; // fail guard
+
+        myName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+        playSfx(sfx.pop); if(!musicPlaying) window.toggleMusic();
+
+        // Register Player in Firestore
+        const playerRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'players', myUid);
+        await setDoc(playerRef, {
+            name: myName,
+            joinedAt: Date.now(),
+            lastActive: Date.now()
+        });
+
+        isConnected = true;
+        setupListeners();
+        startHeartbeat();
+
+        // Boot system state if empty
+        const stateRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'state', 'main');
+        const stateSnap = await getDoc(stateRef);
+        if (!stateSnap.exists()) {
+            await setDoc(stateRef, { phase: 'lobby', chat: [], turnIndex: 0, turnOrder: [], votes: {}, scores: {} });
         }
 
-        // Generate sharable link
-        const currentUrl = new URL(window.location.href);
-        currentUrl.searchParams.set("room", window.roomId);
-        document.getElementById('lobbyLinkInput').value = currentUrl.toString();
-        
-        const playerRef = ref(db, `rooms/${window.roomId}/players/${window.myKey}`);
-        
-        // ** CRITICAL PREVENT GLITCH: On Disconnect, remove player node immediately from Firebase **
-        onDisconnect(playerRef).remove().then(() => {
-            set(playerRef, { name: window.myName, isHost: window.amIHost });
-        });
-
-        setupFirebaseListeners();
-        switchView('view-lobby');
-    };
-
-    function setupFirebaseListeners() {
-        const playersRef = ref(db, `rooms/${window.roomId}/players`);
-        onValue(playersRef, (snap) => {
-            window.globalPlayers = snap.val() || {};
-            
-            // Host Migration Logic
-            const keys = Object.keys(window.globalPlayers);
-            if(keys.length > 0 && !keys.some(k => window.globalPlayers[k].isHost)) {
-               if(keys.sort()[0] === window.myKey) {
-                   window.amIHost = true;
-                   update(ref(db, `rooms/${window.roomId}/players/${window.myKey}`), { isHost: true });
-               }
-            }
-            renderLobby();
-            const board = document.getElementById('zone-circular-board');
-            if (board && !board.classList.contains('hidden')) renderBoardNodes(false);
-        });
-
-        const stateRef = ref(db, `rooms/${window.roomId}/state`);
-        onValue(stateRef, (snap) => {
-            const state = snap.val();
-            if(state) {
-                 window.localDB.state = state;
-                 // Safely parse Firebase objects back into Arrays if needed
-                 if(state.chat) window.localDB.state.chat = Object.values(state.chat);
-                 else window.localDB.state.chat = [];
-                 
-                 if(state.turnOrder) window.localDB.state.turnOrder = Object.values(state.turnOrder);
-                 else window.localDB.state.turnOrder = [];
-                 
-                 handleGameState(window.localDB.state);
-                 if(window.amIHost) checkTurnResolution();
-            }
-        });
+        document.getElementById('lobbyLinkInput').value = window.location.href;
+        switchView('view-lobby'); 
+        window.setupSwipeToReply();
     }
 
     function renderLobby() {
-        const grid = document.getElementById('lobbyPlayers');
-        grid.innerHTML = "";
-        
-        // Glitch fix: Ensure lobby purely matches database state
-        Object.keys(window.globalPlayers).forEach((id) => {
-            const p = window.globalPlayers[id];
-            grid.innerHTML += `<div class="p-badge">${p.name} ${p.isHost ? '👑' : ''}</div>`;
-        });
+        const grid = document.getElementById('lobbyPlayers'); grid.innerHTML = "";
+        Object.keys(window.globalPlayers).forEach(id => grid.innerHTML += `<div class="p-badge">${window.globalPlayers[id].name} ${id===hostUid?'👑':''}</div>`);
         
         const btnStart = document.getElementById('btnStartGame');
-        const waitMsg = document.getElementById('waitingForHostMsg');
-        const lobbyStatus = document.getElementById('lobbyStatusText');
-        
         if (window.amIHost) {
-            lobbyStatus.innerText = "You are the Host! 👑";
-            btnStart.classList.remove('hidden');
-            waitMsg.classList.add('hidden');
-            btnStart.disabled = Object.keys(window.globalPlayers).length < 2;
-            if(btnStart.disabled) btnStart.innerText = "Waiting for players...";
-            else btnStart.innerText = "Start Game 🚀";
+            document.getElementById('lobbyStatusText').innerText = "You are the Host! 👑";
+            btnStart.className = "btn-primary"; btnStart.innerText = "Start Game 🚀"; btnStart.disabled = false;
         } else {
-            lobbyStatus.innerText = "Joined Room successfully!";
-            btnStart.classList.add('hidden');
-            waitMsg.classList.remove('hidden');
+            document.getElementById('lobbyStatusText').innerText = "Waiting in Lobby...";
+            btnStart.className = "btn-disabled"; btnStart.innerText = "Waiting for Host..."; btnStart.disabled = true;
         }
     }
 
-    window.hostStartGame = function() {
+    window.hostStartGame = async function() {
         if (!window.amIHost) return;
-        playSfx(sfx.start);
-        pendingVoteFruit = null;
-        
+        playSfx(sfx.start); pendingVoteFruit = null; window.clearReply();
         const keys = Object.keys(window.globalPlayers);
-        let shuffledItems = [...items];
-        for (let i = shuffledItems.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffledItems[i], shuffledItems[j]] = [shuffledItems[j], shuffledItems[i]];
-        }
+        let shuffledItems = [...items].sort(() => 0.5 - Math.random());
+        let playerItems = {}, initScores = {};
+        keys.forEach((k, i) => { playerItems[k] = shuffledItems[i % shuffledItems.length]; initScores[k] = 0; });
         
-        let playerItems = {};
-        let initScores = {};
-        keys.forEach((k, index) => {
-            playerItems[k] = shuffledItems[index % shuffledItems.length];
-            initScores[k] = 0;
-        });
+        await window.updateState({ phase: 'countdown', playerItems: playerItems, countdown: 5, chat: [{u: 'System', m: `🍎 Game started! Memorize your secret fruit.`}], votes: {}, scores: initScores, turnOrder: keys, turnIndex: 0 });
 
-        const initialState = {
-            phase: 'countdown',
-            playerItems: playerItems,
-            countdown: 5,
-            votes: {},
-            scores: initScores,
-            turnOrder: keys,
-            turnIndex: 0
-        };
-
-        update(ref(db, `rooms/${window.roomId}/state`), initialState);
-        push(ref(db, `rooms/${window.roomId}/state/chat`), {u: 'System', m: `🍎 Game started! Memorize your secret fruit.`});
-        
-        playSfx(sfx.tick); 
         let timer = 5;
-        if(hostInterval) clearInterval(hostInterval);
-        hostInterval = setInterval(() => {
+        let interval = setInterval(() => {
             timer--;
-            if (timer > 0) { 
-                update(ref(db, `rooms/${window.roomId}/state`), { countdown: timer }); 
-            } else { 
-                clearInterval(hostInterval);
-                startTurn(); 
-            }
+            if (timer > 0) { playSfx(sfx.tick); window.updateState({ countdown: timer }); } 
+            else { clearInterval(interval); playSfx(sfx.pop); startTurn(); }
         }, 1000);
-    };
+    }
 
     function startTurn() {
-        if(!window.amIHost) return;
+        if (!window.amIHost) return;
         const targetId = window.localDB.state.turnOrder[window.localDB.state.turnIndex];
-        const targetName = window.globalPlayers[targetId].name;
+        pendingVoteFruit = null; 
         
-        update(ref(db, `rooms/${window.roomId}/state`), { phase: 'playing', votes: {} });
-        push(ref(db, `rooms/${window.roomId}/state/chat`), {u: 'System', m: `🔴 Target Acquired: Ask questions to guess ${targetName}'s fruit!`});
+        const msg = `🔴 Target Acquired: Guess ${window.globalPlayers[targetId]?.name || 'Someone'}'s fruit!`;
+        window.updateState({ phase: 'playing', votes: {}, chat: [...(window.localDB.state.chat || []), {u: 'System', m: msg}].slice(-50) });
     }
 
     function handleGameState(state) {
         const isNewPhase = state.phase !== lastPhase;
-        
-        if (state.phase !== 'lobby') switchView('view-game');
+        switchView('view-game');
         
         const status = document.getElementById('gameStatus');
         const chatBox = document.getElementById('center-chat');
         const votingHeader = document.getElementById('voting-header');
         const targetMessage = document.getElementById('target-message');
+        const splitView = document.getElementById('game-content-split');
+        const resultView = document.getElementById('zone-result');
         
-        ['zone-circular-board', 'zone-controls', 'zone-result'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        const chatValues = Object.values(state.chat || {});
+        chatBox.innerHTML = "";
+        chatValues.forEach(msg => {
+            if (msg.u === 'System') { chatBox.innerHTML += `<div class="chat-msg chat-system">${msg.m}</div>`; } 
+            else {
+                const pColor = getUserColorByName(msg.u);
+                const align = (msg.u === myName) ? 'margin-left: auto; border-bottom-right-radius: 4px;' : 'margin-right: auto; border-bottom-left-radius: 4px;';
+                const bgStyle = `background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-left: 4px solid ${pColor};`;
+                let quoteHtml = msg.replyTo ? `<div class="chat-reply-quote"><b>${msg.replyTo.u}</b>: ${msg.replyTo.m}</div>` : '';
+                chatBox.innerHTML += `<div class="chat-msg" style="${align} ${bgStyle}" data-u="${msg.u}" data-m="${msg.m}">${quoteHtml}<b style="color: ${pColor}; font-size: 11px;">${msg.u}</b><br><span style="color: var(--text-main);">${msg.m}</span></div>`;
+            }
+        });
+        setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
 
-        // Handle Chat Sync
-        const currentChatLength = state.chat.length;
-        if (currentChatLength > lastChatCount) {
-            chatBox.innerHTML = "";
-            state.chat.forEach(msg => {
-                if (msg.u === 'System') {
-                    chatBox.innerHTML += `<div class="chat-msg chat-system">${msg.m}</div>`;
-                } else {
-                    const pColor = getUserColorByName(msg.u);
-                    const align = (msg.u === window.myName) ? 'margin-left: auto; border-bottom-right-radius: 4px;' : 'margin-right: auto; border-bottom-left-radius: 4px;';
-                    const bgStyle = `background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-left: 4px solid ${pColor};`;
-                    chatBox.innerHTML += `
-                        <div class="chat-msg" style="${align} ${bgStyle}">
-                            <b style="color: ${pColor}; font-size: 11px;">${msg.u}</b><br>
-                            <span style="color: var(--text-main);">${msg.m}</span>
-                        </div>`;
-                }
-            });
-            setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
-            const lastMsg = state.chat[state.chat.length - 1];
-            if (lastMsg && lastMsg.u !== window.myName && lastMsg.u !== 'System' && lastChatCount !== 0) playSfx(sfx.receive);
-            lastChatCount = currentChatLength;
+        if (chatValues.length < lastChatCount) lastChatCount = 0;
+        if (chatValues.length > lastChatCount) {
+            const lastMsg = chatValues[chatValues.length - 1];
+            if (lastMsg.u !== myName && lastMsg.u !== 'System' && lastChatCount !== 0) playSfx(sfx.receive);
+            lastChatCount = chatValues.length;
         }
 
-        if (state.phase === 'countdown') {
+        if (state.phase !== 'finished') {
+            splitView.classList.remove('hidden');
+            resultView.classList.add('hidden');
             document.getElementById('emojiVaultDisplay').classList.remove('hidden');
-            status.innerText = "Memorize Your Fruit!";
-            status.classList.remove('hidden');
-            votingHeader.classList.add('hidden');
-            targetMessage.classList.add('hidden');
-            document.getElementById('zone-circular-board').classList.remove('hidden');
+        }
+
+        ['center-countdown', 'center-transition', 'center-playing'].forEach(id => document.getElementById(id).classList.add('hidden'));
+
+        if (state.phase === 'countdown') {
+            status.innerText = "Memorize Your Fruit!"; status.classList.remove('hidden');
+            votingHeader.classList.add('hidden'); targetMessage.classList.add('hidden');
             document.getElementById('center-countdown').classList.remove('hidden');
-            document.getElementById('center-transition').classList.add('hidden');
-            document.getElementById('center-chat').classList.add('hidden');
-            if(state.playerItems && state.playerItems[window.myKey]) document.getElementById('bigEmoji').innerText = state.playerItems[window.myKey].e;
+            if(state.playerItems && state.playerItems[myUid]) document.getElementById('bigEmoji').innerText = state.playerItems[myUid].e;
             document.getElementById('countdownDisplay').innerText = `Starts in ${state.countdown}...`;
-            if (state.countdown <= 3 && state.countdown > 1) playSfx(sfx.tick);
-            if (state.countdown === 1) playSfx(sfx.tickFinal);
-            renderBoardNodes(isNewPhase); 
+            window.renderBoardNodes(isNewPhase); 
         }
 
         if (state.phase === 'playing') {
             document.getElementById('emojiVaultDisplay').classList.add('hidden'); 
-            document.getElementById('zone-circular-board').classList.remove('hidden');
-            document.getElementById('center-countdown').classList.add('hidden');
-            document.getElementById('center-transition').classList.add('hidden');
-            document.getElementById('center-chat').classList.remove('hidden');
-            document.getElementById('zone-controls').classList.remove('hidden');
             status.classList.add('hidden'); 
-            if (isNewPhase) playSfx(sfx.chime);
-            renderVotingUI();
-            renderBoardNodes(isNewPhase); 
+            document.getElementById('center-playing').classList.remove('hidden');
+            document.getElementById('playingTargetName').innerText = window.globalPlayers[state.turnOrder[state.turnIndex]]?.name || 'Player';
+            renderVotingUI(); window.renderBoardNodes(isNewPhase); 
         }
 
         if (state.phase === 'readingResults') {
-            document.getElementById('zone-circular-board').classList.remove('hidden');
-            document.getElementById('center-chat').classList.remove('hidden');
-            document.getElementById('zone-controls').classList.add('hidden');
-            status.classList.add('hidden'); 
-            votingHeader.classList.add('hidden');
-            targetMessage.classList.remove('hidden');
-            targetMessage.innerText = "Turn Ended! Checking Scores...";
-            renderBoardNodes(isNewPhase); 
+            document.getElementById('emojiVaultDisplay').classList.add('hidden'); 
+            status.classList.add('hidden'); votingHeader.classList.add('hidden');
+            document.getElementById('center-playing').classList.remove('hidden');
+            targetMessage.classList.remove('hidden'); targetMessage.innerText = "Turn Ended! Checking Scores...";
+            window.renderBoardNodes(isNewPhase); 
         }
 
         if (state.phase === 'turnTransition') {
-            document.getElementById('zone-circular-board').classList.remove('hidden');
-            document.getElementById('center-countdown').classList.add('hidden');
-            document.getElementById('center-chat').classList.add('hidden');
-            document.getElementById('zone-controls').classList.add('hidden');
+            document.getElementById('emojiVaultDisplay').classList.add('hidden'); 
+            status.classList.add('hidden'); votingHeader.classList.add('hidden'); targetMessage.classList.add('hidden');
             document.getElementById('center-transition').classList.remove('hidden');
             document.getElementById('transitionPlayerName').innerText = state.nextTargetName;
-            status.classList.add('hidden'); 
-            votingHeader.classList.add('hidden');
-            targetMessage.classList.add('hidden');
-            renderBoardNodes(isNewPhase); 
+            window.renderBoardNodes(isNewPhase); 
         }
 
         if (state.phase === 'finished') {
+            splitView.classList.add('hidden'); resultView.classList.remove('hidden');
             document.getElementById('emojiVaultDisplay').classList.remove('hidden');
-            document.getElementById('zone-result').classList.remove('hidden');
-            votingHeader.classList.add('hidden');
-            targetMessage.classList.add('hidden');
+            votingHeader.classList.add('hidden'); targetMessage.classList.add('hidden'); status.classList.add('hidden');
             
-            const scores = state.scores || {};
-            const sortedPlayers = Object.keys(window.globalPlayers).sort((a, b) => (scores[b] || 0) - (scores[a] || 0));
-            const topScore = scores[sortedPlayers[0]] || 0;
-            const winners = sortedPlayers.filter(p => (scores[p] || 0) === topScore).map(p => window.globalPlayers[p].name);
-            const winnerText = winners.length > 1 ? winners.join(' & ') : winners[0];
-            
-            let chartHtml = `<div style="text-align:left; background:rgba(0,0,0,0.3); padding:15px; border-radius:16px; margin-bottom:20px; font-size:15px;">`;
-            sortedPlayers.forEach((p, i) => {
-                chartHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;">
-                    <span><b>#${i+1}</b> ${window.globalPlayers[p].name}</span>
-                    <span style="color:var(--accent); font-weight:bold;">${scores[p] || 0} pts</span>
-                </div>`;
-            });
-            chartHtml += `</div>`;
-            document.getElementById('resultText').innerHTML = `
-                <div style="font-size: 38px; font-weight: 900; color: #FFD700; text-shadow: 0 0 25px rgba(255,215,0,0.6); margin-bottom: 5px; line-height: 1.1;">${winnerText}</div>
-                <div style="font-size: 20px; font-weight: 800; color: var(--success); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px;">WINNER!</div>
-                <span style="font-size:16px; color:var(--text-muted);">Final Leaderboard</span>
-                ${chartHtml}
-            `;
-            if (window.amIHost) {
-                document.getElementById('host-controls').classList.remove('hidden');
-                document.getElementById('non-host-message').classList.add('hidden');
-            } else {
-                document.getElementById('host-controls').classList.add('hidden');
-                document.getElementById('non-host-message').classList.remove('hidden');
+            const sortedPlayers = Object.keys(window.globalPlayers).sort((a, b) => (state.scores[b] || 0) - (state.scores[a] || 0));
+            if (sortedPlayers.length > 0) {
+                const winners = sortedPlayers.filter(p => (state.scores[p] || 0) === (state.scores[sortedPlayers[0]] || 0)).map(p => window.globalPlayers[p].name);
+                let chartHtml = `<div style="text-align:left; background:rgba(0,0,0,0.3); padding:15px; border-radius:16px; margin-bottom:20px; font-size:15px;">`;
+                sortedPlayers.forEach((p, i) => { chartHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;"><span><b>#${i+1}</b> ${window.globalPlayers[p].name}</span><span style="color:var(--accent); font-weight:bold;">${state.scores[p] || 0} pts</span></div>`; });
+                document.getElementById('resultText').innerHTML = `<div style="font-size: 38px; font-weight: 900; color: #FFD700; text-shadow: 0 0 25px rgba(255,215,0,0.6); margin-bottom: 5px;">${winners.join(' & ')}</div><div style="font-size: 18px; font-weight: 800; color: var(--success); letter-spacing: 2px; margin-bottom: 20px;">WINNER!</div>${chartHtml}</div>`;
             }
+            
+            if (window.amIHost) { document.getElementById('host-controls').classList.remove('hidden'); document.getElementById('non-host-message').classList.add('hidden'); }
+            else { document.getElementById('host-controls').classList.add('hidden'); document.getElementById('non-host-message').classList.remove('hidden'); }
+            
             if (lastPhase !== 'finished') { playSfx(sfx.win); playSfx(sfx.cheer); createConfetti(); }
         }
         
-        if (isNewPhase && lastPhase !== '') playSfx(sfx.animPop);
+        if (isNewPhase && lastPhase !== '') playSfx(sfx.circlePop);
         lastPhase = state.phase;
     }
 
     function renderVotingUI() {
-        const container = document.getElementById('voting-fruits');
-        const btnSubmit = document.getElementById('btnSubmitVote');
-        const targetMsg = document.getElementById('target-message');
-        const votingHeader = document.getElementById('voting-header');
+        const container = document.getElementById('voting-fruits'), btnSubmit = document.getElementById('btnSubmitVote');
+        const targetMsg = document.getElementById('target-message'), votingHeader = document.getElementById('voting-header');
         const targetId = window.localDB.state.turnOrder[window.localDB.state.turnIndex];
         
-        if (window.myKey === targetId) {
-            votingHeader.classList.add('hidden');
-            targetMsg.classList.remove('hidden');
-            return;
-        } else {
-            votingHeader.classList.remove('hidden');
-            targetMsg.classList.add('hidden');
-        }
+        if (myUid === targetId) { votingHeader.classList.add('hidden'); targetMsg.classList.remove('hidden'); return; } 
+        else { votingHeader.classList.remove('hidden'); targetMsg.classList.add('hidden'); }
 
-        const hasVoted = window.localDB.state.votes && window.localDB.state.votes[window.myKey];
-        if(hasVoted) {
-            container.innerHTML = `<span style="font-weight:bold; color:var(--success);">✅ Voted: ${window.localDB.state.votes[window.myKey]}</span>`;
-            btnSubmit.style.display = 'none';
-            return;
-        }
+        const hasVoted = window.localDB.state.votes && window.localDB.state.votes[myUid];
+        if(hasVoted) { container.innerHTML = `<span style="font-weight:bold; color:var(--success); font-size: 14px;">✅ Locked: ${window.localDB.state.votes[myUid]}</span>`; btnSubmit.style.display = 'none'; return; }
 
-        container.innerHTML = items.map(item => {
-            const isActive = pendingVoteFruit === item.e ? 'active-vote' : '';
-            return `<div class="fruit-btn ${isActive}" onclick="selectVoteFruit('${item.e}')">${item.e}</div>`;
-        }).join('');
-
+        container.innerHTML = items.map(i => `<div class="fruit-btn ${pendingVoteFruit === i.e ? 'active-vote' : ''}" onclick="window.selectVoteFruit('${i.e}')">${i.e}</div>`).join('');
         btnSubmit.style.display = pendingVoteFruit ? 'block' : 'none';
     }
 
-    window.selectVoteFruit = function(fruitEmoji) {
-        if(window.localDB.state.votes && window.localDB.state.votes[window.myKey]) return;
-        playSfx(sfx.pop);
-        pendingVoteFruit = fruitEmoji;
-        renderVotingUI(); 
-    };
+    window.selectVoteFruit = function(f) { if(window.localDB.state.votes && window.localDB.state.votes[myUid]) return; playSfx(sfx.pop); pendingVoteFruit = f; renderVotingUI(); }
+    
+    window.submitVote = async function() {
+        if(!pendingVoteFruit || !user) return;
+        
+        // Optimistic UI lock
+        window.localDB.state.votes = window.localDB.state.votes || {};
+        window.localDB.state.votes[myUid] = pendingVoteFruit;
+        renderVotingUI();
 
-    window.submitVote = function() {
-        if(!pendingVoteFruit) return;
-        // Submit directly to Firebase
-        update(ref(db, `rooms/${window.roomId}/state/votes`), { [window.myKey]: pendingVoteFruit });
-        push(ref(db, `rooms/${window.roomId}/state/chat`), {u: 'System', m: `${window.myName} locked in their vote! ✅`});
-        pendingVoteFruit = null; 
-    };
+        const payload = { u: 'System', m: `${myName} locked in their vote! ✅` };
+        const stateRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'state', 'main');
+        try {
+            await setDoc(stateRef, {
+                votes: { [myUid]: pendingVoteFruit },
+                chat: [...(window.localDB.state.chat || []), payload].slice(-50)
+            }, { merge: true });
+        } catch(e) {}
+    }
 
     function checkTurnResolution() {
         if (!window.amIHost || window.localDB.state.phase !== 'playing') return;
-        
         const targetId = window.localDB.state.turnOrder[window.localDB.state.turnIndex];
-        const activePlayersCount = Object.keys(window.globalPlayers).length;
-        const requiredVotes = activePlayersCount - 1; 
-        const currentVotesObj = window.localDB.state.votes || {};
+        const targetFruit = window.localDB.state.playerItems[targetId].e;
         
-        // Filter out votes from players who might have disconnected
-        const validVotesCount = Object.keys(currentVotesObj).filter(voterKey => window.globalPlayers[voterKey]).length;
+        // Active members counting check
+        const activeKeys = Object.keys(window.globalPlayers);
+        let votesReceived = Object.keys(window.localDB.state.votes || {}).length;
+        
+        // Everyone except target must vote
+        if(votesReceived >= activeKeys.length - 1) {
+            let correct = [];
+            let newScores = { ...window.localDB.state.scores };
 
-        if(validVotesCount >= requiredVotes && requiredVotes > 0) {
-            const targetFruit = window.localDB.state.playerItems[targetId].e;
-            let updatedScores = { ...window.localDB.state.scores };
-            let correctPlayers = [];
-            
-            for(let [pid, vote] of Object.entries(currentVotesObj)) {
-                if(vote === targetFruit && window.globalPlayers[pid]) {
-                    updatedScores[pid] = (updatedScores[pid] || 0) + 10;
-                    correctPlayers.push(window.globalPlayers[pid].name);
+            for(let [pid, vote] of Object.entries(window.localDB.state.votes || {})) {
+                if(vote === targetFruit) {
+                    newScores[pid] = (newScores[pid] || 0) + 10;
+                    if(window.globalPlayers[pid]) correct.push(window.globalPlayers[pid].name);
                 }
             }
+            const msg = `Target ${window.globalPlayers[targetId]?.name || 'Unknown'} had ${targetFruit}! ` + (correct.length > 0 ? `${correct.join(', ')} guessed correctly (+10)!` : `Nobody guessed correctly (0 pts)!`);
             
-            let resultMsg = `Target ${window.globalPlayers[targetId].name} had ${targetFruit}! `;
-            resultMsg += correctPlayers.length > 0 ? `${correctPlayers.join(', ')} guessed correctly (+10)!` : `Nobody guessed correctly (0 pts)!`;
-            
-            update(ref(db, `rooms/${window.roomId}/state`), { phase: 'readingResults', scores: updatedScores });
-            push(ref(db, `rooms/${window.roomId}/state/chat`), {u: 'System', m: resultMsg});
+            window.updateState({
+                phase: 'readingResults',
+                scores: newScores,
+                chat: [...(window.localDB.state.chat || []), {u: 'System', m: msg}].slice(-50)
+            });
             playSfx(sfx.alert);
             
             setTimeout(() => {
-                let nextIndex = window.localDB.state.turnIndex + 1;
-                // Skip turns of disconnected players
-                while (nextIndex < window.localDB.state.turnOrder.length && !window.globalPlayers[window.localDB.state.turnOrder[nextIndex]]) {
-                     nextIndex++;
+                let nextTurnIndex = window.localDB.state.turnIndex + 1;
+                if(nextTurnIndex >= activeKeys.length) { 
+                    window.updateState({ phase: 'finished' });
                 }
-
-                if(nextIndex >= window.localDB.state.turnOrder.length) {
-                    update(ref(db, `rooms/${window.roomId}/state`), { phase: 'finished' });
-                } else {
-                    const nextTargetId = window.localDB.state.turnOrder[nextIndex];
-                    const nextTargetName = window.globalPlayers[nextTargetId].name;
-                    update(ref(db, `rooms/${window.roomId}/state`), { 
+                else { 
+                    window.updateState({ 
                         phase: 'turnTransition', 
-                        nextTargetName: nextTargetName,
-                        turnIndex: nextIndex 
-                    });
-                    playSfx(sfx.chime);
+                        nextTargetName: window.globalPlayers[window.localDB.state.turnOrder[nextTurnIndex]]?.name || 'Player',
+                        turnIndex: nextTurnIndex,
+                        votes: {} 
+                    }); 
                     setTimeout(() => startTurn(), 3000); 
                 }
             }, 4000);
         }
     }
 
-    function renderBoardNodes(isNewPhase = false) {
+    window.renderBoardNodes = function(isNewPhase = false) {
+        const board = document.getElementById('zone-circular-board');
+        if(!board || board.offsetParent === null) return; 
+        
         const nodesContainer = document.getElementById('player-nodes-container');
         const keys = Object.keys(window.globalPlayers);
-        
-        // ** CRITICAL FIX: Delete ghost nodes of players who left immediately **
+        if (keys.length === 0) { nodesContainer.innerHTML = ''; return; }
+
+        const N = keys.length, angleStep = (Math.PI * 2) / N, startAngle = (N === 2) ? Math.PI : -Math.PI / 2; 
+
+        const minDimension = Math.min(board.clientWidth, board.clientHeight);
+        const orbRadius = window.innerWidth >= 1024 ? 110 : (window.innerWidth >= 768 ? 90 : 70);
+        const nodeRadiusOffset = window.innerWidth >= 768 ? 40 : 30;
+        const radius = Math.max(orbRadius + nodeRadiusOffset, (minDimension / 2) - nodeRadiusOffset - 10);
+
+        if (isNewPhase) nodesContainer.innerHTML = '';
+
+        // FIX FOR "GLITCH" - Remove disconnected players' DOM elements strictly
         Array.from(nodesContainer.children).forEach(child => {
-            const nodeId = child.id.replace('node-', '');
-            if (!window.globalPlayers[nodeId]) {
-                child.remove();
-            }
+            const id = child.id.replace('node-', '');
+            if (!window.globalPlayers[id]) child.remove();
         });
 
-        const N = keys.length;
-        if(N === 0) return;
-        
-        const angleStep = (Math.PI * 2) / N;
-        const startAngle = (N === 2) ? Math.PI : -Math.PI / 2; 
-        const isCountdown = window.localDB.state.phase === 'countdown';
-        const targetId = window.localDB.state.turnOrder ? window.localDB.state.turnOrder[window.localDB.state.turnIndex] : null;
-        const board = document.getElementById('zone-circular-board');
-        const minDimension = Math.min(board.clientWidth, board.clientHeight);
-        const radius = Math.max(155, (minDimension / 2) * 0.85);
-        
-        if (isNewPhase) playSfx(sfx.circlePop);
-        
         keys.forEach((pid, index) => {
             const angle = startAngle + (index * angleStep);
-            const xOffset = Math.cos(angle) * radius;
-            const yOffset = Math.sin(angle) * radius;
-            const pData = window.globalPlayers[pid];
-            const pColor = window.getUserColorByName(pData.name);
-            const isActiveTarget = pid === targetId && !isCountdown && window.localDB.state.phase !== 'turnTransition';
+            const pData = window.globalPlayers[pid], pColor = getUserColorByName(pData.name);
+            const isActiveTarget = pid === (window.localDB.state.turnOrder ? window.localDB.state.turnOrder[window.localDB.state.turnIndex] : null) && window.localDB.state.phase !== 'countdown' && window.localDB.state.phase !== 'turnTransition';
             const hasVoted = window.localDB.state.votes && window.localDB.state.votes[pid];
             
             let glowClass = isActiveTarget ? 'active-target-glow' : (hasVoted ? 'voted-glow' : '');
-            const blinkClass = isCountdown ? 'node-blink' : '';
-            
             let nodeEl = document.getElementById(`node-${pid}`);
-            let isNewNode = false;
-            if (!nodeEl) {
-                nodeEl = document.createElement('div');
-                nodeEl.id = `node-${pid}`;
-                nodesContainer.appendChild(nodeEl);
-                isNewNode = true;
-            }
-            if (hasVoted && !nodeEl.classList.contains('voted-glow')) {
-                nodeEl.style.animation = 'none';
-                void nodeEl.offsetWidth;
-                nodeEl.style.animation = 'votePopAnim 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-                playSfx(sfx.vote); 
-            }
-            nodeEl.className = `player-node ${glowClass} ${blinkClass}`;
-            if (isNewNode) nodeEl.style.animation = 'popInNode 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-            nodeEl.style.left = `calc(50% + ${xOffset}px)`;
-            nodeEl.style.top = `calc(50% + ${yOffset}px)`;
             
-            const score = (window.localDB.state.scores && window.localDB.state.scores[pid]) ? window.localDB.state.scores[pid] : 0;
-            nodeEl.innerHTML = `
-                <div class="score-badge">${score}</div>
-                <div class="node-color" style="background: ${pColor};"></div>
-                <div class="node-name">${pData.name}</div>
-            `;
+            if (!nodeEl) { 
+                nodeEl = document.createElement('div'); 
+                nodeEl.id = `node-${pid}`; 
+                nodesContainer.appendChild(nodeEl); 
+                nodeEl.style.animation = 'popInNode 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; 
+            }
+
+            if (hasVoted && !nodeEl.classList.contains('voted-glow')) {
+                nodeEl.style.animation = 'none'; void nodeEl.offsetWidth; nodeEl.style.animation = 'votePopAnim 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; 
+                if (pid !== myUid) playSfx(sfx.vote); 
+            }
+
+            nodeEl.className = `player-node ${glowClass} ${window.localDB.state.phase === 'countdown' ? 'node-blink' : ''}`;
+            nodeEl.style.left = `calc(50% + ${Math.cos(angle) * radius}px)`; nodeEl.style.top = `calc(50% + ${Math.sin(angle) * radius}px)`;
+            nodeEl.style.borderColor = glowClass ? '' : 'var(--glass-border)';
+            nodeEl.innerHTML = `<div class="score-badge">${window.localDB.state.scores?.[pid] || 0}</div><div class="node-color" style="background: ${pColor};"></div><div class="node-name">${pData.name}</div>`;
         });
     }
 
     window.addEventListener('resize', () => {
-        const board = document.getElementById('zone-circular-board');
-        if(board && !board.classList.contains('hidden')) renderBoardNodes(false); 
+        if(document.getElementById('zone-circular-board').offsetParent !== null) window.renderBoardNodes(false); 
     });
 
-    window.sendChatMessage = function() {
-        const input = document.getElementById('chatInput');
-        if(!input.value.trim() || !window.roomId) return;
-        playSfx(sfx.send); 
-        push(ref(db, `rooms/${window.roomId}/state/chat`), { u: window.myName, m: input.value.trim() });
-        input.value = "";
-    };
+    window.setupSwipeToReply = function() {
+        const chatBox = document.getElementById('center-chat'); let startX = 0, swipedElem = null;
+        const handleStart = (e, isTouch) => { const el = e.target.closest('.chat-msg'); if(!el || el.classList.contains('chat-system')) return; startX = isTouch ? e.touches[0].clientX : e.clientX; swipedElem = el; swipedElem.style.transition = 'none'; };
+        const handleMove = (e, isTouch) => { if(!swipedElem) return; const diffX = (isTouch ? e.touches[0].clientX : e.clientX) - startX; if(diffX > 0 && diffX < 80) swipedElem.style.transform = `translateX(${diffX}px)`; };
+        const handleEnd = (e, isTouch) => { if(!swipedElem) return; const diffX = (isTouch ? e.changedTouches[0].clientX : e.clientX) - startX; swipedElem.style.transition = 'transform 0.2s ease'; swipedElem.style.transform = 'translateX(0)'; if(diffX > 40) window.setReply(swipedElem.getAttribute('data-u'), swipedElem.getAttribute('data-m')); swipedElem = null; };
 
-    document.getElementById("chatInput").addEventListener("keypress", e => { if (e.key === "Enter") { e.preventDefault(); window.sendChatMessage(); } });
-
-    function createConfetti() {
-        const colors = ['#FF3B30', '#34C759', '#007AFF', '#FFD700', '#FF9500', '#AF52DE'];
-        for (let i = 0; i < 80; i++) {
-            let conf = document.createElement('div');
-            conf.className = 'confetti';
-            conf.style.left = Math.random() * 100 + 'vw';
-            conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            conf.style.animationDuration = (Math.random() * 2 + 2) + 's';
-            conf.style.animationDelay = (Math.random() * 0.5) + 's';
-            document.body.appendChild(conf);
-            setTimeout(() => conf.remove(), 5000);
-        }
+        chatBox.addEventListener('touchstart', e => handleStart(e, true), {passive: true}); chatBox.addEventListener('touchmove', e => handleMove(e, true), {passive: true}); chatBox.addEventListener('touchend', e => handleEnd(e, true));
+        chatBox.addEventListener('mousedown', e => handleStart(e, false)); window.addEventListener('mousemove', e => handleMove(e, false)); window.addEventListener('mouseup', e => handleEnd(e, false));
     }
+
+    window.setReply = function(r_user, msgText) {
+        if(r_user === myName) return; playSfx(sfx.pop); activeReply = { u: r_user, m: msgText };
+        document.getElementById('reply-user').innerText = `Replying to ${r_user}`; document.getElementById('reply-text').innerText = msgText;
+        document.getElementById('reply-indicator').classList.remove('hidden'); document.getElementById('chatInput').focus();
+    }
+    window.clearReply = function() { playSfx(sfx.pop); activeReply = null; document.getElementById('reply-indicator').classList.add('hidden'); }
+
+    window.sendChatMessage = async function() {
+        const input = document.getElementById('chatInput'); if(!input.value.trim() || !user) return; playSfx(sfx.send); 
+        const payload = { u: myName, m: input.value.trim() }; if(activeReply) { payload.replyTo = activeReply; window.clearReply(); }
+        
+        const stateRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'state', 'main');
+        try {
+            await setDoc(stateRef, { chat: [...(window.localDB.state.chat || []), payload].slice(-50) }, { merge: true });
+        } catch(e) {}
+        input.value = "";
+    }
+    document.getElementById("chatInput").addEventListener("keypress", function(e) { if (e.key === "Enter") { e.preventDefault(); window.sendChatMessage(); } });
 </script>
 </body>
 </html>
