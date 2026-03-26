@@ -3,20 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ioGame</title>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <title>ioGame - Multiplayer</title>
     <style>
         :root {
             --primary: #FF3B30; --success: #34C759; --accent: #007AFF;
             --glass-bg: rgba(255, 255, 255, 0.15); --glass-border: rgba(255, 255, 255, 0.25);
-            --text-main: #ffffff; --text-muted: rgba(255, 255, 255, 0.7);
+            --text-main: #E5E5EA; 
+            --text-muted: #AEAEB2;
+            --text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85), 0 0 2px rgba(0, 0, 0, 0.5);
         }
 
         @media (prefers-color-scheme: light) {
             :root {
                 --glass-bg: rgba(255, 255, 255, 0.6); --glass-border: rgba(0, 0, 0, 0.1);
-                --text-main: #000000; --text-muted: rgba(0, 0, 0, 0.5);
+                --text-main: #2C2C2E; 
+                --text-muted: #48484A;
+                --text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9), 0 0 2px rgba(255, 255, 255, 0.5);
             }
         }
 
@@ -24,15 +26,22 @@
         
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, sans-serif;
-            color: var(--text-main); height: 100dvh; overflow: hidden; display: flex; justify-content: center;
-            background: #000 url('desk.png') no-repeat center center fixed; background-size: cover;
+            color: var(--text-main); 
+            text-shadow: var(--text-shadow);
+            min-height: 100dvh;
+            overflow-x: hidden; 
+            overflow-y: auto;
+            display: flex; justify-content: center;
+            background: #000 url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070&auto=format&fit=crop') no-repeat center center fixed; background-size: cover;
             transition: background 0.5s ease;
         }
-        @media (orientation: portrait) { body { background-image: url('vert.png'); } }
 
-        .app-container { width: 100%; max-width: 500px; height: 100%; display: flex; flex-direction: column; padding: 20px; position: relative; z-index: 1; }
+        .app-container { 
+            width: 100%; max-width: 500px; 
+            min-height: 100dvh;
+            display: flex; flex-direction: column; padding: 20px; position: relative; z-index: 1; 
+        }
         
-        /* Advanced Apple-Style Glassmorphism */
         .glass-card { 
             background: var(--glass-bg); 
             backdrop-filter: blur(40px) saturate(200%); -webkit-backdrop-filter: blur(40px) saturate(200%);
@@ -41,24 +50,22 @@
             transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        /* Typography */
         h1 { font-size: 46px; font-weight: 800; letter-spacing: -2px; text-align: center; margin-bottom: 4px; }
         .subtitle { font-size: 15px; font-weight: 500; color: var(--text-muted); text-align: center; margin-bottom: 25px; }
         
-        /* Inputs & Buttons */
         input { 
             width: 100%; background: rgba(150, 150, 150, 0.15); border: 1.5px solid transparent; 
-            padding: 18px; border-radius: 20px; color: var(--text-main); outline: none; 
+            padding: 18px; border-radius: 20px; color: #fff; outline: none; text-shadow: none;
             font-size: 16px; font-weight: 500; margin-bottom: 16px; transition: 0.3s ease; 
         }
-        input:focus { border-color: var(--accent); background: rgba(150, 150, 150, 0.25); transform: translateY(-2px); }
+        @media (prefers-color-scheme: light) { input { color: #000; } }
         
-        input::placeholder { color: rgba(255, 255, 255, 0.8); opacity: 1; }
+        input:focus { border-color: var(--accent); background: rgba(150, 150, 150, 0.25); transform: translateY(-2px); }
         
         button { 
             width: 100%; padding: 18px; border-radius: 20px; border: none; font-weight: 700; font-size: 16px; 
             cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            text-transform: uppercase; letter-spacing: 0.8px; 
+            text-transform: uppercase; letter-spacing: 0.8px; text-shadow: none;
         }
         button:active { transform: scale(0.94); }
         
@@ -67,14 +74,10 @@
         .btn-accent { background: var(--accent); color: #fff; box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3); }
         .btn-disabled { background: rgba(150, 150, 150, 0.3); color: rgba(255,255,255,0.5); cursor: not-allowed; box-shadow: none; }
         
-        .flex-row { display: flex; gap: 12px; margin-top: 10px; }
-        .flex-row button { flex: 1; }
-
-        /* Lobby Display */
         .link-display-container { display: flex; gap: 8px; margin-bottom: 20px; }
         .link-display-container input {
             margin-bottom: 0; padding: 12px 16px; font-size: 14px; color: var(--accent);
-            background: rgba(0, 0, 0, 0.2); border: 1px solid var(--glass-border);
+            background: rgba(150, 150, 150, 0.15); border: 1px solid var(--glass-border);
         }
         
         .player-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
@@ -84,146 +87,50 @@
             animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         
-        /* Game Zones */
-        .emoji-showcase { font-size: 90px; text-align: center; margin: 10px 0; text-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        
-        .mini-emojis { 
-            display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; 
-            font-size: 32px; 
-            opacity: 0.95; margin-bottom: 15px; 
-            text-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-        
-        .roster-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 15px; }
-        .roster-card { 
-            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); 
-            border: 1px solid var(--glass-border); border-radius: 12px; 
-            padding: 8px 12px; font-size: 13px; font-weight: 600; 
-            display: flex; align-items: center; gap: 6px;
-            transition: all 0.3s ease;
-            animation: popIn 0.3s ease;
-        }
-        .roster-card.main-player { 
-            border-color: var(--primary); background: rgba(255, 59, 48, 0.2); 
-            box-shadow: 0 0 12px rgba(255, 59, 48, 0.4); color: #fff;
-        }
-        .roster-card.has-voted { 
-            border-color: var(--success); background: rgba(52, 199, 89, 0.2); 
-            box-shadow: 0 0 12px rgba(52, 199, 89, 0.3); color: #fff;
-        }
-        
-        .roster-color-dot { width: 10px; height: 10px; border-radius: 50%; }
-
-        .chat-container { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; padding-right: 5px; scroll-behavior: smooth; }
-        .chat-msg { 
-            padding: 10px 14px; font-size: 15px; width: fit-content; max-width: 85%; 
-            animation: slideUp 0.3s ease; line-height: 1.4; backdrop-filter: blur(10px);
-            border-radius: 18px;
-        }
-        .chat-system { 
-            margin: 10px auto; 
-            font-size: 15px; 
-            font-weight: 600; 
-            color: rgba(255, 255, 255, 0.9); 
-            background: transparent !important; 
-            border: none !important; 
-            font-style: italic; 
-            text-align: center;
-        }
-        
-        .music-toggle { position: absolute; top: 20px; right: 20px; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; z-index: 100; transition: 0.3s; }
-        .music-toggle:active { transform: scale(0.9); }
-
         .hidden { display: none !important; }
-
+        .music-toggle { position: absolute; top: 20px; right: 20px; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; z-index: 100; }
         @keyframes popIn { 0% { opacity: 0; transform: scale(0.5); } 100% { opacity: 1; transform: scale(1); } }
-        @keyframes slideUp { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
     </style>
 </head>
 <body>
 
-<audio id="bgMusic" loop>
-    <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3" type="audio/mpeg">
-</audio>
-
 <div class="music-toggle" onclick="toggleMusic()" id="musicBtn">🎵</div>
 
 <div class="app-container">
-    <div id="view-login" style="margin-top: 22vh;">
+    <div id="view-login" style="margin-top: 15vh;">
         <h1>ioGame</h1>
-        <div class="subtitle">Family Game Night 🎲</div>
+        <div class="subtitle">Multiplayer Experience 🎮</div>
         <div class="glass-card">
-            <input type="text" id="userName" placeholder="Enter your nickname" maxlength="12">
-            <button class="btn-primary" onclick="joinGame()">Enter Lobby</button>
+            <input type="text" id="userName" placeholder="Enter your name" maxlength="12">
+            <button class="btn-primary" onclick="joinGame()">Connect Online</button>
         </div>
     </div>
 
     <div id="view-lobby" class="hidden">
         <div class="glass-card" style="margin-bottom: 15px;">
-            <p style="font-size: 14px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; text-align: center;">🔗 Invite Friends & Family</p>
+            <p style="font-size: 14px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; text-align: center;">🔗 Multiplayer Invite Link</p>
             <div class="link-display-container">
                 <input type="text" id="lobbyLinkInput" readonly value="">
-                <button class="btn-accent" style="width: auto; padding: 0 20px; font-size: 14px;" onclick="copyInviteLink(this)">Copy</button>
+                <button class="btn-accent" style="width: auto; padding: 0 20px;" onclick="copyInviteLink(this)">Copy</button>
             </div>
         </div>
         
         <div class="glass-card">
-            <div class="floating-emojis" style="font-size: 24px; text-align: center; margin-bottom: 15px; animation: float 3s infinite;">🍿 🎮 🚀 🎸 🎬</div>
-            <h2 id="lobbyStatusText" style="font-size: 18px; margin-bottom: 15px; text-align: center;">Waiting in Lobby...</h2>
+            <h2 id="lobbyStatusText" style="font-size: 18px; margin-bottom: 15px; text-align: center;">Players in Room</h2>
             <div class="player-grid" id="lobbyPlayers"></div>
-            
-            <button id="btnStartGame" class="btn-disabled" onclick="hostStartGame()">Start Game 🔒</button>
-            <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room</button>
-        </div>
-    </div>
-
-    <div id="view-game" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
-        <div class="glass-card" style="flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; padding-bottom: 15px;">
-            <div id="gameStatus" style="text-align: center; font-weight: 700; color: var(--accent); margin-bottom: 10px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">System Ready</div>
-            
-            <div class="mini-emojis" id="emojiVaultDisplay"></div>
-            
-            <div id="gameRoster" class="roster-container hidden"></div>
-            
-            <div id="zone-secret" class="hidden" style="margin: auto 0;">
-                <div class="emoji-showcase" id="bigEmoji">❓</div>
-                <p style="text-align: center; margin-bottom: 25px; font-weight: 600; font-size: 16px;">You are the Main Player!<br><span style="color: var(--text-muted); font-size: 13px;">Do you want to lie or tell the truth?</span></p>
-                <div class="flex-row">
-                    <button class="btn-primary" onclick="lockStance('truth')">Tell Truth</button>
-                    <button class="btn-danger" onclick="lockStance('lie')">Tell Lie</button>
-                </div>
-            </div>
-
-            <div id="zone-chat" class="chat-container hidden"></div>
-
-            <div id="zone-controls" class="hidden" style="margin-top: auto; padding-top: 15px;">
-                <div style="display: flex; gap: 10px; margin-bottom: 12px;">
-                    <input type="text" id="chatInput" placeholder="Type a message..." style="margin-bottom: 0;">
-                    <button class="btn-primary" style="width: auto; padding: 0 24px;" onclick="sendChatMessage()">Send</button>
-                </div>
-                
-                <div id="voteSection" class="hidden">
-                    <p style="text-align: center; font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--text-muted);">Is the Main Player lying?</p>
-                    <div class="flex-row">
-                        <button class="btn-primary" onclick="castVote('truth')">Truth</button>
-                        <button class="btn-danger" onclick="castVote('lie')">Lie</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="zone-result" class="hidden" style="text-align: center; margin: auto 0;">
-                <div id="resultEmoji" style="font-size: 70px; margin-bottom: 15px; animation: float 2s infinite;">🏆</div>
-                <h2 id="resultText" style="margin-bottom: 25px; font-size: 26px; font-weight: 800; letter-spacing: -1px; line-height: 1.2;"></h2>
-                <button id="btnPlayAgain" class="btn-disabled" onclick="hostStartGame()">Waiting for Host...</button>
-                <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room</button>
-            </div>
+            <button id="btnStartGame" class="btn-disabled" disabled>Wait for Host</button>
+            <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Disconnect</button>
         </div>
     </div>
 </div>
 
-<script>
-    // --- FIREBASE CONFIGURATION ---
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getDatabase, ref, onValue, set, onDisconnect, push } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+    // Firebase configuration from your uploaded screenshots
     const firebaseConfig = {
         apiKey: "AIzaSyAVREmzFgrnE_1NP9Ke-YbtynlS1Ka-HNk",
         authDomain: "iogame-145c9.firebaseapp.com",
@@ -231,399 +138,124 @@
         projectId: "iogame-145c9",
         storageBucket: "iogame-145c9.firebasestorage.app",
         messagingSenderId: "1024963573565",
-        appId: "1:1024963573565:web:907f671f3fad2c56443754"
+        appId: "1:1024963573565:web:907f671f3fad2c56443754",
+        measurementId: "G-N1J57G3WS6"
     };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
 
-    // --- EXPANDED EMOJI VAULT ---
-    const items = [
-        {e:"🍎", n:"Apple"}, {e:"🚗", n:"Car"}, {e:"🍕", n:"Pizza"}, {e:"📱", n:"Phone"}, 
-        {e:"⌚", n:"Watch"}, {e:"🎸", n:"Guitar"}, {e:"🚀", n:"Rocket"}, {e:"🍔", n:"Burger"}, 
-        {e:"🦄", n:"Unicorn"}, {e:"🍩", n:"Donut"}, {e:"🎮", n:"Controller"}, {e:"🧸", n:"Teddy"}, 
-        {e:"🥑", n:"Avocado"}, {e:"🛸", n:"UFO"}, {e:"🏀", n:"Basketball"}, {e:"🎨", n:"Palette"},
-        {e:"👻", n:"Ghost"}, {e:"🌮", n:"Taco"}
-    ];
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const rtdb = getDatabase(app);
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'iogame-main';
 
-    document.getElementById('emojiVaultDisplay').innerText = items.map(i => i.e).join(' ');
+    let user = null;
+    let roomId = null;
+    let myName = "";
 
-    let musicPlaying = false;
-    const bgm = document.getElementById('bgMusic');
-    bgm.volume = 0.15; 
-
-    function toggleMusic() {
-        if (musicPlaying) { bgm.pause(); document.getElementById('musicBtn').innerText = "🔇"; } 
-        else { bgm.play().catch(()=>{}); document.getElementById('musicBtn').innerText = "🎵"; }
-        musicPlaying = !musicPlaying;
-    }
-
-    const sfx = {
-        pop: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
-        send: new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3'),     
-        receive: new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3'),   
-        chime: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'),
-        start: new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3'), 
-        win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),       
-        lose: new Audio('https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3')       
-    };
-    Object.values(sfx).forEach(sound => sound.volume = 0.6);
-    const playSfx = (sound) => { sound.currentTime = 0; sound.play().catch(()=>{}); };
-
-    // --- GAME VARIABLES ---
-    let roomId = new URLSearchParams(window.location.search).get('room') || Math.random().toString(36).substring(7);
-    if (!window.location.search.includes('room')) window.history.pushState({}, '', `?room=${roomId}`);
-    
-    let myKey, myName, amIHost = false;
-    let globalPlayers = {}; 
-    let lastPhase = '';
-    let lastChatCount = 0;
-
-    function getUserColor(name) {
-        let hash = 0;
-        for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-        return `hsl(${Math.abs(hash) % 360}, 85%, 65%)`;
-    }
-
-    function copyInviteLink(btn) { 
-        const linkInput = document.getElementById('lobbyLinkInput');
-        linkInput.select();
-        linkInput.setSelectionRange(0, 99999);
-        navigator.clipboard.writeText(linkInput.value); 
-        playSfx(sfx.pop); 
-        
-        const originalText = btn.innerText;
-        btn.innerText = "Copied!";
-        btn.style.background = "var(--success)";
-        setTimeout(() => {
-            btn.innerText = originalText;
-            btn.style.background = "var(--accent)";
-        }, 1500);
-    }
-
-    function switchView(viewId) {
-        ['view-login', 'view-lobby', 'view-game'].forEach(id => document.getElementById(id).classList.add('hidden'));
-        document.getElementById(viewId).classList.remove('hidden');
-    }
-
-    // --- INSTANT CLEANUP ON SWIPE/CLOSE ---
-    function forceCleanup() {
-        if (myKey) {
-            // Instantly delete this player's data
-            db.ref(`rooms/${roomId}/players/${myKey}`).remove();
-            db.ref(`rooms/${roomId}/state/votes/${myKey}`).remove();
-            // Force the socket to drop immediately, bypassing mobile freezing
-            db.goOffline(); 
-        }
-    }
-    
-    window.addEventListener('beforeunload', forceCleanup);
-    window.addEventListener('pagehide', forceCleanup);
-    window.addEventListener('unload', forceCleanup);
-
-    // --- LEAVE ROOM BUTTON LOGIC ---
-    function leaveRoom() {
-        if (amIHost) {
-            if(confirm("As the Host, leaving will end the game and kick everyone out. Are you sure?")) {
-                db.ref(`rooms/${roomId}`).remove().then(() => {
-                    window.location.href = window.location.origin + window.location.pathname;
-                });
-            }
-        } else {
-            if(confirm("Are you sure you want to leave the room?")) {
-                // Delete user info locally so they don't leave a ghost
-                db.ref(`rooms/${roomId}/players/${myKey}`).remove();
-                db.ref(`rooms/${roomId}/state/votes/${myKey}`).remove().then(() => {
-                    window.location.href = window.location.origin + window.location.pathname;
-                });
-            }
-        }
-    }
-
-    function joinGame() {
-        myName = document.getElementById('userName').value.trim();
-        if(!myName) return;
-        playSfx(sfx.pop);
-        
-        if(!musicPlaying) { toggleMusic(); }
-        
-        const ref = db.ref(`rooms/${roomId}/players`).push();
-        myKey = ref.key;
-        
-        // Firebase native fallback cleanup
-        ref.onDisconnect().remove();
-        db.ref(`rooms/${roomId}/state/votes/${myKey}`).onDisconnect().remove();
-
-        ref.set({ name: myName, joinedAt: firebase.database.ServerValue.TIMESTAMP }).then(() => {
-            document.getElementById('lobbyLinkInput').value = window.location.href;
-            switchView('view-lobby');
-            listenToLobby();
-        });
-    }
-
-    function listenToLobby() {
-        db.ref(`rooms/${roomId}/players`).on('value', snap => {
-            globalPlayers = snap.val() || {};
-            const keys = Object.keys(globalPlayers);
-            
-            // --- KICK PLAYERS OUT IF THE HOST DELETES THE ROOM ---
-            if (keys.length === 0 && myName) {
-                alert("The Host has ended the game and closed the room.");
-                window.location.href = window.location.origin + window.location.pathname;
-                return;
-            }
-            
-            amIHost = (myKey === keys[0]);
-            
-            const grid = document.getElementById('lobbyPlayers');
-            grid.innerHTML = "";
-            keys.forEach((id) => {
-                grid.innerHTML += `<div class="p-badge">${globalPlayers[id].name} ${id === keys[0] ? '👑' : ''}</div>`;
-            });
-
-            const btnStart = document.getElementById('btnStartGame');
-            const lobbyStatus = document.getElementById('lobbyStatusText');
-            
-            if(amIHost) {
-                lobbyStatus.innerText = "You are the Host! 👑";
-                btnStart.className = "btn-primary";
-                btnStart.innerText = "Start Game 🚀";
-                btnStart.disabled = false;
-            } else {
-                lobbyStatus.innerText = "Waiting for Host to start...";
-                btnStart.className = "btn-disabled";
-                btnStart.innerText = "Start Game 🔒"; 
-                btnStart.disabled = true;
-            }
-            
-            // Auto-finish if someone leaves mid-vote
-            if (amIHost && lastPhase === 'interrogation') {
-                db.ref(`rooms/${roomId}/state`).once('value', sSnap => {
-                    const st = sSnap.val();
-                    if(st && st.phase === 'interrogation') {
-                        const totalActive = keys.length;
-                        const vCount = Object.keys(st.votes || {}).length;
-                        if(vCount >= totalActive - 1 && totalActive > 1) {
-                            calculateWinner(st);
-                        }
-                    }
-                });
-            }
-        });
-
-        db.ref(`rooms/${roomId}/state`).on('value', snap => {
-            if(snap.val()) handleGameState(snap.val());
-        });
-    }
-
-    function hostStartGame() {
-        if(!amIHost) return; 
-        playSfx(sfx.start);
-        db.ref(`rooms/${roomId}/players`).once('value', pSnap => {
-            const keys = Object.keys(pSnap.val());
-            const subject = keys[Math.floor(Math.random() * keys.length)];
-            const item = items[Math.floor(Math.random() * items.length)];
-            
-            db.ref(`rooms/${roomId}/state`).set({
-                phase: 'choosing',
-                subject: subject,
-                item: item,
-                chat: [{u: 'System', m: '🤫 The Main Player is making their secret choice...'}],
-                votes: {} 
-            });
-        });
-    }
-
-    function handleGameState(state) {
-        switchView('view-game');
-        const isSubject = (myKey === state.subject);
-        const status = document.getElementById('gameStatus');
-        const chatBox = document.getElementById('zone-chat');
-        const rosterBox = document.getElementById('gameRoster');
-        
-        ['zone-secret', 'zone-chat', 'zone-controls', 'voteSection', 'zone-result'].forEach(id => document.getElementById(id).classList.add('hidden'));
-
-        if (state.phase !== 'finished') {
-            rosterBox.classList.remove('hidden');
-            rosterBox.innerHTML = "";
-            const currentVotes = state.votes || {};
-
-            Object.entries(globalPlayers).forEach(([pid, pData]) => {
-                const isMainPlayer = (pid === state.subject);
-                const hasVoted = currentVotes[pid] ? true : false;
-                const pColor = getUserColor(pData.name);
-                
-                let cardClass = "roster-card";
-                if (isMainPlayer) {
-                    cardClass += " main-player";
-                } else if (hasVoted) {
-                    cardClass += " has-voted";
-                }
-
-                rosterBox.innerHTML += `
-                    <div class="${cardClass}">
-                        <div class="roster-color-dot" style="background: ${pColor};"></div>
-                        ${pData.name} ${isMainPlayer ? '🎯' : (hasVoted ? '✅' : '')}
-                    </div>
-                `;
-            });
-        } else {
-            rosterBox.classList.add('hidden');
-        }
-
-        const chatValues = Object.values(state.chat || {});
-        chatBox.innerHTML = "";
-        
-        chatValues.forEach(msg => {
-            if (msg.u === 'System') {
-                chatBox.innerHTML += `<div class="chat-msg chat-system">${msg.m}</div>`;
-            } else {
-                const pColor = getUserColor(msg.u);
-                const isMainPlayer = globalPlayers[state.subject] && msg.u === globalPlayers[state.subject].name;
-                
-                const align = (msg.u === myName) 
-                    ? 'margin-left: auto; border-bottom-right-radius: 4px;' 
-                    : 'margin-right: auto; border-bottom-left-radius: 4px;';
-                    
-                const bgStyle = `background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.1); border-left: 4px solid ${pColor};`;
-                const mainBadge = isMainPlayer ? `<span style="color: var(--primary); font-size: 11px; margin-left: 5px; vertical-align: middle;">[Target 🎯]</span>` : '';
-                
-                chatBox.innerHTML += `
-                    <div class="chat-msg" style="${align} ${bgStyle}">
-                        <b style="color: ${pColor};">${msg.u}${mainBadge}</b><br>
-                        <span style="color: var(--text-main); font-size: 14px;">${msg.m}</span>
-                    </div>`;
-            }
-        });
-        
-        setTimeout(() => {
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }, 50);
-
-        if (chatValues.length < lastChatCount) lastChatCount = 0;
-        if (chatValues.length > lastChatCount) {
-            const lastMsg = chatValues[chatValues.length - 1];
-            if (lastMsg.u !== myName && lastMsg.u !== 'System' && lastChatCount !== 0) {
-                playSfx(sfx.receive);
-            }
-            lastChatCount = chatValues.length;
-        }
-
-        if (state.phase === 'choosing') {
-            if (isSubject) {
-                status.innerText = "Your Secret Item";
-                document.getElementById('zone-secret').classList.remove('hidden');
-                document.getElementById('bigEmoji').innerText = state.item.e;
-            } else {
-                status.innerText = "Waiting for Main Player...";
-                document.getElementById('zone-chat').classList.remove('hidden');
-            }
-        }
-
-        if (state.phase === 'interrogation') {
-            document.getElementById('zone-chat').classList.remove('hidden');
-            document.getElementById('zone-controls').classList.remove('hidden');
-            
-            if (isSubject) {
-                status.innerText = "Interrogation Active - Defend Yourself!";
-            } else {
-                status.innerText = "Interrogation Active - Ask & Vote!";
-                if (!state.votes || !state.votes[myKey]) {
-                    document.getElementById('voteSection').classList.remove('hidden');
-                } else {
-                    document.getElementById('voteSection').classList.add('hidden');
-                }
-            }
-        }
-
-        if (state.phase === 'finished') {
-            document.getElementById('zone-result').classList.remove('hidden');
-            
-            document.getElementById('resultText').innerHTML = state.winner;
-            
-            if (lastPhase !== 'finished') {
-                const iWon = (isSubject && state.winnerRole === 'imposter') || (!isSubject && state.winnerRole === 'crewmates');
-                if (iWon) {
-                    playSfx(sfx.win);
-                    document.getElementById('resultEmoji').innerText = "🏆";
-                } else {
-                    playSfx(sfx.lose);
-                    document.getElementById('resultEmoji').innerText = "💀";
-                }
-            }
-            
-            const btnReplay = document.getElementById('btnPlayAgain');
-            if(amIHost) {
-                btnReplay.className = "btn-primary";
-                btnReplay.innerText = "Start Next Round 🚀";
-                btnReplay.disabled = false;
-            } else {
-                btnReplay.className = "btn-disabled";
-                btnReplay.innerText = "Start Next Round 🔒";
-                btnReplay.disabled = true;
-            }
-        }
-        
-        lastPhase = state.phase;
-    }
-
-    function lockStance(stance) {
-        playSfx(sfx.chime);
-        db.ref(`rooms/${roomId}/state/secretStance`).set(stance);
-        db.ref(`rooms/${roomId}/state/phase`).set('interrogation');
-        db.ref(`rooms/${roomId}/state/chat`).push({u: 'System', m: '🔒 The choice is locked in. Let the interrogation begin!'});
-    }
-
-    function sendChatMessage() {
-        const input = document.getElementById('chatInput');
-        if(!input.value.trim()) return;
-        playSfx(sfx.send); 
-        db.ref(`rooms/${roomId}/state/chat`).push({u: myName, m: input.value.trim()});
-        input.value = "";
-    }
-
-    document.getElementById("chatInput").addEventListener("keypress", function(event) {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            sendChatMessage();
+    // Auth Initialization
+    onAuthStateChanged(auth, (u) => {
+        user = u;
+        if (!u) {
+            signInAnonymously(auth).catch(console.error);
         }
     });
 
-    function castVote(vote) {
-        playSfx(sfx.chime);
-        db.ref(`rooms/${roomId}/state/votes/${myKey}`).set(vote);
+    // Check for room ID in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlRoom = urlParams.get('room');
+
+    window.joinGame = async () => {
+        myName = document.getElementById('userName').value.trim();
+        if (!myName || !user) return;
+
+        roomId = urlRoom || "global_room";
         
-        document.getElementById('voteSection').classList.add('hidden');
+        // Use Realtime Database for presence (much more reliable for "left/swiped away")
+        const presenceRef = ref(rtdb, `presence/${appId}/${roomId}/${user.uid}`);
+        set(presenceRef, { name: myName, joinedAt: Date.now() });
         
-        db.ref(`rooms/${roomId}`).once('value', snap => {
-            const data = snap.val();
-            const totalPlayers = Object.keys(data.players).length;
-            const currentVotes = Object.keys(data.state.votes || {}).length;
-            
-            if (currentVotes >= totalPlayers - 1) { 
-                calculateWinner(data.state);
-            }
+        // CRITICAL: Immediately remove player if they leave/swipe away
+        onDisconnect(presenceRef).remove();
+
+        // Also track in Firestore for the game state
+        const playerRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId, 'players', user.uid);
+        await setDoc(playerRef, {
+            name: myName,
+            uid: user.uid,
+            isHost: !urlRoom,
+            lastSeen: Date.now()
+        });
+
+        // If user closes tab, cleanup Firestore too
+        window.addEventListener('beforeunload', () => {
+            deleteDoc(playerRef);
+        });
+
+        document.getElementById('lobbyLinkInput').value = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
+        switchView('view-lobby');
+        listenToPlayers();
+    };
+
+    function listenToPlayers() {
+        // Listen to RTDB presence for the most accurate "online" list
+        const presenceListRef = ref(rtdb, `presence/${appId}/${roomId}`);
+        onValue(presenceListRef, (snapshot) => {
+            const players = snapshot.val() || {};
+            renderPlayerGrid(players);
         });
     }
 
-    function calculateWinner(state) {
-        const votes = Object.values(state.votes || {});
-        let correctGuesses = 0;
-        votes.forEach(v => { if(v === state.secretStance) correctGuesses++; });
+    function renderPlayerGrid(players) {
+        const grid = document.getElementById('lobbyPlayers');
+        grid.innerHTML = "";
         
-        const majorityCorrect = correctGuesses > (votes.length / 2);
-        
-        const winText = majorityCorrect 
-            ? "Crewmates Won! 🎉<br><span style='font-size: 16px; color: var(--text-muted); font-weight: 500;'>They guessed right!</span>" 
-            : "Imposter Won! 😈<br><span style='font-size: 16px; color: var(--text-muted); font-weight: 500;'>Crewmates couldn't guess!</span>";
-        
-        const winnerRole = majorityCorrect ? 'crewmates' : 'imposter';
-        
-        db.ref(`rooms/${roomId}/state`).update({
-            phase: 'finished',
-            winner: winText,
-            winnerRole: winnerRole
+        const playerKeys = Object.keys(players);
+        playerKeys.forEach(uid => {
+            const p = players[uid];
+            const isMe = uid === user.uid;
+            grid.innerHTML += `
+                <div class="p-badge" id="badge-${uid}">
+                    ${p.name} ${isMe ? '(You)' : ''}
+                </div>
+            `;
         });
+
+        const btnStart = document.getElementById('btnStartGame');
+        if (playerKeys.length >= 2) {
+            btnStart.disabled = false;
+            btnStart.classList.remove('btn-disabled');
+            btnStart.classList.add('btn-primary');
+            btnStart.innerText = "Start Game 🚀";
+        } else {
+            btnStart.disabled = true;
+            btnStart.classList.add('btn-disabled');
+            btnStart.innerText = "Waiting for players...";
+        }
     }
+
+    function switchView(viewId) {
+        ['view-login', 'view-lobby'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        document.getElementById(viewId).classList.remove('hidden');
+    }
+
+    window.copyInviteLink = (btn) => {
+        const input = document.getElementById('lobbyLinkInput');
+        input.select();
+        document.execCommand('copy');
+        const oldText = btn.innerText;
+        btn.innerText = "Copied!";
+        setTimeout(() => btn.innerText = oldText, 2000);
+    };
+
+    window.leaveRoom = () => {
+        window.location.href = window.location.pathname;
+    };
+
+    window.toggleMusic = () => {
+        const btn = document.getElementById('musicBtn');
+        btn.innerText = btn.innerText === "🎵" ? "🔇" : "🎵";
+    };
+
 </script>
 </body>
 </html>
