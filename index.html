@@ -2,76 +2,136 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ioGame - Glass Room Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ioGame | Pro Edition</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
     <style>
-        :root { --primary: #FF3B30; --success: #34C759; --bg: #000; --glass: rgba(255, 255, 255, 0.08); }
-        body { font-family: -apple-system, sans-serif; background: #050505; color: #fff; margin: 0; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
+        :root {
+            --primary: #FF3B30;
+            --success: #34C759;
+            --accent: #007AFF;
+            --glass: rgba(255, 255, 255, 0.1);
+            --glass-heavy: rgba(255, 255, 255, 0.2);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        .container { width: 100%; max-width: 900px; padding: 20px; text-align: center; }
+        body { 
+            margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #000 url('desk.png') no-repeat center center fixed;
+            background-size: cover; color: #fff; height: 100vh; overflow: hidden;
+        }
+
+        @media (max-width: 768px) {
+            body { background-image: url('vert.png'); }
+        }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.6) 100%);
+            z-index: 0; pointer-events: none;
+        }
+
+        .container { 
+            position: relative; z-index: 1; width: 100%; max-width: 600px; 
+            margin: 0 auto; height: 100vh; display: flex; flex-direction: column; padding: 20px;
+        }
+
+        /* Glassmorphism Components */
+        .glass-panel {
+            background: var(--glass); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 28px; padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4); margin-bottom: 15px;
+        }
+
+        .player-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
         
-        /* Glass Card Layout */
-        .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-top: 20px; }
-        .player-card { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 15px; transition: 0.4s; position: relative; }
-        .player-card.active { border: 2px solid var(--primary); box-shadow: 0 0 20px rgba(255,59,48,0.3); }
-        .player-card.blurred { filter: blur(8px); pointer-events: none; opacity: 0.5; }
-        
-        .badge { font-size: 10px; background: #FFD60A; color: #000; padding: 2px 6px; border-radius: 4px; font-weight: bold; position: absolute; top: 10px; right: 10px; }
-        
-        /* UI Elements */
-        button { border-radius: 12px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; }
-        .btn-main { background: var(--primary); color: #fff; padding: 12px 30px; font-size: 16px; width: 200px; }
-        .btn-disabled { background: #333 !important; cursor: not-allowed; opacity: 0.5; }
-        .btn-copy { background: rgba(255,255,255,0.1); color: #fff; padding: 8px 15px; font-size: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
-        
-        .emoji-display { font-size: 40px; margin: 10px 0; display: block; }
-        .status-msg { font-size: 14px; color: rgba(255,255,255,0.6); margin: 15px 0; }
-        
-        #questionBox { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; margin: 20px 0; border: 1px dashed #555; }
+        .p-card {
+            background: var(--glass); border-radius: 18px; padding: 12px;
+            text-align: center; border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .p-card.active { border-color: var(--success); transform: scale(1.05); background: rgba(52, 199, 89, 0.1); }
+        .p-card.blurred { filter: blur(8px); opacity: 0.5; }
+
+        .p-avatar { font-size: 24px; margin-bottom: 5px; }
+        .p-name { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; }
+
+        /* Game UI */
+        h1 { font-weight: 800; letter-spacing: -2px; margin: 0 0 5px 0; text-align: center; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; margin-bottom: 10px; }
+
+        .chat-container {
+            flex-grow: 1; overflow-y: auto; padding: 10px;
+            background: rgba(0,0,0,0.2); border-radius: 20px; margin-bottom: 15px;
+        }
+        .msg { margin-bottom: 10px; font-size: 13px; animation: fadeIn 0.3s ease; }
+        .msg b { color: var(--accent); margin-right: 5px; }
+
+        input {
+            width: 100%; background: var(--glass-heavy); border: none; padding: 15px;
+            border-radius: 15px; color: #fff; font-size: 16px; outline: none; margin-bottom: 10px;
+        }
+
+        button {
+            width: 100%; padding: 15px; border-radius: 15px; border: none;
+            font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.2s;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn-green { background: var(--success); color: #fff; box-shadow: 0 4px 15px rgba(52,199,89,0.3); }
+        .btn-green:active { transform: scale(0.96); }
+
         .hidden { display: none !important; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
+<div class="overlay"></div>
+
 <div class="container">
-    <div id="loginScreen" style="margin-top: 100px;">
-        <h1 style="letter-spacing: -2px;">ioGame</h1>
-        <input type="text" id="userName" placeholder="Your Name" style="padding:12px; border-radius:10px; background:#111; border:1px solid #333; color:#fff; width:200px; text-align:center;">
-        <br><br>
-        <button class="btn-main" onclick="joinGame()">Enter Room</button>
+    <div id="loginScreen" style="text-align:center; margin-top:30%;">
+        <h1>ioGame</h1>
+        <p style="opacity:0.6; font-size:14px; margin-bottom:30px;">Professional Social Deduction</p>
+        <div class="glass-panel">
+            <input type="text" id="userName" placeholder="ENTER NICKNAME" maxlength="10">
+            <button class="btn-green" onclick="joinGame()">Join Room</button>
+        </div>
     </div>
 
     <div id="gameBoard" class="hidden">
-        <h2 id="roomTitle">Room Lobby</h2>
-        <button class="btn-copy" onclick="copyLink()">🔗 Copy & Share Link</button>
-        
-        <div id="hostArea">
-            <button id="startBtn" class="btn-main btn-disabled" onclick="startGame()">START GAME</button>
+        <div style="text-align:center;">
+            <div class="badge" style="background:var(--accent); color:#fff;">LIVE SESSION</div>
+            <h2 id="statusText" style="margin:0 0 15px 0; font-size:18px;">Waiting for players...</h2>
         </div>
 
-        <div id="statusUpdate" class="status-msg">Waiting for more players...</div>
+        <div class="player-grid" id="pGrid"></div>
 
-        <div class="game-grid" id="playerGrid"></div>
-
-        <div id="actionArea" class="hidden">
-            <div id="questionBox">
-                <p id="instructionText">Waiting for Main Player...</p>
-                <div id="decisionButtons" class="hidden">
-                    <button class="btn-main" style="background:var(--success)" onclick="setStance('truth')">I'll tell TRUTH</button>
-                    <button class="btn-main" onclick="setStance('lie')">I'll tell a LIE</button>
-                </div>
-                <div id="votingButtons" class="hidden">
-                    <button class="btn-main" style="background:var(--success)" onclick="castVote('truth')">Truth</button>
-                    <button class="btn-main" onclick="castVote('lie')">Lie</button>
-                </div>
+        <div class="glass-panel" id="actionCenter">
+            <div id="emojiHints" style="display:flex; justify-content:space-around; font-size:20px; margin-bottom:15px; opacity:0.5;">
+                🍎 🚗 👟 🍕 📱 ⌚
             </div>
+
+            <div class="chat-container" id="chatArea"></div>
+
+            <div id="inputGroup" class="hidden">
+                <input type="text" id="mainInput" placeholder="TYPE HERE...">
+                <button id="sendBtn" class="btn-green">SEND MESSAGE</button>
+            </div>
+
+            <button id="hostStartBtn" class="btn-green hidden" onclick="triggerStart()">START NEW ROUND</button>
         </div>
+        
+        <button onclick="copyInvite()" style="background:none; color:rgba(255,255,255,0.3); font-size:10px;">COPY INVITE LINK</button>
     </div>
 </div>
 
 <script>
+    // --- FIREBASE CONFIG (Verified) ---
     const firebaseConfig = {
         apiKey: "AIzaSyAVREmzFgrnE_1NP9Ke-YbtynlS1Ka-HNk",
         authDomain: "iogame-145c9.firebaseapp.com",
@@ -85,155 +145,140 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    let roomId = new URLSearchParams(window.location.search).get('room');
-    let myKey, amIHost = false;
-    const items = [{e:"🍎", n:"Apple"}, {e:"🚗", n:"Tesla"}, {e:"👟", n:"Nike"}, {e:"🍕", n:"Pizza"}];
+    
+    // --- AUDIO ENGINE ---
+    const sfx = {
+        click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
+        win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
+        alert: new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3')
+    };
+    function play(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
 
-    if (!roomId) {
-        roomId = Math.random().toString(36).substring(7);
-        window.history.pushState({}, '', `?room=${roomId}`);
-    }
+    // --- GAME LOGIC ---
+    let roomId = new URLSearchParams(window.location.search).get('room') || Math.random().toString(36).substring(7);
+    if (!window.location.search.includes('room')) window.history.pushState({}, '', `?room=${roomId}`);
+    
+    let myKey, myName, amIHost = false;
+    const itemVault = [{e:"🍎", n:"Apple"}, {e:"🚗", n:"Tesla"}, {e:"👟", n:"Nike"}, {e:"🍕", n:"Pizza"}, {e:"📱", n:"iPhone"}, {e:"⌚", n:"Rolex"}];
 
-    function copyLink() {
-        navigator.clipboard.writeText(window.location.href);
-        alert("Link copied! Share it with your friends.");
-    }
+    function copyInvite() { navigator.clipboard.writeText(window.location.href); alert("Invite Link Copied!"); }
 
     function joinGame() {
-        const name = document.getElementById('userName').value.trim();
-        if(!name) return;
+        myName = document.getElementById('userName').value.trim().toUpperCase();
+        if(!myName) return;
+        play(sfx.click);
         const ref = db.ref(`rooms/${roomId}/players`).push();
         myKey = ref.key;
-        ref.set({ name: name, joinedAt: firebase.database.ServerValue.TIMESTAMP }).then(setupListeners);
+        ref.set({ name: myName, joinedAt: firebase.database.ServerValue.TIMESTAMP }).then(initLobby);
     }
 
-    function setupListeners() {
+    function initLobby() {
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('gameBoard').classList.remove('hidden');
 
-        // Monitor Players
         db.ref(`rooms/${roomId}/players`).on('value', snap => {
-            const players = snap.val();
-            const keys = Object.keys(players || {});
+            const players = snap.val() || {};
+            const keys = Object.keys(players);
             amIHost = (myKey === keys[0]);
             
-            const grid = document.getElementById('playerGrid');
+            const grid = document.getElementById('pGrid');
             grid.innerHTML = "";
-            keys.forEach((id, index) => {
-                const isHost = (index === 0);
-                const isMe = (id === myKey);
+            keys.forEach((id, i) => {
                 grid.innerHTML += `
-                    <div id="card-${id}" class="player-card">
-                        ${isHost ? '<span class="badge">HOST</span>' : `<span class="badge" style="background:#555;color:#fff">P${index}</span>`}
-                        <div style="font-size:30px; margin-bottom:10px;">👤</div>
-                        <div style="font-weight:bold">${players[id].name} ${isMe ? '(You)' : ''}</div>
-                        <div id="emoji-${id}" class="emoji-display hidden">❓</div>
+                    <div id="c-${id}" class="p-card">
+                        <div class="p-avatar">👤</div>
+                        <div class="p-name">${players[id].name}</div>
+                        <div style="font-size:8px; opacity:0.4">${id === keys[0] ? 'HOST' : 'PLAYER '+i}</div>
                     </div>`;
             });
 
-            const startBtn = document.getElementById('startBtn');
-            if(amIHost) {
-                startBtn.classList.remove('btn-disabled');
-                startBtn.innerText = "START GAME";
-            } else {
-                startBtn.classList.add('btn-disabled');
-                startBtn.innerText = "HOST STARTING...";
-            }
+            if(amIHost) document.getElementById('hostStartBtn').classList.remove('hidden');
         });
 
-        // Monitor Game State
-        db.ref(`rooms/${roomId}/gameState`).on('value', snap => {
-            const state = snap.val();
-            if(!state) return;
-            handleGameLogic(state);
+        db.ref(`rooms/${roomId}/state`).on('value', snap => {
+            if(snap.val()) syncUI(snap.val());
         });
     }
 
-    function startGame() {
-        if(!amIHost) return;
+    function triggerStart() {
+        play(sfx.click);
         db.ref(`rooms/${roomId}/players`).once('value', snap => {
             const keys = Object.keys(snap.val());
-            const randomPlayer = keys[Math.floor(Math.random() * keys.length)];
-            const randomItem = items[Math.floor(Math.random() * items.length)];
-            
-            db.ref(`rooms/${roomId}/gameState`).set({
-                status: 'choosing_stance',
-                mainPlayer: randomPlayer,
-                item: randomItem,
-                turnIndex: 0,
-                votes: {}
+            const subject = keys[Math.floor(Math.random() * keys.length)];
+            const target = itemVault[Math.floor(Math.random() * itemVault.length)];
+            db.ref(`rooms/${roomId}/state`).set({
+                phase: 'prep',
+                subject: subject,
+                item: target,
+                log: [{u: 'SYSTEM', m: 'NEW ROUND STARTED!'}]
             });
         });
     }
 
-    function handleGameLogic(state) {
-        const isMain = (myKey === state.mainPlayer);
-        const actionArea = document.getElementById('actionArea');
-        const instruction = document.getElementById('instructionText');
-        const decisionButtons = document.getElementById('decisionButtons');
-        const votingButtons = document.getElementById('votingButtons');
-        
-        actionArea.classList.remove('hidden');
-        
-        // Reset Card Effects
-        document.querySelectorAll('.player-card').forEach(c => {
-            c.classList.remove('active', 'blurred');
+    function syncUI(state) {
+        const isSubject = (myKey === state.subject);
+        const status = document.getElementById('statusText');
+        const inputGroup = document.getElementById('inputGroup');
+        const sendBtn = document.getElementById('sendBtn');
+        const chat = document.getElementById('chatArea');
+
+        // Render Chat
+        chat.innerHTML = "";
+        (state.log || []).forEach(l => {
+            chat.innerHTML += `<div class="msg"><b>${l.u}:</b> ${l.m}</div>`;
+            chat.scrollTop = chat.scrollHeight;
         });
-        document.getElementById(`card-${state.mainPlayer}`).classList.add('active');
 
-        if(state.status === 'choosing_stance') {
-            if(isMain) {
-                instruction.innerHTML = `YOU ARE MAIN! <br> Emoji: ${state.item.e} (${state.item.n})`;
-                decisionButtons.classList.remove('hidden');
-                votingButtons.classList.add('hidden');
+        // Update Cards
+        document.querySelectorAll('.p-card').forEach(c => c.classList.remove('active', 'blurred'));
+        document.getElementById(`c-${state.subject}`).classList.add('active');
+        if(state.phase === 'interrogating' && isSubject) document.getElementById(`c-${myKey}`).classList.add('blurred');
+
+        if(state.phase === 'prep') {
+            document.getElementById('hostStartBtn').classList.add('hidden');
+            if(isSubject) {
+                status.innerHTML = `YOUR ITEM: <span style="color:var(--success)">${state.item.e} ${state.item.item}</span>`;
+                inputGroup.classList.remove('hidden');
+                sendBtn.innerText = "START INTERROGATION";
+                sendBtn.onclick = () => {
+                    db.ref(`rooms/${roomId}/state/phase`).set('interrogating');
+                    play(sfx.alert);
+                };
             } else {
-                instruction.innerText = "Waiting for Main Player to choose Truth or Lie...";
-                decisionButtons.classList.add('hidden');
-            }
-        } 
-        
-        if(state.status === 'interrogation') {
-            decisionButtons.classList.add('hidden');
-            if(isMain) {
-                document.getElementById(`card-${myKey}`).classList.add('blurred'); // Blur host card after selection
-                instruction.innerText = "Interrogation started! Answer their questions.";
-            } else {
-                instruction.innerText = "Look at the main player! Decide: Truth or Lie?";
-                votingButtons.classList.remove('hidden');
+                status.innerText = "WAITING FOR SUBJECT...";
+                inputGroup.classList.add('hidden');
             }
         }
 
-        if(state.status === 'finished') {
-            instruction.innerText = state.result;
-            votingButtons.classList.add('hidden');
-            setTimeout(() => { if(amIHost) startGame(); }, 4000); // Auto restart turn
+        if(state.phase === 'interrogating') {
+            inputGroup.classList.remove('hidden');
+            status.innerText = isSubject ? "ANSWER THEIR QUESTIONS!" : "IS THE SUBJECT LYING?";
+            sendBtn.innerText = "SEND";
+            sendBtn.onclick = () => {
+                const val = document.getElementById('mainInput').value;
+                if(!val) return;
+                db.ref(`rooms/${roomId}/state/log`).push({u: myName, m: val});
+                document.getElementById('mainInput').value = "";
+                play(sfx.click);
+            };
+
+            // Voting Logic for Host
+            if(amIHost) {
+                status.innerHTML += `<br><button onclick="endPhase('TRUTH')" style="width:80px; padding:5px; background:var(--success); margin:5px;">TRUTH</button>
+                                     <button onclick="endPhase('LIE')" style="width:80px; padding:5px; background:var(--primary); margin:5px;">LIE</button>`;
+            }
         }
     }
 
-    function setStance(type) {
-        db.ref(`rooms/${roomId}/gameState/status`).set('interrogation');
-    }
-
-    function castVote(val) {
-        db.ref(`rooms/${roomId}/gameState/votes/${myKey}`).set(val);
-        document.getElementById('votingButtons').classList.add('hidden');
-        document.getElementById('instructionText').innerText = "Vote Cast! Waiting for others...";
-        
-        // Check if majority voted
-        db.ref(`rooms/${roomId}`).once('value', snap => {
+    function endPhase(guess) {
+        play(sfx.win);
+        db.ref(`rooms/${roomId}/state`).once('value', snap => {
             const data = snap.val();
-            const total = Object.keys(data.players).length;
-            const currentVotes = Object.keys(data.gameState.votes || {}).length;
-            if(currentVotes >= (total - 1) && total > 1) calculateWinner(data.gameState.votes);
+            const resultMsg = (guess === 'LIE') ? "CREWMATES WON! CAUGHT THE LIE! 🎉" : "IMPOSTER FOOLED YOU! 😈";
+            db.ref(`rooms/${roomId}/state/phase`).set('done');
+            db.ref(`rooms/${roomId}/state/log`).push({u: 'RESULT', m: resultMsg});
+            document.getElementById('hostStartBtn').classList.remove('hidden');
         });
-    }
-
-    function calculateWinner(votes) {
-        let lies = 0, truths = 0;
-        for(let id in votes) { votes[id] === 'lie' ? lies++ : truths++; }
-        const result = (lies > truths) ? "CREW MATE WON! (Caught the lie)" : "IMPOSTER WON! (Fooled you)";
-        db.ref(`rooms/${roomId}/gameState/status`).set('finished');
-        db.ref(`rooms/${roomId}/gameState/result`).set(result);
     }
 </script>
 </body>
