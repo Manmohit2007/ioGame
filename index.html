@@ -10,46 +10,52 @@
         :root { --primary: #FF3B30; --success: #34C759; --bg: #000; --glass: rgba(255, 255, 255, 0.1); }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
         .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 2rem; border-radius: 30px; width: 350px; border: 1px solid rgba(255,255,255,0.1); text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
-        input { width: 80%; padding: 12px; margin: 10px 0; border-radius: 12px; border: 1px solid var(--glass); background: rgba(0,0,0,0.3); color: #fff; }
+        input { width: 80%; padding: 12px; margin: 10px 0; border-radius: 12px; border: 1px solid var(--glass); background: rgba(0,0,0,0.3); color: #fff; text-align: center; }
         button { width: 100%; padding: 12px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; margin-top: 10px; transition: 0.3s; }
         .btn-primary { background: var(--primary); color: #fff; }
         .btn-success { background: var(--success); color: #fff; }
-        .btn-copy { background: #007AFF; color: #fff; font-size: 12px; width: auto; padding: 5px 15px; margin-bottom: 10px; }
+        .btn-copy { background: #007AFF; color: #fff; font-size: 12px; width: auto; padding: 8px 20px; margin-bottom: 15px; border-radius: 20px; }
         .hidden { display: none !important; }
-        .player-item { padding: 8px; border-bottom: 1px solid var(--glass); display: flex; justify-content: space-between; font-size: 14px; }
-        .emoji-box { font-size: 50px; margin: 20px 0; background: var(--glass); border-radius: 20px; padding: 20px; }
-        .vote-btns { display: flex; gap: 10px; }
+        .player-item { padding: 10px; border-bottom: 1px solid var(--glass); display: flex; justify-content: space-between; font-size: 14px; opacity: 0.9; }
+        .emoji-box { font-size: 60px; margin: 20px 0; background: var(--glass); border-radius: 25px; padding: 30px; border: 1px solid rgba(255,255,255,0.1); }
+        .vote-btns { display: flex; gap: 10px; margin-top: 15px; }
+        .badge { background: #FFD60A; color: #000; padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="glass-card">
     <div id="loginScreen">
-        <h2>ioGame</h2>
-        <input type="text" id="userName" placeholder="Your Name" maxlength="12">
+        <h2 style="letter-spacing: -1px;">ioGame</h2>
+        <input type="text" id="userName" placeholder="Enter Name" maxlength="12">
         <button class="btn-primary" onclick="joinGame()">Enter Room</button>
     </div>
 
     <div id="lobbyScreen" class="hidden">
         <h2 id="lobbyTitle">Lobby</h2>
         <button class="btn-copy" onclick="copyLink()">🔗 Copy Invite Link</button>
+        
         <div id="hostControls" class="hidden">
             <button class="btn-success" onclick="startNewTurn()">Pick Random Player & Start</button>
         </div>
-        <div class="player-list" id="playerList"></div>
+
+        <div id="playerList" style="text-align: left; margin-top: 20px;">
+            <p style="opacity: 0.5; font-size: 12px; margin-bottom: 10px;">Players Connected:</p>
+            <div id="playersDiv"></div>
+        </div>
     </div>
 
     <div id="gameScreen" class="hidden">
-        <h3 id="turnAnnounce">Waiting...</h3>
+        <h3 id="turnAnnounce" style="text-transform: uppercase; color: var(--primary);">Waiting...</h3>
         
         <div id="subjectView" class="hidden">
             <div class="emoji-box" id="secretEmoji">❓</div>
-            <p>You are the <b>Imposter</b>! Describe this item.</p>
+            <p style="font-size: 14px; opacity: 0.7;">You are describing this! Keep a straight face.</p>
         </div>
 
         <div id="voterView" class="hidden">
             <div class="emoji-box">🔒</div>
-            <p>Ask the Subject: "How does the emoji look?"</p>
+            <p>Ask the Subject: <br><b>"Describe the emoji/product!"</b></p>
             <div class="vote-btns">
                 <button class="btn-success" onclick="vote('truth')">Truth</button>
                 <button class="btn-primary" onclick="vote('lie')">Lie</button>
@@ -57,8 +63,8 @@
         </div>
 
         <div id="resultsView" class="hidden">
-            <h2 id="winText"></h2>
-            <button class="btn-primary" onclick="backToLobby()">Back to Lobby</button>
+            <h2 id="winText" style="margin: 20px 0;"></h2>
+            <button class="btn-primary" onclick="backToLobby()">Next Round</button>
         </div>
     </div>
 </div>
@@ -78,30 +84,31 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     let roomId = new URLSearchParams(window.location.search).get('room');
-    let isHost = !roomId;
-    let myKey, myName;
+    let myKey, myName, amIHost = false;
+
     const items = [
-        {e:"🍎", n:"Apple"}, {e:"🚗", n:"Tesla"}, {e:"🍕", n:"Pizza Hut"}, 
-        {e:"📱", n:"iPhone"}, {e:"👟", n:"Nike"}, {e:"⌚", n:"Rolex"}
+        {e:"🍎", n:"Apple iPhone"}, {e:"🚗", n:"Tesla Car"}, {e:"🍕", n:"Pizza"}, 
+        {e:"👟", n:"Nike Shoes"}, {e:"⌚", n:"Rolex Watch"}, {e:"🍦", n:"Magnum Ice Cream"}
     ];
 
-    if (isHost) {
+    if (!roomId) {
         roomId = Math.random().toString(36).substring(7);
         window.history.pushState({}, '', `?room=${roomId}`);
     }
 
     function copyLink() {
         navigator.clipboard.writeText(window.location.href);
-        alert("Link copied to clipboard!");
+        alert("Link copied! Send it to Reema or other cousins.");
     }
 
     function joinGame() {
         myName = document.getElementById('userName').value.trim();
-        if (!myName) return alert("Name needed!");
+        if (!myName) return alert("Enter your name!");
+        
         const ref = db.ref(`rooms/${roomId}/players`).push();
         myKey = ref.key;
-        ref.set({ name: myName, isHost: isHost }).then(() => {
-            if(isHost) db.ref(`rooms/${roomId}/status`).set('lobby');
+        
+        ref.set({ name: myName, joinedAt: firebase.database.ServerValue.TIMESTAMP }).then(() => {
             listenToGame();
         });
     }
@@ -109,24 +116,37 @@
     function listenToGame() {
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('lobbyScreen').classList.remove('hidden');
-        if(isHost) document.getElementById('hostControls').classList.remove('hidden');
 
         db.ref(`rooms/${roomId}/players`).on('value', snap => {
             const players = snap.val();
-            const list = document.getElementById('playerList');
-            list.innerHTML = "<h4>Players:</h4>";
-            for(let id in players) {
-                list.innerHTML += `<div class="player-item">${players[id].name} ${id === myKey ? '(You)' : ''}</div>`;
+            const listDiv = document.getElementById('playersDiv');
+            listDiv.innerHTML = "";
+            
+            const keys = Object.keys(players || {});
+            // The person who joined first is ALWAYS the host
+            const hostKey = keys[0]; 
+            amIHost = (myKey === hostKey);
+
+            if(amIHost) {
+                document.getElementById('hostControls').classList.remove('hidden');
+                document.getElementById('lobbyTitle').innerText = "👑 Host Lobby";
             }
+
+            keys.forEach(id => {
+                const isHost = (id === hostKey);
+                listDiv.innerHTML += `
+                    <div class="player-item">
+                        <span>${players[id].name} ${id === myKey ? '(You)' : ''}</span>
+                        ${isHost ? '<span class="badge">HOST</span>' : ''}
+                    </div>`;
+            });
         });
 
         db.ref(`rooms/${roomId}/status`).on('value', snap => {
-            const status = snap.val();
-            if(status === 'lobby') {
+            if (snap.val() === 'playing') handleGameStart();
+            if (snap.val() === 'lobby') {
                 document.getElementById('gameScreen').classList.add('hidden');
                 document.getElementById('lobbyScreen').classList.remove('hidden');
-            } else if (status === 'playing') {
-                handleGameStart();
             }
         });
     }
@@ -136,6 +156,7 @@
             const players = Object.keys(snap.val());
             const randomPlayer = players[Math.floor(Math.random() * players.length)];
             const randomItem = items[Math.floor(Math.random() * items.length)];
+            
             db.ref(`rooms/${roomId}/currentTurn`).set({
                 subject: randomPlayer,
                 item: randomItem,
@@ -154,8 +175,8 @@
             const data = snap.val();
             if(!data) return;
             
-            const isSubject = myKey === data.subject;
-            document.getElementById('turnAnnounce').innerText = isSubject ? "YOUR TURN" : "VOTING TIME";
+            const isSubject = (myKey === data.subject);
+            document.getElementById('turnAnnounce').innerText = isSubject ? "YOU ARE THE IMPOSTER" : "VOTING TIME";
             
             if(isSubject) {
                 document.getElementById('subjectView').classList.remove('hidden');
@@ -166,41 +187,38 @@
                 document.getElementById('subjectView').classList.add('hidden');
             }
 
-            // Check if everyone voted
             db.ref(`rooms/${roomId}/players`).once('value', pSnap => {
                 const totalPlayers = Object.keys(pSnap.val()).length;
                 const voteCount = data.votes ? Object.keys(data.votes).length : 0;
-                if(voteCount >= totalPlayers - 1 && totalPlayers > 1) {
-                    tallyVotes(data.votes);
-                }
+                if(voteCount >= totalPlayers - 1 && totalPlayers > 1) tallyVotes(data.votes);
             });
         });
     }
 
     function vote(type) {
         db.ref(`rooms/${roomId}/currentTurn/votes/${myKey}`).set(type);
-        document.getElementById('voterView').innerHTML = "<h3>Vote Cast! Waiting for others...</h3>";
+        document.getElementById('voterView').innerHTML = "<h3>Vote Logged!</h3><p>Waiting for others...</p>";
     }
 
     function tallyVotes(votes) {
         let truths = 0, lies = 0;
         for(let id in votes) { votes[id] === 'truth' ? truths++ : lies++; }
         
-        const winText = document.getElementById('winText');
         document.getElementById('resultsView').classList.remove('hidden');
         document.getElementById('voterView').classList.add('hidden');
         document.getElementById('subjectView').classList.add('hidden');
 
+        const winText = document.getElementById('winText');
         if(lies > truths) {
-            winText.innerText = "IMPOSTER CAUGHT! Cremates Won! 🎉";
+            winText.innerText = "IMPOSTER CAUGHT! 🎉";
             winText.style.color = "var(--success)";
         } else {
-            winText.innerText = "FOOLED THEM! Imposter Won! 😈";
+            winText.innerText = "IMPOSTER WON! 😈";
             winText.style.color = "var(--primary)";
         }
     }
 
-    function backToLobby() { db.ref(`rooms/${roomId}/status`).set('lobby'); location.reload(); }
+    function backToLobby() { db.ref(`rooms/${roomId}/status`).set('lobby'); }
 </script>
 </body>
 </html>
