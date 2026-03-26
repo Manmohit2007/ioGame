@@ -28,7 +28,9 @@
             background: #000 url('desk.png') no-repeat center center fixed; background-size: cover;
             transition: background 0.5s ease;
         }
-        @media (max-width: 768px) { body { background-image: url('vert.png'); } }
+        
+        /* UPDATED: Now triggers on any vertical screen (Phone, Tablet, or rotated Desktop) */
+        @media (orientation: portrait) { body { background-image: url('vert.png'); } }
 
         .app-container { width: 100%; max-width: 500px; height: 100%; display: flex; flex-direction: column; padding: 20px; position: relative; z-index: 1; }
         
@@ -219,7 +221,7 @@
 
             <div id="zone-result" class="hidden" style="text-align: center; margin: auto 0;">
                 <div id="resultEmoji" style="font-size: 70px; margin-bottom: 15px; animation: float 2s infinite;">🏆</div>
-                <h2 id="resultText" style="margin-bottom: 25px; font-size: 26px; font-weight: 800; letter-spacing: -1px;"></h2>
+                <h2 id="resultText" style="margin-bottom: 25px; font-size: 26px; font-weight: 800; letter-spacing: -1px; line-height: 1.2;"></h2>
                 <button id="btnPlayAgain" class="btn-disabled" onclick="hostStartGame()">Waiting for Host...</button>
             </div>
         </div>
@@ -245,7 +247,8 @@
         {e:"🍎", n:"Apple"}, {e:"🚗", n:"Car"}, {e:"🍕", n:"Pizza"}, {e:"📱", n:"Phone"}, 
         {e:"⌚", n:"Watch"}, {e:"🎸", n:"Guitar"}, {e:"🚀", n:"Rocket"}, {e:"🍔", n:"Burger"}, 
         {e:"🦄", n:"Unicorn"}, {e:"🍩", n:"Donut"}, {e:"🎮", n:"Controller"}, {e:"🧸", n:"Teddy"}, 
-        {e:"🥑", n:"Avocado"}, {e:"🛸", n:"UFO"}, {e:"🏀", n:"Basketball"}, {e:"🎨", n:"Palette"}
+        {e:"🥑", n:"Avocado"}, {e:"🛸", n:"UFO"}, {e:"🏀", n:"Basketball"}, {e:"🎨", n:"Palette"},
+        {e:"👻", n:"Ghost"}, {e:"🌮", n:"Taco"}
     ];
 
     document.getElementById('emojiVaultDisplay').innerText = items.map(i => i.e).join(' ');
@@ -486,7 +489,9 @@
 
         if (state.phase === 'finished') {
             document.getElementById('zone-result').classList.remove('hidden');
-            document.getElementById('resultText').innerText = state.winner;
+            
+            // Allow result text to accept HTML (so the break tags work properly)
+            document.getElementById('resultText').innerHTML = state.winner;
             
             if (lastPhase !== 'finished') {
                 const iWon = (isSubject && state.winnerRole === 'imposter') || (!isSubject && state.winnerRole === 'crewmates');
@@ -560,8 +565,10 @@
         
         const majorityCorrect = correctGuesses > (votes.length / 2);
         
-        // UPDATED WIN TEXT HERE
-        const winText = majorityCorrect ? "Crewmates Won! 🎉" : "Imposter Won! 😈";
+        const winText = majorityCorrect 
+            ? "Crewmates Won! 🎉<br><span style='font-size: 16px; color: var(--text-muted); font-weight: 500;'>They guessed right!</span>" 
+            : "Imposter Won! 😈<br><span style='font-size: 16px; color: var(--text-muted); font-weight: 500;'>Crewmates couldn't guess!</span>";
+        
         const winnerRole = majorityCorrect ? 'crewmates' : 'imposter';
         
         db.ref(`rooms/${roomId}/state`).update({
