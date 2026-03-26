@@ -9,110 +9,142 @@
     <style>
         :root {
             --primary: #FF3B30; --success: #34C759; --accent: #007AFF;
-            --glass: rgba(255, 255, 255, 0.1); --border: rgba(255, 255, 255, 0.2);
-            --text: #fff;
+            --glass-bg: rgba(20, 20, 20, 0.4); --glass-border: rgba(255, 255, 255, 0.15);
+            --text-main: #ffffff; --text-muted: rgba(255, 255, 255, 0.6);
         }
 
-        /* Light Mode Adaptive Styling */
         @media (prefers-color-scheme: light) {
             :root {
-                --glass: rgba(255, 255, 255, 0.6); --border: rgba(0, 0, 0, 0.1);
-                --text: #000;
+                --glass-bg: rgba(255, 255, 255, 0.5); --glass-border: rgba(0, 0, 0, 0.1);
+                --text-main: #000000; --text-muted: rgba(0, 0, 0, 0.6);
             }
-            body { color: #000; }
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         
         body { 
-            margin: 0; font-family: -apple-system, sans-serif; color: var(--text); 
-            height: 100dvh; overflow: hidden; display: flex; justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-main); height: 100dvh; overflow: hidden; display: flex; justify-content: center;
             background: #000 url('desk.png') no-repeat center center fixed; background-size: cover;
         }
         @media (max-width: 768px) { body { background-image: url('vert.png'); } }
 
-        .container { position: relative; z-index: 1; width: 100%; max-width: 600px; height: 100%; display: flex; flex-direction: column; padding: 15px; }
+        .app-container { width: 100%; max-width: 500px; height: 100%; display: flex; flex-direction: column; padding: 20px; position: relative; z-index: 1; }
         
-        /* Glass Components */
-        .glass { 
-            background: var(--glass); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-            border: 1px solid var(--border); border-radius: 24px; padding: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        /* Premium Glass Card */
+        .glass-card { 
+            background: var(--glass-bg); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border); border-radius: 28px; padding: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        .player-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
-        .p-card { 
-            background: var(--glass); border-radius: 18px; padding: 12px; text-align: center;
-            border: 1px solid var(--border); transition: 0.4s;
-        }
-        .p-card.main-player { border: 2px solid var(--success); transform: scale(1.05); background: rgba(52, 199, 89, 0.2); }
-        .p-card.blurred { filter: blur(10px); opacity: 0.4; }
+        /* Typography & Layout */
+        h1 { font-size: 42px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 8px; text-align: center; }
+        .subtitle { font-size: 14px; font-weight: 500; color: var(--text-muted); text-align: center; margin-bottom: 30px; }
+        
+        /* Inputs & Buttons */
+        input { width: 100%; background: rgba(150, 150, 150, 0.1); border: 1px solid var(--glass-border); padding: 16px; border-radius: 16px; color: var(--text-main); outline: none; font-size: 16px; margin-bottom: 16px; transition: 0.2s; }
+        input:focus { border-color: var(--accent); background: rgba(150, 150, 150, 0.2); }
+        
+        button { width: 100%; padding: 16px; border-radius: 16px; border: none; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
+        button:active { transform: scale(0.96); }
+        .btn-primary { background: var(--success); color: #fff; box-shadow: 0 4px 15px rgba(52, 199, 89, 0.3); }
+        .btn-danger { background: var(--primary); color: #fff; box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3); }
+        .btn-disabled { background: rgba(150, 150, 150, 0.2); color: var(--text-muted); cursor: not-allowed; box-shadow: none; }
+        
+        .flex-row { display: flex; gap: 12px; margin-top: 10px; }
+        .flex-row button { flex: 1; }
 
-        .action-zone { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; margin-top: 10px; }
-        .chat-box { flex-grow: 1; overflow-y: auto; padding: 10px; margin: 10px 0; border-radius: 15px; background: rgba(0,0,0,0.1); }
+        /* Lobby Elements */
+        .invite-banner { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; backdrop-filter: blur(20px); cursor: pointer; }
+        .invite-banner:active { background: rgba(150, 150, 150, 0.2); }
         
-        /* UI Elements */
-        .copy-banner { background: var(--accent); color: white; padding: 10px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; cursor: pointer; font-weight: bold; font-size: 12px; }
-        input { width: 100%; background: var(--glass); border: 1px solid var(--border); padding: 14px; border-radius: 15px; color: var(--text); outline: none; margin-bottom: 10px; }
-        button { border-radius: 15px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; padding: 14px; text-transform: uppercase; }
-        .btn-green { background: var(--success); color: #fff; width: 100%; }
+        .player-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+        .p-badge { background: rgba(150, 150, 150, 0.1); border: 1px solid var(--glass-border); border-radius: 16px; padding: 12px; text-align: center; font-weight: 600; font-size: 14px; }
         
-        .msg { background: var(--glass); padding: 8px 12px; border-radius: 12px; margin-bottom: 8px; border-left: 4px solid var(--accent); animation: slideIn 0.3s ease; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+        /* Game Zones */
+        .emoji-showcase { font-size: 80px; text-align: center; margin: 20px 0; text-shadow: 0 10px 30px rgba(0,0,0,0.3); animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .emoji-list { font-size: 24px; text-align: center; letter-spacing: 8px; opacity: 0.8; margin-bottom: 15px; }
+        
+        .chat-container { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; padding-right: 5px; }
+        .chat-msg { background: rgba(150, 150, 150, 0.15); padding: 10px 14px; border-radius: 18px 18px 18px 4px; font-size: 14px; width: fit-content; max-width: 90%; animation: slideUp 0.3s ease; }
+        .chat-msg b { color: var(--accent); }
         
         .hidden { display: none !important; }
-        .emoji-hint { font-size: 20px; text-align: center; letter-spacing: 5px; opacity: 0.6; margin: 5px 0; }
+
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.5); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes slideUp { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div id="loginScreen" style="text-align:center; margin-top:30%;">
-        <h1 style="font-size:42px; letter-spacing:-2px; margin:0;">ioGame</h1>
-        <p style="opacity:0.6; margin-bottom:30px;">Cousins Interrogation</p>
-        <div class="glass">
-            <input type="text" id="userName" placeholder="ENTER NAME" maxlength="12">
-            <button class="btn-green" onclick="joinRoom()">START PLAYING</button>
+<div class="app-container">
+    <div id="view-login" style="margin-top: 25vh;">
+        <h1>ioGame</h1>
+        <div class="subtitle">Join the Interrogation Room</div>
+        <div class="glass-card">
+            <input type="text" id="userName" placeholder="Enter your name" maxlength="12">
+            <button class="btn-primary" onclick="joinGame()">Enter Lobby</button>
         </div>
     </div>
 
-    <div id="gameBoard" class="hidden">
-        <div class="copy-banner" onclick="copyURL()">
-            <span>🔗 INVITE YOUR COUSINS</span>
-            <span style="font-size:10px; background:rgba(0,0,0,0.2); padding:4px 8px; border-radius:5px;">COPY</span>
+    <div id="view-lobby" class="hidden">
+        <div class="invite-banner" onclick="copyInviteLink()">
+            <span style="font-weight: 600; font-size: 14px;">🔗 Share Invite Link</span>
+            <span style="font-size: 12px; background: var(--accent); color: white; padding: 4px 10px; border-radius: 10px;">COPY</span>
         </div>
-
-        <div class="player-grid" id="pGrid"></div>
-
-        <div class="glass action-zone">
-            <div id="statusHeader" style="font-weight:bold; font-size:13px; text-align:center;">LOBBY</div>
-            <div class="emoji-hint">🍎 🚗 👟 🍕 📱 ⌚</div>
+        
+        <div class="glass-card">
+            <h2 style="font-size: 18px; margin-bottom: 15px; text-align: center;">Players in Room</h2>
+            <div class="player-grid" id="lobbyPlayers"></div>
             
-            <div class="chat-box" id="chatDisplay"></div>
+            <button id="btnStartGame" class="btn-disabled" onclick="hostStartGame()">Waiting for Host...</button>
+        </div>
+    </div>
 
-            <div id="gameControls">
-                <button id="hostStart" class="btn-green hidden" onclick="newRound()">NEW ROUND</button>
-                
-                <div id="inputArea" class="hidden">
-                    <input type="text" id="gameInput" placeholder="Type message...">
-                    <button class="btn-green" id="sendBtn">SEND</button>
-                </div>
-
-                <div id="voteButtons" class="hidden" style="display:flex; gap:10px;">
-                    <button class="btn-green" style="flex:1" onclick="submitVote('truth')">TRUTH</button>
-                    <button class="btn-green" style="flex:1; background:var(--primary)" onclick="submitVote('lie')">LIE</button>
+    <div id="view-game" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
+        <div class="glass-card" style="flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; padding-bottom: 15px;">
+            <div id="gameStatus" style="text-align: center; font-weight: 700; color: var(--accent); margin-bottom: 10px; font-size: 13px; text-transform: uppercase;">System Ready</div>
+            
+            <div class="emoji-list">🍎 🚗 👟 🍕 📱 ⌚</div>
+            
+            <div id="zone-secret" class="hidden">
+                <div class="emoji-showcase" id="bigEmoji">❓</div>
+                <p style="text-align: center; margin-bottom: 20px; font-weight: 600;">You are the Main Player. Do you want to lie or tell the truth about your emoji?</p>
+                <div class="flex-row">
+                    <button class="btn-primary" onclick="lockStance('truth')">Tell Truth</button>
+                    <button class="btn-danger" onclick="lockStance('lie')">Tell Lie</button>
                 </div>
             </div>
 
-            <div id="victoryBox" class="hidden" style="text-align:center;">
-                <h2 id="winMsg" style="font-size:24px;"></h2>
-                <button class="btn-green" onclick="newRound()">NEXT ROUND</button>
+            <div id="zone-chat" class="chat-container hidden"></div>
+
+            <div id="zone-controls" class="hidden" style="margin-top: auto; padding-top: 15px;">
+                <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                    <input type="text" id="chatInput" placeholder="Ask a question..." style="margin-bottom: 0;">
+                    <button class="btn-primary" style="width: auto; padding: 0 20px;" onclick="sendChatMessage()">Send</button>
+                </div>
+                
+                <div id="voteSection" class="hidden">
+                    <p style="text-align: center; font-size: 12px; margin-bottom: 8px; color: var(--text-muted);">Lock in your final guess:</p>
+                    <div class="flex-row">
+                        <button class="btn-primary" onclick="castVote('truth')">Truth</button>
+                        <button class="btn-danger" onclick="castVote('lie')">Lie</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="zone-result" class="hidden" style="text-align: center; margin: auto 0;">
+                <div style="font-size: 60px; margin-bottom: 10px;">🏆</div>
+                <h2 id="resultText" style="margin-bottom: 20px; font-size: 24px;"></h2>
+                <button id="btnPlayAgain" class="btn-disabled" onclick="hostStartGame()">Waiting for Host...</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
+    // --- FIREBASE CONFIGURATION ---
     const firebaseConfig = {
         apiKey: "AIzaSyAVREmzFgrnE_1NP9Ke-YbtynlS1Ka-HNk",
         authDomain: "iogame-145c9.firebaseapp.com",
@@ -120,153 +152,195 @@
         projectId: "iogame-145c9",
         storageBucket: "iogame-145c9.firebasestorage.app",
         messagingSenderId: "1024963573565",
-        appId: "1:1024963573565:web:907f671f3fad2c56443754",
-        measurementId: "G-N1J57G3WS6"
+        appId: "1:1024963573565:web:907f671f3fad2c56443754"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    
-    // SFX Engine
-    const play = (url) => { new Audio(url).play().catch(()=>{}); };
-    const sounds = {
-        pop: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
-        win: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3',
-        msg: 'https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3'
-    };
 
+    // --- AUDIO ENGINE ---
+    const sfx = {
+        tap: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
+        send: new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3'),
+        select: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'),
+        win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3')
+    };
+    const playSfx = (sound) => { sound.currentTime = 0; sound.play().catch(()=>{}); };
+
+    // --- GAME VARIABLES ---
     let roomId = new URLSearchParams(window.location.search).get('room') || Math.random().toString(36).substring(7);
     if (!window.location.search.includes('room')) window.history.pushState({}, '', `?room=${roomId}`);
     
     let myKey, myName, amIHost = false;
     const items = [{e:"🍎", n:"Apple"}, {e:"🚗", n:"Tesla"}, {e:"👟", n:"Nike"}, {e:"🍕", n:"Pizza"}, {e:"📱", n:"iPhone"}, {e:"⌚", n:"Rolex"}];
 
-    function copyURL() { navigator.clipboard.writeText(window.location.href); alert("Link Copied!"); }
+    // --- CORE FUNCTIONS ---
+    function copyInviteLink() { navigator.clipboard.writeText(window.location.href); playSfx(sfx.tap); alert("Invite Link Copied!"); }
 
-    function joinRoom() {
-        myName = document.getElementById('userName').value.trim().toUpperCase();
-        if(!myName) return;
-        play(sounds.pop);
-        const ref = db.ref(`rooms/${roomId}/players`).push();
-        myKey = ref.key;
-        ref.set({ name: myName, joinedAt: firebase.database.ServerValue.TIMESTAMP }).then(init);
+    function switchView(viewId) {
+        ['view-login', 'view-lobby', 'view-game'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        document.getElementById(viewId).classList.remove('hidden');
     }
 
-    function init() {
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('gameBoard').classList.remove('hidden');
+    function joinGame() {
+        myName = document.getElementById('userName').value.trim();
+        if(!myName) return;
+        playSfx(sfx.tap);
+        
+        const ref = db.ref(`rooms/${roomId}/players`).push();
+        myKey = ref.key;
+        ref.set({ name: myName, joinedAt: firebase.database.ServerValue.TIMESTAMP }).then(() => {
+            switchView('view-lobby');
+            listenToLobby();
+        });
+    }
 
+    function listenToLobby() {
         db.ref(`rooms/${roomId}/players`).on('value', snap => {
             const players = snap.val() || {};
             const keys = Object.keys(players);
             amIHost = (myKey === keys[0]);
-            const grid = document.getElementById('pGrid');
+            
+            const grid = document.getElementById('lobbyPlayers');
             grid.innerHTML = "";
-            keys.forEach((id, i) => {
-                grid.innerHTML += `<div id="card-${id}" class="p-card">
-                    <div style="font-size:9px; opacity:0.5;">PLAYER ${i+1}</div>
-                    <div style="font-weight:bold; font-size:13px;">${players[id].name}</div>
-                </div>`;
+            keys.forEach((id) => {
+                grid.innerHTML += `<div class="p-badge">${players[id].name} ${id === keys[0] ? '👑' : ''}</div>`;
             });
-            if(amIHost) document.getElementById('hostStart').classList.remove('hidden');
+
+            // Start Game Button Logic (Visible to all, clickable by host)
+            const btnStart = document.getElementById('btnStartGame');
+            if(amIHost) {
+                btnStart.className = "btn-primary";
+                btnStart.innerText = "Start Game";
+                btnStart.disabled = false;
+            } else {
+                btnStart.className = "btn-disabled";
+                btnStart.innerText = "Waiting for Host to start...";
+                btnStart.disabled = true;
+            }
         });
 
-        db.ref(`rooms/${roomId}/state`).on('value', snap => { if(snap.val()) render(snap.val()); });
+        db.ref(`rooms/${roomId}/state`).on('value', snap => {
+            if(snap.val()) handleGameState(snap.val());
+        });
     }
 
-    function newRound() {
+    function hostStartGame() {
+        if(!amIHost) return;
+        playSfx(sfx.tap);
         db.ref(`rooms/${roomId}/players`).once('value', pSnap => {
             const keys = Object.keys(pSnap.val());
             const subject = keys[Math.floor(Math.random() * keys.length)];
             const item = items[Math.floor(Math.random() * items.length)];
-            const stance = Math.random() > 0.5 ? 'truth' : 'lie';
             
             db.ref(`rooms/${roomId}/state`).set({
-                phase: 'interrogation',
+                phase: 'choosing',
                 subject: subject,
                 item: item,
-                secretStance: stance,
-                history: [{u:'SYSTEM', m:'Round Started!'}],
-                voterIndex: 0
+                chat: [{u: 'System', m: 'The Main Player is making their choice...'}],
+                votes: {}
             });
         });
     }
 
-    function render(state) {
+    function handleGameState(state) {
+        switchView('view-game');
         const isSubject = (myKey === state.subject);
-        const status = document.getElementById('statusHeader');
-        const chat = document.getElementById('chatDisplay');
+        const status = document.getElementById('gameStatus');
+        const chatBox = document.getElementById('zone-chat');
         
-        document.querySelectorAll('.p-card').forEach(c => c.className = 'p-card');
-        document.getElementById(`card-${state.subject}`).classList.add('main-player');
+        // Reset view visibility
+        ['zone-secret', 'zone-chat', 'zone-controls', 'voteSection', 'zone-result'].forEach(id => document.getElementById(id).classList.add('hidden'));
 
-        chat.innerHTML = "";
-        Object.values(state.history || {}).forEach(h => {
-            chat.innerHTML += `<div class="msg"><b>${h.u}:</b> ${h.m}</div>`;
+        // Render Chat
+        chatBox.innerHTML = "";
+        (Object.values(state.chat || {})).forEach(msg => {
+            chatBox.innerHTML += `<div class="chat-msg"><b>${msg.u}:</b> ${msg.m}</div>`;
         });
-        chat.scrollTop = chat.scrollHeight;
+        chatBox.scrollTop = chatBox.scrollHeight;
 
-        // Reset UI visibility
-        ['inputArea', 'voteButtons', 'hostStart', 'victoryBox'].forEach(id => document.getElementById(id).classList.add('hidden'));
-
-        if(state.phase === 'interrogation') {
-            db.ref(`rooms/${roomId}/players`).once('value', snap => {
-                const voterKeys = Object.keys(snap.val()).filter(k => k !== state.subject);
-                const currentVoter = voterKeys[state.voterIndex];
-                
-                if(isSubject) {
-                    status.innerHTML = `YOUR MISSION: <span style="color:var(--primary)">ACT LIKE YOU HAVE ${state.item.e}</span> (MODE: ${state.secretStance.toUpperCase()})`;
-                    document.getElementById('inputArea').classList.remove('hidden');
-                    document.getElementById('sendBtn').onclick = sendMessage;
-                } else if(myKey === currentVoter) {
-                    status.innerText = "YOUR TURN TO ASK & VOTE!";
-                    document.getElementById('inputArea').classList.remove('hidden');
-                    document.getElementById('voteButtons').classList.remove('hidden');
-                    document.getElementById('sendBtn').onclick = sendMessage;
-                } else {
-                    status.innerText = "WAITING FOR TURN...";
-                }
-            });
+        if (state.phase === 'choosing') {
+            if (isSubject) {
+                status.innerText = "Your Secret Emoji";
+                document.getElementById('zone-secret').classList.remove('hidden');
+                document.getElementById('bigEmoji').innerText = state.item.e;
+            } else {
+                status.innerText = "Waiting for Main Player...";
+                document.getElementById('zone-chat').classList.remove('hidden');
+            }
         }
 
-        if(state.phase === 'done') {
-            play(sounds.win);
-            document.getElementById('victoryBox').classList.remove('hidden');
-            document.getElementById('winMsg').innerText = state.result;
-            if(amIHost) document.getElementById('hostStart').classList.remove('hidden');
+        if (state.phase === 'interrogation') {
+            document.getElementById('zone-chat').classList.remove('hidden');
+            document.getElementById('zone-controls').classList.remove('hidden');
+            
+            if (isSubject) {
+                status.innerText = "Interrogation Active - Answer them!";
+            } else {
+                status.innerText = "Interrogation Active - Ask & Vote!";
+                document.getElementById('voteSection').classList.remove('hidden');
+            }
+        }
+
+        if (state.phase === 'finished') {
+            document.getElementById('zone-result').classList.remove('hidden');
+            document.getElementById('resultText').innerText = state.winner;
+            
+            const btnReplay = document.getElementById('btnPlayAgain');
+            if(amIHost) {
+                btnReplay.className = "btn-primary";
+                btnReplay.innerText = "Start Next Round";
+                btnReplay.disabled = false;
+            } else {
+                btnReplay.className = "btn-disabled";
+                btnReplay.innerText = "Waiting for Host...";
+                btnReplay.disabled = true;
+            }
         }
     }
 
-    function sendMessage() {
-        const txt = document.getElementById('gameInput').value;
-        if(!txt) return;
-        play(sounds.msg);
-        db.ref(`rooms/${roomId}/state/history`).push({u: myName, m: txt});
-        document.getElementById('gameInput').value = "";
+    // --- GAME ACTIONS ---
+    function lockStance(stance) {
+        playSfx(sfx.select);
+        db.ref(`rooms/${roomId}/state/secretStance`).set(stance);
+        db.ref(`rooms/${roomId}/state/phase`).set('interrogation');
+        db.ref(`rooms/${roomId}/state/chat`).push({u: 'System', m: 'The Main Player has locked in. Ask your questions!'});
     }
 
-    function submitVote(v) {
-        db.ref(`rooms/${roomId}/state/votes/${myKey}`).set(v);
-        db.ref(`rooms/${roomId}/state`).once('value', snap => {
-            const s = snap.val();
-            db.ref(`rooms/${roomId}/players`).once('value', pSnap => {
-                const voters = Object.keys(pSnap.val()).filter(k => k !== s.subject);
-                if(s.voterIndex + 1 < voters.length) {
-                    db.ref(`rooms/${roomId}/state/voterIndex`).set(s.voterIndex + 1);
-                } else {
-                    finishRound(s);
-                }
-            });
+    function sendChatMessage() {
+        const input = document.getElementById('chatInput');
+        if(!input.value.trim()) return;
+        playSfx(sfx.send);
+        db.ref(`rooms/${roomId}/state/chat`).push({u: myName, m: input.value.trim()});
+        input.value = "";
+    }
+
+    function castVote(vote) {
+        playSfx(sfx.select);
+        db.ref(`rooms/${roomId}/state/votes/${myKey}`).set(vote);
+        
+        // Auto-check if everyone has voted
+        db.ref(`rooms/${roomId}`).once('value', snap => {
+            const data = snap.val();
+            const totalPlayers = Object.keys(data.players).length;
+            const currentVotes = Object.keys(data.state.votes || {}).length;
+            
+            if (currentVotes >= totalPlayers - 1) { // -1 because subject doesn't vote
+                calculateWinner(data.state);
+            }
         });
     }
 
-    function finishRound(s) {
-        const votes = Object.values(s.votes || {});
-        let correct = 0;
-        votes.forEach(v => { if(v === s.secretStance) correct++; });
-        const res = (correct > votes.length/2) ? "CREWMATES CAUGHT THE LIE! 🎉" : "IMPOSTER FOOLED EVERYONE! 😈";
-        db.ref(`rooms/${roomId}/state/phase`).set('done');
-        db.ref(`rooms/${roomId}/state/result`).set(res);
+    function calculateWinner(state) {
+        const votes = Object.values(state.votes || {});
+        let correctGuesses = 0;
+        votes.forEach(v => { if(v === state.secretStance) correctGuesses++; });
+        
+        const majorityCorrect = correctGuesses > (votes.length / 2);
+        const winText = majorityCorrect ? "Crewmates Caught the Lie! 🎉" : "Imposter Fooled Everyone! 😈";
+        
+        playSfx(sfx.win);
+        db.ref(`rooms/${roomId}/state/phase`).set('finished');
+        db.ref(`rooms/${roomId}/state/winner`).set(winText);
     }
 </script>
 </body>
