@@ -3,77 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ioGame | Pro</title>
+    <title>ioGame</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
         :root {
-            --primary: #FF3B30; --success: #34C759; --accent: #007AFF;
-            --glass-bg: rgba(20, 20, 20, 0.4); --glass-border: rgba(255, 255, 255, 0.15);
-            --text-main: #ffffff; --text-muted: rgba(255, 255, 255, 0.6);
+            /* Apple System Colors */
+            --system-blue: #007AFF;
+            --system-green: #34C759;
+            --system-red: #FF3B30;
+            --system-gray6-light: #F2F2F7;
+            --system-gray6-dark: #1C1C1E;
+            
+            /* Glassmorphism Variables */
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --text-main: #1C1C1E;
+            --text-muted: #8E8E93;
+            --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            --input-bg: rgba(0, 0, 0, 0.05);
         }
 
-        @media (prefers-color-scheme: light) {
+        @media (prefers-color-scheme: dark) {
             :root {
-                --glass-bg: rgba(255, 255, 255, 0.5); --glass-border: rgba(0, 0, 0, 0.1);
-                --text-main: #000000; --text-muted: rgba(0, 0, 0, 0.6);
+                --glass-bg: rgba(30, 30, 30, 0.65);
+                --glass-border: rgba(255, 255, 255, 0.1);
+                --text-main: #FFFFFF;
+                --text-muted: rgba(235, 235, 245, 0.6);
+                --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+                --input-bg: rgba(255, 255, 255, 0.1);
             }
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            /* Apple Typography Stack */
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             color: var(--text-main); height: 100dvh; overflow: hidden; display: flex; justify-content: center;
-            background: #000 url('desk.png') no-repeat center center fixed; background-size: cover;
+            /* Added a soft mesh-gradient fallback if the background image fails to load */
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%) url('desk.png') no-repeat center center fixed; 
+            background-size: cover;
+        }
+        @media (prefers-color-scheme: dark) {
+            body { background-image: linear-gradient(135deg, #1c1c1c 0%, #2d3436 100%); }
         }
         @media (max-width: 768px) { body { background-image: url('vert.png'); } }
 
         .app-container { width: 100%; max-width: 500px; height: 100%; display: flex; flex-direction: column; padding: 20px; position: relative; z-index: 1; }
         
-        /* Premium Glass Card */
+        /* Premium iOS Glass Card */
         .glass-card { 
-            background: var(--glass-bg); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
-            border: 1px solid var(--glass-border); border-radius: 28px; padding: 24px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2); transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            background: var(--glass-bg); 
+            /* Added saturation for that authentic Apple frosted glass look */
+            backdrop-filter: blur(40px) saturate(180%); 
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid var(--glass-border); border-radius: 24px; padding: 24px;
+            box-shadow: var(--card-shadow); transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         /* Typography & Layout */
-        h1 { font-size: 42px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 8px; text-align: center; }
-        .subtitle { font-size: 14px; font-weight: 500; color: var(--text-muted); text-align: center; margin-bottom: 30px; }
+        h1 { font-size: clamp(34px, 8vw, 42px); font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; text-align: center; }
+        .subtitle { font-size: 15px; font-weight: 500; color: var(--text-muted); text-align: center; margin-bottom: 30px; }
         
         /* Inputs & Buttons */
-        input { width: 100%; background: rgba(150, 150, 150, 0.1); border: 1px solid var(--glass-border); padding: 16px; border-radius: 16px; color: var(--text-main); outline: none; font-size: 16px; margin-bottom: 16px; transition: 0.2s; }
-        input:focus { border-color: var(--accent); background: rgba(150, 150, 150, 0.2); }
+        input { 
+            width: 100%; background: var(--input-bg); border: 1.5px solid transparent; 
+            padding: 16px; border-radius: 14px; color: var(--text-main); outline: none; 
+            font-size: 17px; margin-bottom: 16px; transition: 0.2s cubic-bezier(0.25, 1, 0.5, 1); 
+        }
+        input:focus { border-color: var(--system-blue); background: var(--glass-bg); box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15); }
+        input::placeholder { color: var(--text-muted); }
         
-        button { width: 100%; padding: 16px; border-radius: 16px; border: none; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
-        button:active { transform: scale(0.96); }
-        .btn-primary { background: var(--success); color: #fff; box-shadow: 0 4px 15px rgba(52, 199, 89, 0.3); }
-        .btn-danger { background: var(--primary); color: #fff; box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3); }
-        .btn-disabled { background: rgba(150, 150, 150, 0.2); color: var(--text-muted); cursor: not-allowed; box-shadow: none; }
+        button { 
+            width: 100%; padding: 16px; border-radius: 14px; border: none; 
+            font-weight: 600; font-size: 17px; cursor: pointer; transition: 0.2s cubic-bezier(0.25, 1, 0.5, 1); 
+            letter-spacing: -0.3px; 
+        }
+        button:active { transform: scale(0.97); }
+        .btn-primary { background: var(--system-blue); color: #fff; }
+        .btn-success { background: var(--system-green); color: #fff; }
+        .btn-danger { background: var(--system-red); color: #fff; }
+        .btn-disabled { background: var(--input-bg); color: var(--text-muted); cursor: not-allowed; }
         
         .flex-row { display: flex; gap: 12px; margin-top: 10px; }
         .flex-row button { flex: 1; }
 
         /* Lobby Elements */
-        .invite-banner { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; backdrop-filter: blur(20px); cursor: pointer; }
-        .invite-banner:active { background: rgba(150, 150, 150, 0.2); }
+        .invite-banner { 
+            background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; 
+            padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 20px; backdrop-filter: blur(20px) saturate(180%); cursor: pointer; 
+            box-shadow: var(--card-shadow); transition: 0.2s;
+        }
+        .invite-banner:active { transform: scale(0.98); }
         
         .player-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
-        .p-badge { background: rgba(150, 150, 150, 0.1); border: 1px solid var(--glass-border); border-radius: 16px; padding: 12px; text-align: center; font-weight: 600; font-size: 14px; }
+        .p-badge { background: var(--input-bg); border-radius: 12px; padding: 12px; text-align: center; font-weight: 600; font-size: 15px; display: flex; justify-content: center; align-items: center; gap: 6px;}
         
         /* Game Zones */
-        .emoji-showcase { font-size: 80px; text-align: center; margin: 20px 0; text-shadow: 0 10px 30px rgba(0,0,0,0.3); animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .emoji-list { font-size: 24px; text-align: center; letter-spacing: 8px; opacity: 0.8; margin-bottom: 15px; }
+        /* Responsive scaling using clamp for emojis */
+        .emoji-showcase { font-size: clamp(80px, 20vw, 120px); text-align: center; margin: 20px 0; text-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .emoji-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; font-size: clamp(24px, 5vw, 32px); opacity: 0.9; margin-bottom: 15px; }
         
-        .chat-container { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; padding-right: 5px; }
-        .chat-msg { background: rgba(150, 150, 150, 0.15); padding: 10px 14px; border-radius: 18px 18px 18px 4px; font-size: 14px; width: fit-content; max-width: 90%; animation: slideUp 0.3s ease; }
-        .chat-msg b { color: var(--accent); }
+        .chat-container { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; padding-right: 5px; }
+        .chat-msg { background: var(--input-bg); padding: 12px 16px; border-radius: 18px 18px 18px 4px; font-size: 15px; line-height: 1.4; width: fit-content; max-width: 90%; animation: slideUp 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
+        .chat-msg b { color: var(--system-blue); font-weight: 600; }
         
         .hidden { display: none !important; }
 
-        @keyframes popIn { 0% { opacity: 0; transform: scale(0.5); } 100% { opacity: 1; transform: scale(1); } }
-        @keyframes slideUp { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+        /* Smooth Apple-style animations */
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.4); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes slideUp { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(150, 150, 150, 0.3); border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -90,12 +136,12 @@
 
     <div id="view-lobby" class="hidden">
         <div class="invite-banner" onclick="copyInviteLink()">
-            <span style="font-weight: 600; font-size: 14px;">🔗 Share Invite Link</span>
-            <span style="font-size: 12px; background: var(--accent); color: white; padding: 4px 10px; border-radius: 10px;">COPY</span>
+            <span style="font-weight: 600; font-size: 15px;">🔗 Share Invite Link</span>
+            <span style="font-size: 13px; font-weight: 600; background: var(--system-blue); color: white; padding: 6px 12px; border-radius: 12px;">COPY</span>
         </div>
         
         <div class="glass-card">
-            <h2 style="font-size: 18px; margin-bottom: 15px; text-align: center;">Players in Room</h2>
+            <h2 style="font-size: 19px; font-weight: 700; margin-bottom: 16px; text-align: center; letter-spacing: -0.5px;">Players in Room</h2>
             <div class="player-grid" id="lobbyPlayers"></div>
             
             <button id="btnStartGame" class="btn-disabled" onclick="hostStartGame()">Waiting for Host...</button>
@@ -104,15 +150,15 @@
 
     <div id="view-game" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
         <div class="glass-card" style="flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; padding-bottom: 15px;">
-            <div id="gameStatus" style="text-align: center; font-weight: 700; color: var(--accent); margin-bottom: 10px; font-size: 13px; text-transform: uppercase;">System Ready</div>
+            <div id="gameStatus" style="text-align: center; font-weight: 700; color: var(--system-blue); margin-bottom: 12px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">System Ready</div>
             
-            <div class="emoji-list">🍎 🚗 👟 🍕 📱 ⌚</div>
+            <div class="emoji-list" id="emojiListUI"></div>
             
             <div id="zone-secret" class="hidden">
                 <div class="emoji-showcase" id="bigEmoji">❓</div>
-                <p style="text-align: center; margin-bottom: 20px; font-weight: 600;">You are the Main Player. Do you want to lie or tell the truth about your emoji?</p>
+                <p style="text-align: center; margin-bottom: 20px; font-size: 16px; font-weight: 500; line-height: 1.4;">You are the Main Player.<br>Will you lie or tell the truth?</p>
                 <div class="flex-row">
-                    <button class="btn-primary" onclick="lockStance('truth')">Tell Truth</button>
+                    <button class="btn-success" onclick="lockStance('truth')">Tell Truth</button>
                     <button class="btn-danger" onclick="lockStance('lie')">Tell Lie</button>
                 </div>
             </div>
@@ -120,23 +166,23 @@
             <div id="zone-chat" class="chat-container hidden"></div>
 
             <div id="zone-controls" class="hidden" style="margin-top: auto; padding-top: 15px;">
-                <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 12px;">
                     <input type="text" id="chatInput" placeholder="Ask a question..." style="margin-bottom: 0;">
-                    <button class="btn-primary" style="width: auto; padding: 0 20px;" onclick="sendChatMessage()">Send</button>
+                    <button class="btn-primary" style="width: auto; padding: 0 24px;" onclick="sendChatMessage()">Send</button>
                 </div>
                 
                 <div id="voteSection" class="hidden">
-                    <p style="text-align: center; font-size: 12px; margin-bottom: 8px; color: var(--text-muted);">Lock in your final guess:</p>
+                    <p style="text-align: center; font-size: 13px; font-weight: 500; margin-bottom: 10px; color: var(--text-muted);">Lock in your final guess:</p>
                     <div class="flex-row">
-                        <button class="btn-primary" onclick="castVote('truth')">Truth</button>
+                        <button class="btn-success" onclick="castVote('truth')">Truth</button>
                         <button class="btn-danger" onclick="castVote('lie')">Lie</button>
                     </div>
                 </div>
             </div>
 
             <div id="zone-result" class="hidden" style="text-align: center; margin: auto 0;">
-                <div style="font-size: 60px; margin-bottom: 10px;">🏆</div>
-                <h2 id="resultText" style="margin-bottom: 20px; font-size: 24px;"></h2>
+                <div style="font-size: clamp(60px, 15vw, 80px); margin-bottom: 15px; animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);">🏆</div>
+                <h2 id="resultText" style="margin-bottom: 24px; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;"></h2>
                 <button id="btnPlayAgain" class="btn-disabled" onclick="hostStartGame()">Waiting for Host...</button>
             </div>
         </div>
@@ -166,12 +212,22 @@
     };
     const playSfx = (sound) => { sound.currentTime = 0; sound.play().catch(()=>{}); };
 
-    // --- GAME VARIABLES ---
+    // --- GAME VARIABLES & EMOJI EXPANSION ---
     let roomId = new URLSearchParams(window.location.search).get('room') || Math.random().toString(36).substring(7);
     if (!window.location.search.includes('room')) window.history.pushState({}, '', `?room=${roomId}`);
     
     let myKey, myName, amIHost = false;
-    const items = [{e:"🍎", n:"Apple"}, {e:"🚗", n:"Tesla"}, {e:"👟", n:"Nike"}, {e:"🍕", n:"Pizza"}, {e:"📱", n:"iPhone"}, {e:"⌚", n:"Rolex"}];
+    
+    // Expanded Emoji List
+    const items = [
+        {e:"🍎", n:"Apple"}, {e:"🚗", n:"Tesla"}, {e:"👟", n:"Nike"}, {e:"🍕", n:"Pizza"}, 
+        {e:"📱", n:"iPhone"}, {e:"⌚", n:"Rolex"}, {e:"🚀", n:"Rocket"}, {e:"💎", n:"Diamond"},
+        {e:"🎸", n:"Guitar"}, {e:"🍔", n:"Burger"}, {e:"🏀", n:"Basketball"}, {e:"🎮", n:"Controller"},
+        {e:"🦄", n:"Unicorn"}, {e:"🍩", n:"Donut"}, {e:"🥑", n:"Avocado"}, {e:"👽", n:"Alien"}
+    ];
+
+    // Dynamically render the top emoji list so it updates if you change the array
+    document.getElementById('emojiListUI').innerHTML = items.map(item => `<span>${item.e}</span>`).join('');
 
     // --- CORE FUNCTIONS ---
     function copyInviteLink() { navigator.clipboard.writeText(window.location.href); playSfx(sfx.tap); alert("Invite Link Copied!"); }
@@ -203,10 +259,9 @@
             const grid = document.getElementById('lobbyPlayers');
             grid.innerHTML = "";
             keys.forEach((id) => {
-                grid.innerHTML += `<div class="p-badge">${players[id].name} ${id === keys[0] ? '👑' : ''}</div>`;
+                grid.innerHTML += `<div class="p-badge"><span>${players[id].name}</span> ${id === keys[0] ? '👑' : ''}</div>`;
             });
 
-            // Start Game Button Logic (Visible to all, clickable by host)
             const btnStart = document.getElementById('btnStartGame');
             if(amIHost) {
                 btnStart.className = "btn-primary";
@@ -248,10 +303,8 @@
         const status = document.getElementById('gameStatus');
         const chatBox = document.getElementById('zone-chat');
         
-        // Reset view visibility
         ['zone-secret', 'zone-chat', 'zone-controls', 'voteSection', 'zone-result'].forEach(id => document.getElementById(id).classList.add('hidden'));
 
-        // Render Chat
         chatBox.innerHTML = "";
         (Object.values(state.chat || {})).forEach(msg => {
             chatBox.innerHTML += `<div class="chat-msg"><b>${msg.u}:</b> ${msg.m}</div>`;
@@ -298,7 +351,6 @@
         }
     }
 
-    // --- GAME ACTIONS ---
     function lockStance(stance) {
         playSfx(sfx.select);
         db.ref(`rooms/${roomId}/state/secretStance`).set(stance);
@@ -318,13 +370,12 @@
         playSfx(sfx.select);
         db.ref(`rooms/${roomId}/state/votes/${myKey}`).set(vote);
         
-        // Auto-check if everyone has voted
         db.ref(`rooms/${roomId}`).once('value', snap => {
             const data = snap.val();
             const totalPlayers = Object.keys(data.players).length;
             const currentVotes = Object.keys(data.state.votes || {}).length;
             
-            if (currentVotes >= totalPlayers - 1) { // -1 because subject doesn't vote
+            if (currentVotes >= totalPlayers - 1) { 
                 calculateWinner(data.state);
             }
         });
