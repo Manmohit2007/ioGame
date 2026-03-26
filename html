@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cousins Game Room</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f0f2f5; }
+        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 300px; }
+        button { background: #007AFF; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        input { padding: 8px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px; width: 80%; }
+        #roomLink { background: #eee; padding: 5px; font-size: 0.8rem; word-break: break-all; margin: 10px 0; border-radius: 4px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div id="loginScreen">
+        <h2>Welcome!</h2>
+        <input type="text" id="userName" placeholder="Enter your name">
+        <button onclick="joinGame()">Join Game</button>
+    </div>
+
+    <div id="lobbyScreen" class="hidden">
+        <h3 id="statusMsg">Waiting...</h3>
+        <div id="hostControls" class="hidden">
+            <p>You are the <b>Host</b>! Share this link:</p>
+            <div id="roomLink"></div>
+            <button onclick="startGame()" style="background: #28a745;">Start Game for Everyone</button>
+        </div>
+        <div id="playerControls" class="hidden">
+            <p>Waiting for host to start...</p>
+        </div>
+        <hr>
+        <h4>Players in Room:</h4>
+        <ul id="playerList" style="list-style: none; padding: 0;"></ul>
+    </div>
+</div>
+
+<script>
+    // --- 2. PASTE YOUR FIREBASE CONFIG HERE ---
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        databaseURL: "YOUR_DATABASE_URL",
+        projectId: "YOUR_PROJECT_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // --- 3. GAME LOGIC ---
+    let roomId = new URLSearchParams(window.location.search).get('room');
+    let isHost = false;
+
+    // If there's no room in the link, we generate one (this person is the host)
+    if (!roomId) {
+        roomId = Math.random().toString(36).substring(7);
+        window.history.pushState({}, '', `?room=${roomId}`);
+        isHost = true;
+    }
+
+    function joinGame() {
+        const name = document.getElementById('userName').value;
+        if (!name) return alert("Please enter a name!");
+
+        // Add player to the room in Firebase
+        const playerRef = db.ref(`rooms/${roomId}/players`).push();
+        playerRef.set({ name: name, isHost: isHost });
+
+        // If host, set up the room metadata
+        if (isHost) {
+            db.ref(`rooms/${roomId}/metadata`).set({ started: false, hostName: name });
+        }
+
+        showLobby(name);
+    }
+
+    function showLobby(name) {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('lobbyScreen').classList.remove('hidden');
+        
+        if (isHost) {
+            document.getElementById('hostControls').classList.remove('hidden');
+            document.getElementById('roomLink').innerText = window.location.href;
+            document.getElementById('statusMsg').innerText = "Host Lobby";
+        } else {
+            document.getElementById('playerControls').classList.remove('hidden');
+            document.getElementById('statusMsg').innerText = `Welcome, ${name}!`;
+        }
+
+        // Listen for new players
+        db.ref(`rooms/${roomId}/players`).on('value', (snapshot) => {
+            const players = snapshot.val();
+            const list = document.getElementById('playerList');
+            list.innerHTML = "";
+            for (let id in players) {
+                const li = document.createElement('li');
+                li.innerText = players[id].name + (players[id].isHost ? " (👑)" : "");
+                list.appendChild(li);
+            }
+        });
+
+        // Listen for "Game Start" signal from Host
+        db.ref(`rooms/${roomId}/metadata/started`).on('value', (snapshot) => {
+            if (snapshot.val() === true) {
+                alert("Game is Starting!");
+                // You would redirect to game screen here
+            }
+        });
+    }
+
+    function startGame() {
+        db.ref(`rooms/${roomId}/metadata`).update({ started: true });
+    }
+</script>
+
+</body>
+</html>
