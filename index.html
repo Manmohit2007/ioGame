@@ -53,6 +53,9 @@
         }
         input:focus { border-color: var(--accent); background: rgba(150, 150, 150, 0.25); transform: translateY(-2px); }
         
+        /* Set placeholder text to a bright light-white */
+        input::placeholder { color: rgba(255, 255, 255, 0.8); opacity: 1; }
+        
         button { 
             width: 100%; padding: 18px; border-radius: 20px; border: none; font-weight: 700; font-size: 16px; 
             cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
@@ -107,7 +110,7 @@
             border-color: var(--primary); background: rgba(255, 59, 48, 0.2); 
             box-shadow: 0 0 12px rgba(255, 59, 48, 0.4); color: #fff;
         }
-        /* NEW: Voted State for Players */
+        /* Voted State for Players */
         .roster-card.has-voted { 
             border-color: var(--success); background: rgba(52, 199, 89, 0.2); 
             box-shadow: 0 0 12px rgba(52, 199, 89, 0.3); color: #fff;
@@ -122,7 +125,17 @@
             animation: slideUp 0.3s ease; line-height: 1.4; backdrop-filter: blur(10px);
             border-radius: 18px;
         }
-        .chat-system { margin: 0 auto; font-size: 12px; color: var(--text-muted); background: transparent !important; border: none !important; font-style: italic; }
+        /* Enlarged System Message styling */
+        .chat-system { 
+            margin: 10px auto; 
+            font-size: 15px; 
+            font-weight: 600; 
+            color: rgba(255, 255, 255, 0.9); 
+            background: transparent !important; 
+            border: none !important; 
+            font-style: italic; 
+            text-align: center;
+        }
         
         /* Music Toggle */
         .music-toggle { position: absolute; top: 20px; right: 20px; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; z-index: 100; transition: 0.3s; }
@@ -360,7 +373,7 @@
                 subject: subject,
                 item: item,
                 chat: [{u: 'System', m: '🤫 The Main Player is making their secret choice...'}],
-                votes: {} // Clear votes for new round
+                votes: {} 
             });
         });
     }
@@ -385,7 +398,6 @@
                 const hasVoted = currentVotes[pid] ? true : false;
                 const pColor = getUserColor(pData.name);
                 
-                // Assign classes based on state
                 let cardClass = "roster-card";
                 if (isMainPlayer) {
                     cardClass += " main-player";
@@ -429,7 +441,11 @@
                     </div>`;
             }
         });
-        chatBox.scrollTop = chatBox.scrollHeight;
+        
+        // Timeout ensures DOM fully renders before scrolling down
+        setTimeout(() => {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }, 50);
 
         if (chatValues.length < lastChatCount) lastChatCount = 0;
         if (chatValues.length > lastChatCount) {
@@ -460,7 +476,6 @@
                 status.innerText = "Interrogation Active - Defend Yourself!";
             } else {
                 status.innerText = "Interrogation Active - Ask & Vote!";
-                // Ensure vote buttons disappear if the user already voted
                 if (!state.votes || !state.votes[myKey]) {
                     document.getElementById('voteSection').classList.remove('hidden');
                 } else {
@@ -474,7 +489,7 @@
             document.getElementById('resultText').innerText = state.winner;
             
             if (lastPhase !== 'finished') {
-                const iWon = (isSubject && state.winnerRole === 'imposter') || (!isSubject && state.winnerRole === 'cousins');
+                const iWon = (isSubject && state.winnerRole === 'imposter') || (!isSubject && state.winnerRole === 'crewmates');
                 if (iWon) {
                     playSfx(sfx.win);
                     document.getElementById('resultEmoji').innerText = "🏆";
@@ -503,7 +518,7 @@
         playSfx(sfx.chime);
         db.ref(`rooms/${roomId}/state/secretStance`).set(stance);
         db.ref(`rooms/${roomId}/state/phase`).set('interrogation');
-        db.ref(`rooms/${roomId}/state/chat`).push({u: 'System', m: 'The choice is locked in. Let the interrogation begin! 🕵️‍♂️'});
+        db.ref(`rooms/${roomId}/state/chat`).push({u: 'System', m: '🔒 The choice is locked in. Let the interrogation begin!'});
     }
 
     function sendChatMessage() {
@@ -523,10 +538,8 @@
 
     function castVote(vote) {
         playSfx(sfx.chime);
-        // Save the vote
         db.ref(`rooms/${roomId}/state/votes/${myKey}`).set(vote);
         
-        // Temporarily hide the voting section so they know it registered locally
         document.getElementById('voteSection').classList.add('hidden');
         
         db.ref(`rooms/${roomId}`).once('value', snap => {
@@ -534,7 +547,6 @@
             const totalPlayers = Object.keys(data.players).length;
             const currentVotes = Object.keys(data.state.votes || {}).length;
             
-            // Total players minus 1 (the Main Player doesn't vote)
             if (currentVotes >= totalPlayers - 1) { 
                 calculateWinner(data.state);
             }
@@ -547,8 +559,10 @@
         votes.forEach(v => { if(v === state.secretStance) correctGuesses++; });
         
         const majorityCorrect = correctGuesses > (votes.length / 2);
-        const winText = majorityCorrect ? "The Interrogators Won! 🎉" : "The Target Fooled Everyone! 😈";
-        const winnerRole = majorityCorrect ? 'cousins' : 'imposter';
+        
+        // UPDATED WIN TEXT HERE
+        const winText = majorityCorrect ? "Crewmates Won! 🎉" : "Imposter Won! 😈";
+        const winnerRole = majorityCorrect ? 'crewmates' : 'imposter';
         
         db.ref(`rooms/${roomId}/state`).update({
             phase: 'finished',
