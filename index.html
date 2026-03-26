@@ -87,7 +87,6 @@
         /* Game Zones */
         .emoji-showcase { font-size: 90px; text-align: center; margin: 10px 0; text-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         
-        /* Enlarged Emoji List */
         .mini-emojis { 
             display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; 
             font-size: 32px; 
@@ -95,7 +94,6 @@
             text-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
         
-        /* Dynamic Player Roster */
         .roster-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 15px; }
         .roster-card { 
             background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); 
@@ -116,7 +114,6 @@
         
         .roster-color-dot { width: 10px; height: 10px; border-radius: 50%; }
 
-        /* Chat System */
         .chat-container { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; padding-right: 5px; scroll-behavior: smooth; }
         .chat-msg { 
             padding: 10px 14px; font-size: 15px; width: fit-content; max-width: 85%; 
@@ -134,7 +131,6 @@
             text-align: center;
         }
         
-        /* Utility Toggles (Music) */
         .music-toggle { position: absolute; top: 20px; right: 20px; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; z-index: 100; transition: 0.3s; }
         .music-toggle:active { transform: scale(0.9); }
 
@@ -251,7 +247,6 @@
 
     document.getElementById('emojiVaultDisplay').innerText = items.map(i => i.e).join(' ');
 
-    // --- ENHANCED AUDIO & MUSIC ENGINE ---
     let musicPlaying = false;
     const bgm = document.getElementById('bgMusic');
     bgm.volume = 0.15; 
@@ -283,14 +278,12 @@
     let lastPhase = '';
     let lastChatCount = 0;
 
-    // --- UTILITY: Generate Unique Color based on Username ---
     function getUserColor(name) {
         let hash = 0;
         for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
         return `hsl(${Math.abs(hash) % 360}, 85%, 65%)`;
     }
 
-    // --- CORE FUNCTIONS ---
     function copyInviteLink(btn) { 
         const linkInput = document.getElementById('lobbyLinkInput');
         linkInput.select();
@@ -312,27 +305,36 @@
         document.getElementById(viewId).classList.remove('hidden');
     }
 
-    // --- FORCE CLEANUP ON SWIPE/RELOAD ---
+    // --- INSTANT CLEANUP ON SWIPE/CLOSE ---
     function forceCleanup() {
         if (myKey) {
+            // Instantly delete this player's data
             db.ref(`rooms/${roomId}/players/${myKey}`).remove();
             db.ref(`rooms/${roomId}/state/votes/${myKey}`).remove();
+            // Force the socket to drop immediately, bypassing mobile freezing
+            db.goOffline(); 
         }
     }
     
     window.addEventListener('beforeunload', forceCleanup);
     window.addEventListener('pagehide', forceCleanup);
+    window.addEventListener('unload', forceCleanup);
 
-    // --- NEW: LEAVE ROOM LOGIC ---
+    // --- LEAVE ROOM BUTTON LOGIC ---
     function leaveRoom() {
         if (amIHost) {
-            if(confirm("As the Host, leaving will end the game and remove everyone from the room. Are you sure?")) {
-                db.ref(`rooms/${roomId}`).remove(); // Wipes the room completely
+            if(confirm("As the Host, leaving will end the game and kick everyone out. Are you sure?")) {
+                db.ref(`rooms/${roomId}`).remove().then(() => {
+                    window.location.href = window.location.origin + window.location.pathname;
+                });
             }
         } else {
             if(confirm("Are you sure you want to leave the room?")) {
-                forceCleanup(); // Removes only this player
-                window.location.href = window.location.origin + window.location.pathname;
+                // Delete user info locally so they don't leave a ghost
+                db.ref(`rooms/${roomId}/players/${myKey}`).remove();
+                db.ref(`rooms/${roomId}/state/votes/${myKey}`).remove().then(() => {
+                    window.location.href = window.location.origin + window.location.pathname;
+                });
             }
         }
     }
@@ -347,6 +349,7 @@
         const ref = db.ref(`rooms/${roomId}/players`).push();
         myKey = ref.key;
         
+        // Firebase native fallback cleanup
         ref.onDisconnect().remove();
         db.ref(`rooms/${roomId}/state/votes/${myKey}`).onDisconnect().remove();
 
@@ -362,7 +365,7 @@
             globalPlayers = snap.val() || {};
             const keys = Object.keys(globalPlayers);
             
-            // --- KICK PLAYERS IF ROOM DESTROYED ---
+            // --- KICK PLAYERS OUT IF THE HOST DELETES THE ROOM ---
             if (keys.length === 0 && myName) {
                 alert("The Host has ended the game and closed the room.");
                 window.location.href = window.location.origin + window.location.pathname;
@@ -392,7 +395,7 @@
                 btnStart.disabled = true;
             }
             
-            // --- ANTI-FREEZE LOGIC ---
+            // Auto-finish if someone leaves mid-vote
             if (amIHost && lastPhase === 'interrogation') {
                 db.ref(`rooms/${roomId}/state`).once('value', sSnap => {
                     const st = sSnap.val();
