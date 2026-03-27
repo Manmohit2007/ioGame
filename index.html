@@ -328,10 +328,10 @@
                     
                     <div id="center-glass-orb" class="center-orb">
                         
-                        <!-- NEW PRECISION SVG TIMELINE (No White Track/Outline) -->
-                        <svg id="orb-timer-svg" class="hidden" viewBox="0 0 100 100" style="position:absolute; top:-2px; left:-2px; width:calc(100% + 4px); height:calc(100% + 4px); transform:rotate(-90deg); z-index:1; pointer-events:none; overflow:visible;">
-                            <!-- Sharp Solid Progress Layer Only -->
-                            <circle id="orb-timer-circle" cx="50" cy="50" r="48" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear;"></circle>
+                        <!-- NEW PRECISION SVG TIMELINE (Fully covers underlying circle stroke, no white outline) -->
+                        <svg id="orb-timer-svg" class="hidden" viewBox="0 0 100 100" style="position:absolute; top:0; left:0; width:100%; height:100%; transform:rotate(-90deg); z-index:1; pointer-events:none; border-radius: 50%;">
+                            <!-- Sharp Solid Progress Layer Only. r=49 matches the very outer edge if viewBox is 100, effectively covering the border -->
+                            <circle id="orb-timer-circle" cx="50" cy="50" r="49" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear;"></circle>
                         </svg>
 
                         <div id="center-countdown" class="countdown-view hidden" style="z-index: 2;">
@@ -774,7 +774,7 @@
                 updateState({ 
                     phase: 'qna', 
                     votes: null,
-                    qna: { askers: askers, currentIndex: 0, status: 'ask', currentQuestion: '', deadline: Date.now() + 30000 }
+                    qna: { askers: askers, currentIndex: 0, status: 'ask', currentQuestion: '', deadline: Date.now() + 30000, pausedPct: null }
                 });
             } else {
                 updateState({ phase: 'readingResults', lastTargetFruit: s.playerItems[targetId]?.e || '❓', scores: s.scores || {} });
@@ -961,8 +961,17 @@
         }
 
         clearInterval(uiTimerInterval);
-        if (state.phase === 'qna') {
+        if (state.phase === 'qna' || state.phase === 'readingResults') {
             uiTimerInterval = setInterval(updateTimelineUI, 100);
+        } else {
+            // Immediately hide if not in Q&A or reading results
+            const orbSvg = document.getElementById('orb-timer-svg');
+            const orb = document.getElementById('center-glass-orb');
+            if (orbSvg) orbSvg.classList.add('hidden');
+            if (orb) {
+                orb.style.boxShadow = 'inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2)';
+                orb.style.borderColor = 'var(--glass-border)';
+            }
         }
 
         renderRevealedFruits();
@@ -976,17 +985,34 @@
         const orbCircle = document.getElementById('orb-timer-circle');
         const orb = document.getElementById('center-glass-orb');
 
+        // Case 1: Resolving/Scoring state (keep it paused at current spot)
+        if (gameState.phase === 'readingResults' || (gameState.phase === 'qna' && gameState.qna.status === 'resolving')) {
+            if (orbSvg) orbSvg.classList.remove('hidden');
+            if (bar) bar.style.width = (gameState.qna && gameState.qna.pausedPct !== undefined) ? `${gameState.qna.pausedPct * 100}%` : '0%';
+            
+            if (orbCircle && orb && orbSvg && gameState.qna && gameState.qna.pausedPct !== undefined) {
+                const circumference = 2 * Math.PI * 49;
+                orbCircle.style.strokeDasharray = circumference;
+                orbCircle.style.strokeDashoffset = circumference * (1 - gameState.qna.pausedPct);
+                orbCircle.style.stroke = 'var(--accent)';
+                orb.style.boxShadow = `inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2)`;
+                orb.style.borderColor = `transparent`; 
+            }
+            return;
+        }
+
+        // Case 2: Not in active QnA
         if (gameState.phase !== 'qna' || !gameState.qna || !gameState.qna.deadline) {
             if (bar) bar.style.width = '0%';
             if (orbSvg) orbSvg.classList.add('hidden');
             if (orb) {
-                // Restore standard border
                 orb.style.boxShadow = 'inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2)';
                 orb.style.borderColor = 'var(--glass-border)';
             }
             return;
         }
 
+        // Case 3: Active QnA timing
         if (orbSvg) orbSvg.classList.remove('hidden');
 
         const now = Date.now();
@@ -1005,15 +1031,15 @@
         }
 
         if (orbCircle && orb && orbSvg) {
-            // Using precise percentages based on SVG viewBox (0 0 100 100) with r=48
-            const circumference = 2 * Math.PI * 48;
+            // Using r=49 effectively covers the underlying border of the div
+            const circumference = 2 * Math.PI * 49;
             
             orbCircle.style.strokeDasharray = circumference;
             orbCircle.style.strokeDashoffset = circumference * (1 - pct);
             orbCircle.style.stroke = color;
 
             orb.style.boxShadow = `inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2)`;
-            // Remove the white border completely when the timer is active to avoid any white outline showing through
+            // Remove the white border completely when the timer is active
             orb.style.borderColor = `transparent`; 
         }
     }
@@ -1114,7 +1140,10 @@
             if (nextIndex < qna.askers.length) {
                 updateState({ 'qna/status': 'ask', 'qna/currentIndex': nextIndex, 'qna/currentQuestion': '', 'qna/deadline': Date.now() + 30000 });
             } else {
-                updateState({ 'qna/status': 'resolving' }); 
+                // Capture the exact percentage left when moving to resolving so it pauses smoothly
+                const timeLeft = Math.max(0, qna.deadline - Date.now());
+                const pct = timeLeft / 15000;
+                updateState({ 'qna/status': 'resolving', 'qna/pausedPct': pct }); 
             }
         });
     }
@@ -1138,7 +1167,7 @@
                 if (nextIndex < qna.askers.length) {
                     updateState({ 'qna/status': 'ask', 'qna/currentIndex': nextIndex, 'qna/currentQuestion': '', 'qna/deadline': now + 30000 });
                 } else {
-                    updateState({ 'qna/status': 'resolving' });
+                    updateState({ 'qna/status': 'resolving', 'qna/pausedPct': 0 });
                 }
             } else if (qna.status === 'answer') {
                 push(ref(db, `rooms/${roomId}/chat`), { u: 'System', m: `⏳ Time Out! ${globalPlayers[targetId]?.name || 'Target'} didn't answer.` });
@@ -1150,7 +1179,7 @@
                 if (nextIndex < qna.askers.length) {
                     updateState({ 'qna/status': 'ask', 'qna/currentIndex': nextIndex, 'qna/currentQuestion': '', 'qna/deadline': now + 30000 });
                 } else {
-                    updateState({ 'qna/status': 'resolving' });
+                    updateState({ 'qna/status': 'resolving', 'qna/pausedPct': 0 });
                 }
             }
         }
@@ -1186,13 +1215,16 @@
             let newRevealed = { ...(s.revealedFruits || {}) };
             newRevealed[targetId] = targetFruit;
 
+            // Carry over the paused percentage if it exists so readingResults can display it paused
+            const pausedPct = (qna.pausedPct !== undefined) ? qna.pausedPct : 0;
+
             gameState.phase = 'readingResults';
             updateState({ 
                 phase: 'readingResults', 
                 lastTargetFruit: targetFruit,
                 scores: newScores,
                 revealedFruits: newRevealed,
-                qna: null
+                qna: { pausedPct: pausedPct } 
             });
             
             playSfx(sfx.alert);
@@ -1293,12 +1325,8 @@
         // Map everything to HTML
         const badgesHtml = Object.entries(displayList).map(([pid, fruit]) => {
             const pName = globalPlayers[pid]?.name || 'Offline';
-            const isMe = pid === myKey;
-            
-            // Add a subtle highlight for your own badge
-            const highlightStyle = isMe ? 'border-color: var(--accent); background: rgba(0, 122, 255, 0.15);' : '';
-            
-            return `<div class="revealed-badge" style="${highlightStyle}"><b>${pName}:</b> <span style="font-size: 1.2em; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));">${fruit}</span></div>`;
+            // Removed the highlightStyle completely to keep all badges looking identical
+            return `<div class="revealed-badge"><b>${pName}:</b> <span style="font-size: 1.2em; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));">${fruit}</span></div>`;
         }).join('');
         
         const badgeContainer = document.getElementById('revealed-badges');
