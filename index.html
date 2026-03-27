@@ -553,7 +553,6 @@
     }
 
     function updateState(updates) {
-        // ADDED RETURN: This fixes the progression bug by returning the promise so .then() works
         return update(ref(db, `rooms/${roomId}/state`), updates);
     }
 
@@ -683,6 +682,9 @@
         }
 
         if (state.phase === 'playing') {
+            if (isNewPhase) {
+                pendingVoteFruit = null; // Clear local vote selection on new turn start to allow fresh voting
+            }
             document.getElementById('top-scoreboard').classList.add('hidden');
             document.getElementById('emojiVaultDisplay').classList.add('hidden'); 
             status.classList.add('hidden'); 
@@ -845,7 +847,8 @@
             const pColor = getUserColorByName(pData.name);
             
             const currentTurnId = (gameState.turnOrder && gameState.turnOrder.length > gameState.turnIndex) ? gameState.turnOrder[gameState.turnIndex] : null;
-            const isActiveTarget = pid === currentTurnId && gameState.phase !== 'countdown' && gameState.phase !== 'turnTransition' && gameState.phase !== 'readingResults';
+            // Updated to retain the glowing target indicator during the score update phase
+            const isActiveTarget = pid === currentTurnId && (gameState.phase === 'playing' || gameState.phase === 'readingResults');
             const hasVoted = gameState.votes && gameState.votes[pid];
             
             let glowClass = isActiveTarget ? 'active-target-glow' : (hasVoted ? 'voted-glow' : '');
