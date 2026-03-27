@@ -56,7 +56,8 @@
             font-family: inherit;
         }
         
-        input:focus, textarea:focus { border-color: var(--accent); background: rgba(255, 255, 255, 0.18); transform: translateY(-2px); }
+        /* Removed translateY on focus so inputs do not jump upwards */
+        input:focus, textarea:focus { border-color: var(--accent); background: rgba(255, 255, 255, 0.18); }
         
         input::placeholder, textarea::placeholder { color: #ffffff; opacity: 1; font-weight: 600; }
 
@@ -86,10 +87,8 @@
         
         #view-game { flex: 1; display: flex; flex-direction: column; min-height: 0; }
         
-        /* Removed inner padding on the wrapper so UI sits perfectly aligned to the top */
         #view-game > .game-wrapper { flex: 1; display: flex; flex-direction: column; padding: 0; min-height: 0; }
 
-        /* Modified to push the board downwards a bit from the top header */
         .game-content-split {
             display: flex; flex-direction: column; flex: 1; gap: 16px; min-height: 0;
             margin-top: 3vh; 
@@ -99,13 +98,11 @@
             .game-content-split { flex-direction: row; gap: 24px; margin-top: 4vh; }
         }
 
-        /* Increased flex on mobile so the board gets more space, pushing it down to center visually */
         .board-section {
             flex: 1.3; position: relative; display: flex; align-items: center; justify-content: center;
             min-height: 300px; margin-top: 0; flex-shrink: 0;
         }
 
-        /* Decreased flex on mobile so chat doesn't push the board all the way up */
         .chat-section {
             display: flex; flex-direction: column; flex: 1; min-height: 220px; max-height: 45vh; flex-shrink: 0;
             background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(25px) saturate(120%); -webkit-backdrop-filter: blur(25px) saturate(120%);
@@ -144,7 +141,7 @@
         }
         
         .chat-reply-quote {
-            background: rgba(0,0,0,0.2); border-left: 3px solid var(--accent); padding: 4px 8px;
+            background: rgba(0,0,0,0.2); border-left: 3px solid; padding: 4px 8px;
             border-radius: 4px; margin-bottom: 4px; font-size: 11px; color: var(--text-muted); text-shadow: none;
         }
         .chat-system { 
@@ -306,7 +303,10 @@
                     <button id="btnSubmitVote" class="btn-accent" style="padding: 10px 20px; font-size:14px; width:auto; border-radius: 14px; display:none; flex-shrink:0;" onclick="submitVote()">VOTE</button>
                 </div>
                 
-                <div id="target-message" class="hidden" style="color:var(--primary); font-weight:bold; font-size:15px; margin-bottom: 6px;">🎯 You are the Target! Answer their questions.</div>
+                <!-- Target line color changed to match the blue score-badge -->
+                <div id="target-message" class="hidden" style="color:var(--accent); font-weight:bold; font-size:15px; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    🎯 You Are The Target! Your Fruit: ❓
+                </div>
 
                 <div id="top-scoreboard" class="hidden"></div>
             </div>
@@ -322,17 +322,17 @@
                         <div id="center-countdown" class="countdown-view hidden">
                             <p style="font-size: 13px; font-weight: 700; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-bottom: 2px; text-transform: uppercase;">Your Fruit</p>
                             <div id="bigEmoji" style="font-size: 55px; line-height: 1.1; text-shadow: 0 5px 15px rgba(0,0,0,0.3);">❓</div>
-                            <div id="countdownDisplay" style="font-size: 18px; font-weight: 900; color: #66B2FF; text-shadow: 0 2px 4px rgba(0,0,0,0.9), 0 0 15px rgba(0,122,255,0.8); margin-top:5px;">5...</div>
+                            <div id="countdownDisplay" style="font-size: 18px; font-weight: 900; color: var(--accent); text-shadow: 0 2px 4px rgba(0,0,0,0.9), 0 0 15px rgba(0,122,255,0.8); margin-top:5px;">5...</div>
                         </div>
 
                         <div id="center-transition" class="countdown-view hidden">
                             <p style="font-size: 13px; font-weight: 700; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-bottom: 5px; text-transform: uppercase;">Next Turn</p>
-                            <div id="transitionPlayerName" style="font-size: 26px; font-weight: 900; color: #66B2FF; text-shadow: 0 2px 4px rgba(0,0,0,0.9), 0 0 15px rgba(0,122,255,0.8); text-transform: uppercase;">Player</div>
+                            <div id="transitionPlayerName" style="font-size: 26px; font-weight: 900; color: var(--accent); text-shadow: 0 2px 4px rgba(0,0,0,0.9), 0 0 15px rgba(0,122,255,0.8); text-transform: uppercase;">Player</div>
                         </div>
 
                         <div id="center-playing" class="countdown-view hidden">
                             <p style="font-size: 13px; font-weight: 700; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-bottom: 5px; text-transform: uppercase;">Current Target</p>
-                            <div id="playingTargetName" style="font-size: 26px; font-weight: 900; color: #66B2FF; text-shadow: 0 2px 4px rgba(0,0,0,0.9), 0 0 15px rgba(0,122,255,0.8); text-transform: uppercase;">Name</div>
+                            <div id="playingTargetName" style="font-size: 26px; font-weight: 900; color: var(--accent); text-shadow: 0 2px 4px rgba(0,0,0,0.9), 0 0 15px rgba(0,122,255,0.8); text-transform: uppercase;">Name</div>
                         </div>
 
                         <div id="center-results" class="countdown-view hidden">
@@ -347,9 +347,9 @@
                     <div id="center-chat" class="chat-scroll"></div>
                     
                     <div class="chat-input-area">
-                        <div id="reply-indicator" class="hidden" style="background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); padding: 5px 10px; margin-bottom: 8px; border-radius: 6px; display:flex; justify-content:space-between; align-items:center; font-size: 11px; text-shadow: none;">
+                        <div id="reply-indicator" class="hidden" style="background: rgba(0,0,0,0.3); padding: 5px 10px; margin-bottom: 8px; border-radius: 6px; display:flex; justify-content:space-between; align-items:center; font-size: 11px; text-shadow: none;">
                             <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:85%;">
-                                <b id="reply-user" style="color:var(--accent);"></b><br>
+                                <b id="reply-user"></b><br>
                                 <span id="reply-text" style="color:#ffffff;"></span>
                             </div>
                             <button onclick="clearReply()" style="background:none; border:none; color:white; width:auto; padding:0; font-size:18px; text-shadow:none;">×</button>
@@ -396,7 +396,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Setup Room URL safely for blob/iframe environments
     let roomId = new URLSearchParams(window.location.search).get('room');
     if (!roomId) {
         roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -481,29 +480,25 @@
         myName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
         playSfx(sfx.pop); if(!musicPlaying) toggleMusic();
         
-        // Generate User ID
         myKey = 'user_' + Math.random().toString(36).substr(2, 9);
         
-        // Construct shareable URL safely for display
         let displayUrl = window.location.href;
         try {
             const url = new URL(window.location.href);
             url.searchParams.set('room', roomId);
             displayUrl = url.href;
-            if (displayUrl.startsWith('blob:')) throw new Error('blob environment'); // Trigger catch for blob environments
+            if (displayUrl.startsWith('blob:')) throw new Error('blob environment'); 
         } catch(e) {
-            displayUrl = `https://play-iogame.com/?room=${roomId}`; // Fallback fake URL so UI stays clean in sandbox
+            displayUrl = `https://play-iogame.com/?room=${roomId}`; 
         }
         document.getElementById('lobbyLinkInput').value = displayUrl;
         
         const playerRef = ref(db, `rooms/${roomId}/players/${myKey}`);
         
-        // Setup OnDisconnect to strictly remove the player node immediately when leaving
         onDisconnect(playerRef).remove().then(() => {
             set(playerRef, { name: myName, joinedAt: Date.now() });
         });
 
-        // Listen for Realtime Players Sync
         onValue(ref(db, `rooms/${roomId}/players`), (snap) => {
             globalPlayers = snap.val() || {};
             const pKeys = Object.keys(globalPlayers);
@@ -515,16 +510,12 @@
             
             renderLobby();
             if(gameState.phase !== 'login' && gameState.phase !== 'lobby') {
-                renderBoardNodes(false); // Update nodes immediately dynamically mapping to current players
+                renderBoardNodes(false); 
             }
             
-            // Recheck votes if a player drops during active turn
-            if (gameState.phase === 'playing' && amIHost) {
-                checkTurnResolution();
-            }
+            if (gameState.phase === 'playing' && amIHost) checkTurnResolution();
         });
 
-        // Listen for Realtime State Sync
         onValue(ref(db, `rooms/${roomId}/state`), (snap) => {
             const s = snap.val();
             if (s) {
@@ -541,14 +532,10 @@
                 };
                 handleGameState(gameState);
                 
-                // Host automatically checks for turn completion when state updates
-                if (amIHost && gameState.phase === 'playing') {
-                    checkTurnResolution();
-                }
+                if (amIHost && gameState.phase === 'playing') checkTurnResolution();
             }
         });
 
-        // Listen for Realtime Chat Sync
         onValue(ref(db, `rooms/${roomId}/chat`), (snap) => {
             const chats = snap.val() || {};
             renderChat(Object.values(chats));
@@ -645,7 +632,13 @@
                 const pColor = getUserColorByName(msg.u);
                 const align = (msg.u === myName) ? 'margin-left: auto; border-bottom-right-radius: 4px;' : 'margin-right: auto; border-bottom-left-radius: 4px;';
                 const bgStyle = `background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.2); border-left: 4px solid ${pColor};`;
-                let quoteHtml = msg.replyTo ? `<div class="chat-reply-quote"><b>${msg.replyTo.u}</b>: ${msg.replyTo.m}</div>` : '';
+                
+                let quoteHtml = '';
+                if (msg.replyTo) {
+                    const repCol = getUserColorByName(msg.replyTo.u);
+                    quoteHtml = `<div class="chat-reply-quote" style="border-left-color: ${repCol};"><b style="color: ${repCol};">${msg.replyTo.u}</b>: ${msg.replyTo.m}</div>`;
+                }
+                
                 chatBox.innerHTML += `<div class="chat-msg" style="${align} ${bgStyle}" data-u="${msg.u}" data-m="${msg.m}">${quoteHtml}<b style="color: ${pColor}; font-size: 11px;">${msg.u}</b><br><span style="color: var(--text-main);">${msg.m}</span></div>`;
             }
         });
@@ -687,9 +680,7 @@
         }
 
         if (state.phase === 'playing') {
-            if (isNewPhase) {
-                pendingVoteFruit = null; // Clear local vote selection on new turn start to allow fresh voting
-            }
+            if (isNewPhase) pendingVoteFruit = null; 
             document.getElementById('top-scoreboard').classList.add('hidden');
             document.getElementById('emojiVaultDisplay').classList.add('hidden'); 
             status.classList.add('hidden'); 
@@ -750,8 +741,17 @@
         const targetMsg = document.getElementById('target-message'), votingHeader = document.getElementById('voting-header');
         const targetId = gameState.turnOrder[gameState.turnIndex];
         
-        if (myKey === targetId) { votingHeader.classList.add('hidden'); targetMsg.classList.remove('hidden'); return; } 
-        else { votingHeader.classList.remove('hidden'); targetMsg.classList.add('hidden'); }
+        if (myKey === targetId) { 
+            const myFruit = (gameState.playerItems && gameState.playerItems[myKey]) ? gameState.playerItems[myKey].e : '❓';
+            targetMsg.innerHTML = `🎯 You Are The Target! Your Fruit: <span style="font-size:1.4em; filter:drop-shadow(0 2px 2px rgba(0,0,0,0.4));">${myFruit}</span>`;
+            votingHeader.classList.add('hidden'); 
+            targetMsg.classList.remove('hidden'); 
+            return; 
+        } 
+        else { 
+            votingHeader.classList.remove('hidden'); 
+            targetMsg.classList.add('hidden'); 
+        }
 
         const hasVoted = gameState.votes && gameState.votes[myKey];
         if(hasVoted) { container.innerHTML = `<span style="font-weight:bold; color:var(--success); font-size: 14px;">✅ Locked: ${gameState.votes[myKey]}</span>`; btnSubmit.style.display = 'none'; return; }
@@ -781,7 +781,7 @@
         if (activeVotes.length >= requiredVotes && requiredVotes > 0) {
             const targetFruit = s.playerItems[targetId] ? s.playerItems[targetId].e : '❓';
 
-            gameState.phase = 'readingResults'; // local prevention of double triggers
+            gameState.phase = 'readingResults'; 
             updateState({ phase: 'readingResults', lastTargetFruit: targetFruit });
             
             let correct = [];
@@ -803,7 +803,6 @@
             setTimeout(() => {
                 let nextIndex = s.turnIndex + 1;
                 
-                // Skip any target who disconnected entirely during the game
                 while (nextIndex < s.turnOrder.length && !globalPlayers[s.turnOrder[nextIndex]]) {
                     nextIndex++;
                 }
@@ -811,7 +810,6 @@
                 if (nextIndex >= s.turnOrder.length) {
                     updateState({ phase: 'finished' });
                 } else {
-                    // Skip the transition phase entirely and jump straight into the next turn
                     updateState({ turnIndex: nextIndex }).then(() => {
                         startTurn();
                     });
@@ -922,8 +920,17 @@
 
     function setReply(user, msgText) {
         playSfx(sfx.pop); activeReply = { u: user, m: msgText };
-        document.getElementById('reply-user').innerText = `Replying to ${user}`; document.getElementById('reply-text').innerText = msgText;
-        document.getElementById('reply-indicator').classList.remove('hidden'); document.getElementById('chatInput').focus();
+        const uColor = getUserColorByName(user);
+        
+        document.getElementById('reply-user').innerText = `Replying to ${user}`; 
+        document.getElementById('reply-user').style.color = uColor;
+        document.getElementById('reply-text').innerText = msgText;
+        
+        const indicator = document.getElementById('reply-indicator');
+        indicator.style.borderLeft = `3px solid ${uColor}`;
+        indicator.classList.remove('hidden'); 
+        
+        document.getElementById('chatInput').focus();
     }
     
     window.clearReply = function() { playSfx(sfx.pop); activeReply = null; document.getElementById('reply-indicator').classList.add('hidden'); }
