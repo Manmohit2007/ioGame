@@ -436,6 +436,17 @@
         }
     }
     
+    // Auto-fill previous name to prevent user confusion after a reload
+    const storedSessionData = sessionStorage.getItem(`iogame_user_${roomId}`);
+    if (storedSessionData) {
+        try {
+            const parsedSession = JSON.parse(storedSessionData);
+            if (parsedSession && parsedSession.name) {
+                document.getElementById('userName').value = parsedSession.name;
+            }
+        } catch(e) {}
+    }
+
     const items = [ {e:"🍎", n:"Apple"}, {e:"🥭", n:"Mango"}, {e:"🍉", n:"Watermelon"}, {e:"🍇", n:"Grapes"}, {e:"🍓", n:"Strawberry"}, {e:"🍊", n:"Orange"} ];
     document.getElementById('emojiVaultDisplay').innerHTML = items.map(i => `<span>${i.e}</span>`).join('');
     document.getElementById('lobbyEmojiDisplay').innerHTML = items.map(i => `<span>${i.e}</span>`).join('');
@@ -484,6 +495,7 @@
 
     window.leaveRoom = function() { 
         playSfx(sfx.pop); 
+        sessionStorage.removeItem(`iogame_user_${roomId}`);
         if (myKey) {
             remove(ref(db, `rooms/${roomId}/players/${myKey}`)).then(() => window.location.reload());
         } else {
@@ -508,7 +520,23 @@
         myName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
         playSfx(sfx.pop); if(!musicPlaying) toggleMusic();
         
-        myKey = 'user_' + Math.random().toString(36).substr(2, 9);
+        // Recover previous identity to prevent ghost players on reconnect
+        let storedData = sessionStorage.getItem(`iogame_user_${roomId}`);
+        let joinedTime = Date.now();
+        if (storedData) {
+            try {
+                let parsed = JSON.parse(storedData);
+                if (parsed.name === myName) {
+                    myKey = parsed.key;
+                    joinedTime = parsed.joinedAt || Date.now();
+                } else {
+                    myKey = 'user_' + Math.random().toString(36).substr(2, 9);
+                }
+            } catch(e) { myKey = 'user_' + Math.random().toString(36).substr(2, 9); }
+        } else {
+            myKey = 'user_' + Math.random().toString(36).substr(2, 9);
+        }
+        sessionStorage.setItem(`iogame_user_${roomId}`, JSON.stringify({ key: myKey, name: myName, joinedAt: joinedTime }));
         
         let displayUrl = window.location.href;
         try {
@@ -521,11 +549,18 @@
         }
         document.getElementById('lobbyLinkInput').value = displayUrl;
         
-        const playerRef = ref(db, `rooms/${roomId}/players/${myKey}`);
-        
-        onDisconnect(playerRef).remove().then(() => {
-            set(playerRef, { name: myName, joinedAt: Date.now() });
-        });
+        // Robust automatic reconnection system
+        if (!window.connectionListenerAdded) {
+            window.connectionListenerAdded = true;
+            onValue(ref(db, ".info/connected"), (snap) => {
+                if (snap.val() === true && myKey) {
+                    const playerRef = ref(db, `rooms/${roomId}/players/${myKey}`);
+                    onDisconnect(playerRef).remove().then(() => {
+                        set(playerRef, { name: myName, joinedAt: joinedTime });
+                    });
+                }
+            });
+        }
 
         onValue(ref(db, `rooms/${roomId}/players`), (snap) => {
             globalPlayers = snap.val() || {};
