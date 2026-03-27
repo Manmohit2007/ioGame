@@ -421,7 +421,11 @@
         if(viewId === 'view-game') setTimeout(() => renderBoardNodes(false), 100); 
     }
     
-    window.leaveRoom = function() { playSfx(sfx.pop); window.location.href = window.location.pathname; }
+    window.leaveRoom = function() { 
+        playSfx(sfx.pop); 
+        const baseUrl = window.location.href.split('?')[0];
+        window.location.replace(baseUrl); 
+    }
 
     function createConfetti() {
         const colors = ['#FF3B30', '#34C759', '#007AFF', '#FFD700', '#FF9500', '#AF52DE'];
@@ -438,7 +442,7 @@
         if(!rawName) return;
         myName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
 
-        playSfx(sfx.pop); if(!musicPlaying) toggleMusic();
+        playSfx(sfx.pop); if(!musicPlaying) window.toggleMusic();
         
         try {
             const userCred = await signInAnonymously(auth);
@@ -446,7 +450,6 @@
             
             if (!currentRoom) {
                 currentRoom = Math.random().toString(36).substring(2, 8).toUpperCase();
-                window.history.pushState({}, '', '?room=' + currentRoom);
                 await set(ref(db, `rooms/${currentRoom}/state`), { phase: 'lobby' });
             }
             
@@ -456,12 +459,17 @@
             // Critical Firebase Cleanup - Automatically kicks out closed/disconnected users instantly
             onDisconnect(playerRef).remove();
 
-            document.getElementById('lobbyLinkInput').value = window.location.href;
+            const baseUrl = window.location.href.split('?')[0];
+            document.getElementById('lobbyLinkInput').value = `${baseUrl}?room=${currentRoom}`;
             switchView('view-lobby');
             setupFirebaseListeners();
             setupSwipeToReply();
         } catch(e) {
             console.error("Auth failed:", e);
+            const nameInput = document.getElementById('userName');
+            nameInput.value = "";
+            nameInput.placeholder = "Auth Error - Check Firebase settings!";
+            nameInput.style.borderColor = "var(--primary)";
         }
     }
 
@@ -475,7 +483,8 @@
             
             // Evict if I got removed
             if (myUid && !players[myUid] && window.localState.phase !== 'login') {
-                 window.location.href = window.location.pathname;
+                 const baseUrl = window.location.href.split('?')[0];
+                 window.location.replace(baseUrl);
                  return;
             }
 
@@ -499,7 +508,8 @@
                 handleGameState(window.localState);
                 if (amIHost && state.phase === 'playing') checkTurnResolution();
             } else if (window.localState.phase !== 'login') {
-                window.location.href = window.location.pathname;
+                const baseUrl = window.location.href.split('?')[0];
+                window.location.replace(baseUrl);
             }
         });
     }
