@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ioGame - Family Edition</title>
+    <title>ioGame</title>
     <style>
         :root {
             --primary: #FF3B30; --success: #34C759; --accent: #007AFF;
@@ -57,15 +57,16 @@
         .subtitle { font-size: 15px; font-weight: 500; color: var(--text-muted); text-align: center; margin-bottom: 25px; }
         @media (min-width: 768px) { h1 { font-size: 52px; } .subtitle { font-size: 18px; } }
         
-        input { 
+        input, textarea { 
             width: 100%; background: rgba(150, 150, 150, 0.15); border: 1.5px solid transparent; 
             padding: 16px; border-radius: 16px; color: #fff; outline: none; text-shadow: none;
             font-size: 16px; font-weight: 500; margin-bottom: 12px; transition: 0.3s ease; 
+            font-family: inherit;
         }
-        @media (prefers-color-scheme: light) { input { color: #000; } }
-        input:focus { border-color: var(--accent); background: rgba(150, 150, 150, 0.25); transform: translateY(-2px); }
-        input::placeholder { color: rgba(255, 255, 255, 0.8); }
-        @media (prefers-color-scheme: light) { input::placeholder { color: rgba(0, 0, 0, 0.5); } }
+        @media (prefers-color-scheme: light) { input, textarea { color: #000; } }
+        input:focus, textarea:focus { border-color: var(--accent); background: rgba(150, 150, 150, 0.25); transform: translateY(-2px); }
+        input::placeholder, textarea::placeholder { color: rgba(255, 255, 255, 0.8); }
+        @media (prefers-color-scheme: light) { input::placeholder, textarea::placeholder { color: rgba(0, 0, 0, 0.5); } }
         
         button { 
             width: 100%; padding: 16px; border-radius: 16px; border: none; font-weight: 700; font-size: 16px; 
@@ -90,37 +91,51 @@
             animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         
-        #view-game { flex: 1; display: flex; flex-direction: column; }
-        #view-game > .glass-card { flex: 1; display: flex; flex-direction: column; padding: 15px; }
+        #view-game { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+        #view-game > .glass-card { flex: 1; display: flex; flex-direction: column; padding: 15px; min-height: 0; }
         @media (min-width: 768px) { #view-game > .glass-card { padding: 24px; } }
 
-        .game-content-split { display: flex; flex-direction: column; flex: 1; gap: 12px; }
-        @media (min-width: 768px) { .game-content-split { flex-direction: row; gap: 20px; } }
+        .game-content-split {
+            display: flex; flex-direction: column; flex: 1; gap: 12px; min-height: 0;
+        }
+
+        @media (min-width: 768px) {
+            .game-content-split { flex-direction: row; gap: 20px; }
+        }
 
         .board-section {
-            flex: 1; position: relative; display: flex; align-items: center; justify-content: center; min-height: 320px; 
+            flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
+            min-height: 250px; 
         }
-        @media (min-width: 768px) { .board-section { flex: 1.5; min-height: 400px; } }
+        @media (min-width: 768px) { .board-section { flex: 1.5; min-height: 0; } }
         @media (min-width: 1024px) { .board-section { flex: 2; } }
 
         .chat-section {
-            display: flex; flex-direction: column; min-height: 300px; 
+            display: flex; flex-direction: column; flex: 1; min-height: 200px; max-height: 40vh;
             background: rgba(0,0,0,0.15); border-radius: 20px; border: 1px solid var(--glass-border);
             overflow: hidden; flex-shrink: 0;
         }
-        @media (min-width: 768px) { .chat-section { width: 320px; height: 100%; min-height: auto; } }
-        @media (min-width: 1024px) { .chat-section { width: 380px; } }
+        @media (min-width: 768px) { 
+            .chat-section { width: 320px; height: 100%; max-height: none; flex: none; min-height: 0; } 
+        }
+        @media (min-width: 1024px) { 
+            .chat-section { width: 380px; } 
+        }
 
         .chat-scroll {
             flex: 1; padding: 15px; overflow-y: auto; scroll-behavior: smooth;
-            display: flex; flex-direction: column; gap: 8px; scrollbar-width: none;
+            display: flex; flex-direction: column; gap: 8px; min-height: 0;
+            scrollbar-width: thin; scrollbar-color: var(--glass-border) transparent;
         }
-        .chat-scroll::-webkit-scrollbar { display: none; }
+        .chat-scroll::-webkit-scrollbar { width: 6px; }
+        .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+        .chat-scroll::-webkit-scrollbar-thumb { background-color: var(--glass-border); border-radius: 10px; }
 
         .chat-msg { 
             padding: 8px 12px; font-size: 13px; width: fit-content; max-width: 90%; 
             animation: slideUp 0.3s ease; line-height: 1.3; backdrop-filter: blur(10px);
             border-radius: 16px; touch-action: pan-y; will-change: transform; transition: transform 0.2s;
+            word-break: break-word;
         }
         @media (hover: hover) {
             .chat-msg:not(.chat-system):hover { transform: translateX(3px); cursor: grab; }
@@ -136,9 +151,12 @@
             background: transparent !important; border: none !important; font-style: italic; text-align: center;
         }
 
-        .chat-input-area { padding: 12px; background: rgba(0,0,0,0.2); border-top: 1px solid var(--glass-border); }
-        .chat-input-area input { margin-bottom: 0; padding: 12px; font-size: 14px; border-radius: 12px; }
-        .chat-input-area button { padding: 12px 18px; font-size: 14px; border-radius: 12px; }
+        .chat-input-area {
+            padding: 12px; background: rgba(0,0,0,0.2); border-top: 1px solid var(--glass-border);
+        }
+        .chat-input-area input, .chat-input-area textarea { margin-bottom: 0; padding: 12px; font-size: 14px; border-radius: 12px; }
+        .chat-input-area textarea { height: 60px; min-height: 60px; max-height: 60px; resize: none; overflow-y: auto; line-height: 1.4; scrollbar-width: thin; }
+        .chat-input-area button { padding: 12px 18px; font-size: 14px; border-radius: 12px; height: 60px; }
 
         #status-container { text-align: center; min-height: 40px; margin-bottom: 8px; }
         .fruit-btn {
@@ -219,24 +237,26 @@
     <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3" type="audio/mpeg">
 </audio>
 
-<div class="music-toggle" onclick="toggleMusic()" id="musicBtn">🎵</div>
+<div class="music-toggle" onclick="window.toggleMusic()" id="musicBtn">🎵</div>
 
 <div class="app-container">
+    <!-- VIEW: LOGIN -->
     <div id="view-login" class="view-centered" style="margin-top: 20vh;">
         <h1>ioGame</h1>
         <div class="subtitle">Family Game Night 🎲</div>
         <div class="glass-card">
             <input type="text" id="userName" placeholder="Enter Your Nickname" maxlength="12">
-            <button class="btn-primary" onclick="joinGame()">Enter Lobby</button>
+            <button class="btn-primary" onclick="window.joinGame()">Enter Lobby</button>
         </div>
     </div>
 
+    <!-- VIEW: LOBBY -->
     <div id="view-lobby" class="view-centered-wide hidden" style="margin-top: 10vh;">
         <div class="glass-card" style="margin-bottom: 15px;">
             <p style="font-size: 14px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; text-align: center;">🔗 Invite Friends & Family</p>
             <div class="link-display-container">
                 <input type="text" id="lobbyLinkInput" readonly value="">
-                <button class="btn-accent" style="width: auto; padding: 0 20px; font-size: 14px;" onclick="copyInviteLink(this)">Copy</button>
+                <button class="btn-accent" style="width: auto; padding: 0 20px; font-size: 14px;" onclick="window.copyInviteLink(this)">Copy</button>
             </div>
         </div>
         
@@ -245,11 +265,12 @@
             <h2 id="lobbyStatusText" style="font-size: 18px; margin-bottom: 20px; text-align: center;">Waiting in Lobby...</h2>
             <div class="player-grid" id="lobbyPlayers"></div>
             
-            <button id="btnStartGame" class="btn-disabled" onclick="hostStartGame()" disabled>Waiting for Host...</button>
-            <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room</button>
+            <button id="btnStartGame" class="btn-disabled" onclick="window.hostStartGame()" style="display:none;">Start Game 🔒</button>
+            <button class="btn-danger" style="margin-top: 12px;" onclick="window.leaveRoom()">Leave Room</button>
         </div>
     </div>
 
+    <!-- VIEW: IN-GAME -->
     <div id="view-game" class="hidden">
         <div class="glass-card">
             
@@ -258,7 +279,7 @@
                 
                 <div id="voting-header" class="hidden" style="display:flex; align-items:center; justify-content:center; gap:8px;">
                     <div id="voting-fruits" style="display:flex; gap:6px; flex-wrap:nowrap;"></div>
-                    <button id="btnSubmitVote" class="btn-accent" style="padding: 10px 14px; font-size:12px; width:auto; border-radius: 12px; display:none; flex-shrink:0;" onclick="submitVote()">VOTE</button>
+                    <button id="btnSubmitVote" class="btn-accent" style="padding: 10px 14px; font-size:12px; width:auto; border-radius: 12px; display:none; flex-shrink:0;" onclick="window.submitVote()">VOTE</button>
                 </div>
                 
                 <div id="target-message" class="hidden" style="color:var(--primary); font-weight:bold; font-size:15px;">🎯 You are the Target! Answer their questions.</div>
@@ -299,12 +320,12 @@
                                 <b id="reply-user" style="color:var(--accent);"></b><br>
                                 <span id="reply-text" style="color:#aaa;"></span>
                             </div>
-                            <button onclick="clearReply()" style="background:none; border:none; color:white; width:auto; padding:0; font-size:18px; text-shadow:none;">×</button>
+                            <button onclick="window.clearReply()" style="background:none; border:none; color:white; width:auto; padding:0; font-size:18px; text-shadow:none;">×</button>
                         </div>
 
                         <div style="display: flex; gap: 8px;">
-                            <input type="text" id="chatInput" placeholder="Message..." autocomplete="off">
-                            <button class="btn-primary" style="width: auto;" onclick="sendChatMessage()">Send</button>
+                            <textarea id="chatInput" placeholder="Message..." autocomplete="off"></textarea>
+                            <button class="btn-primary" style="width: auto;" onclick="window.sendChatMessage()">Send</button>
                         </div>
                     </div>
                 </div>
@@ -316,8 +337,8 @@
                 <h2 id="resultText" style="margin-bottom: 20px; font-size: 24px; font-weight: 800; line-height: 1.2;"></h2>
                 
                 <div id="host-controls" class="hidden">
-                    <button id="btnPlayAgain" class="btn-primary" onclick="hostStartGame()">Play Again 🚀</button>
-                    <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room</button>
+                    <button id="btnPlayAgain" class="btn-primary" onclick="window.hostStartGame()">Play Again 🚀</button>
+                    <button class="btn-danger" style="margin-top: 12px;" onclick="window.leaveRoom()">Leave Room</button>
                 </div>
                 <div id="non-host-message" class="hidden" style="color:var(--text-muted); font-weight:bold;">Waiting for Host...</div>
             </div>
@@ -326,52 +347,30 @@
 </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+    import { getDatabase, ref, set, onValue, onDisconnect, remove, update, push } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
-    // Replaced hardcoded config with injected environment configuration variables to fix Auth error
-    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'default-iogame'; 
-
-    let user = null;
-    let myUid = null;
-    let isConnected = false;
-    let heartbeatInterval = null;
-    let playersUnsub = null;
-    let stateUnsub = null;
-
-    window.localDB = { state: { phase: 'lobby', chat: [], votes: {}, scores: {}, turnIndex: 0, turnOrder: [] } };
-    window.globalPlayers = {};
-    window.amIHost = false;
-    let hostUid = null;
-
-    // RULE 3 COMPLIANCE: Init Auth First & Wait via Custom Token properly
-    const initAuth = async () => {
-        try {
-            let credential;
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                credential = await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                credential = await signInAnonymously(auth);
-            }
-            user = credential.user;
-            myUid = user.uid;
-        } catch (error) {
-            console.error("Auth error:", error);
-        }
+    // Initialize Firebase exactly as provided
+    const firebaseConfig = {
+      apiKey: "AIzaSyAVREmzFgrnE_1NP9Ke-Ybtyn1S1Ka-HNk",
+      authDomain: "iogame-145c9.firebaseapp.com",
+      databaseURL: "https://iogame-145c9-default-rtdb.firebaseio.com",
+      projectId: "iogame-145c9",
+      storageBucket: "iogame-145c9.firebasestorage.app",
+      messagingSenderId: "1024963573565",
+      appId: "1:1024963573565:web:907f671f3fad2c56443754",
+      measurementId: "G-N1J57G3WS6"
     };
 
-    initAuth().then(() => {
-        onAuthStateChanged(auth, (u) => {
-            user = u;
-            if (u) myUid = u.uid;
-        });
-    });
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
 
+    // Global Logic State
+    window.globalPlayers = {};
+    window.localState = { phase: 'login', chat: {}, votes: {}, scores: {}, turnIndex: 0, turnOrder: [] };
+    
     const items = [ {e:"🍎", n:"Apple"}, {e:"🥭", n:"Mango"}, {e:"🍉", n:"Watermelon"}, {e:"🍇", n:"Grapes"}, {e:"🍓", n:"Strawberry"}, {e:"🍊", n:"Orange"} ];
     document.getElementById('emojiVaultDisplay').innerText = items.map(i => i.e).join(' ');
     document.getElementById('lobbyEmojiDisplay').innerText = items.map(i => i.e).join(' ');
@@ -400,7 +399,8 @@
         musicPlaying = !musicPlaying;
     }
 
-    let myName, lastPhase = '', lastChatCount = 0, pendingVoteFruit = null, activeReply = null; 
+    let myUid, myName, currentRoom = new URLSearchParams(window.location.search).get('room');
+    let amIHost = false, hostId = null, lastPhase = '', lastChatCount = 0, pendingVoteFruit = null, activeReply = null; 
 
     function getUserColorByName(name) {
         const keys = Object.keys(window.globalPlayers);
@@ -418,8 +418,10 @@
     function switchView(viewId) {
         ['view-login', 'view-lobby', 'view-game'].forEach(id => document.getElementById(id).classList.add('hidden'));
         document.getElementById(viewId).classList.remove('hidden');
-        if(viewId === 'view-game') setTimeout(() => window.renderBoardNodes(false), 100); 
+        if(viewId === 'view-game') setTimeout(() => renderBoardNodes(false), 100); 
     }
+    
+    window.leaveRoom = function() { playSfx(sfx.pop); window.location.href = window.location.pathname; }
 
     function createConfetti() {
         const colors = ['#FF3B30', '#34C759', '#007AFF', '#FFD700', '#FF9500', '#AF52DE'];
@@ -431,175 +433,153 @@
         }
     }
 
-    // FIREBASE SYNC IMPLEMENTATION
-    
-    // Core game state mutator
-    window.updateState = async function(newState) { 
-        if (!user || !isConnected) return;
-        const stateRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'state', 'main');
-        try {
-            await setDoc(stateRef, newState, { merge: true });
-        } catch(e) { console.error("Error updating state", e); }
-    }
-
-    function determineHost(playersData) {
-        const sorted = Object.entries(playersData).sort((a, b) => a[1].joinedAt - b[1].joinedAt);
-        if (sorted.length > 0) {
-            hostUid = sorted[0][0];
-            window.amIHost = (hostUid === myUid);
-        } else {
-            window.amIHost = false;
-        }
-    }
-
-    function setupListeners() {
-        if (!user) return;
-        
-        // Track Players collection
-        playersUnsub = onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'players'), (snap) => {
-            const playersData = {};
-            snap.forEach(document => { playersData[document.id] = document.data(); });
-            window.globalPlayers = playersData;
-            determineHost(playersData);
-
-            if (window.localDB.state.phase === 'lobby') renderLobby();
-            window.renderBoardNodes(false); 
-        }, (error) => console.error(error));
-
-        // Track Game State Document
-        stateUnsub = onSnapshot(doc(db, 'artifacts', APP_ID, 'public', 'data', 'state', 'main'), (snap) => {
-            if (snap.exists()) {
-                const newState = snap.data();
-                const oldVotesLength = Object.keys(window.localDB.state.votes || {}).length;
-                const newVotesLength = Object.keys(newState.votes || {}).length;
-
-                window.localDB.state = newState;
-                handleGameState(newState);
-
-                // Host determines game logic advances
-                if (window.amIHost && newVotesLength > oldVotesLength) checkTurnResolution();
-            }
-        }, (error) => console.error(error));
-    }
-
-    function startHeartbeat() {
-        heartbeatInterval = setInterval(async () => {
-            if (!myUid || !isConnected || !user) return;
-            try {
-                const playerRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'players', myUid);
-                await updateDoc(playerRef, { lastActive: Date.now() });
-
-                // Host cleans up abruptly disconnected players
-                if (window.amIHost) {
-                    const now = Date.now();
-                    Object.keys(window.globalPlayers).forEach(async (pid) => {
-                        if (pid !== myUid && window.globalPlayers[pid].lastActive && (now - window.globalPlayers[pid].lastActive > 12000)) {
-                            await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'players', pid));
-                        }
-                    });
-                }
-            } catch(e){}
-        }, 4000);
-    }
-
-    // Departure logic for swiping away / leaving
-    window.leaveGame = async function() {
-        if (!myUid || !isConnected) return;
-        isConnected = false;
-        try {
-            await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'players', myUid));
-        } catch(e) {}
-    };
-    
-    window.leaveRoom = async function() {
-        playSfx(sfx.pop);
-        await window.leaveGame();
-        window.location.reload();
-    }
-
-    window.addEventListener('beforeunload', window.leaveGame);
-    window.addEventListener('pagehide', window.leaveGame);
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') window.leaveGame(); });
-
-
     window.joinGame = async function() {
         let rawName = document.getElementById('userName').value.trim(); 
         if(!rawName) return;
-        
-        if (!user) await initAuth();
-        if (!user) return; // fail guard
-
         myName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
-        playSfx(sfx.pop); if(!musicPlaying) window.toggleMusic();
 
-        // Register Player in Firestore
-        const playerRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'players', myUid);
-        await setDoc(playerRef, {
-            name: myName,
-            joinedAt: Date.now(),
-            lastActive: Date.now()
+        playSfx(sfx.pop); if(!musicPlaying) toggleMusic();
+        
+        try {
+            const userCred = await signInAnonymously(auth);
+            myUid = userCred.user.uid;
+            
+            if (!currentRoom) {
+                currentRoom = Math.random().toString(36).substring(2, 8).toUpperCase();
+                window.history.pushState({}, '', '?room=' + currentRoom);
+                await set(ref(db, `rooms/${currentRoom}/state`), { phase: 'lobby' });
+            }
+            
+            const playerRef = ref(db, `rooms/${currentRoom}/players/${myUid}`);
+            await set(playerRef, { name: myName });
+            
+            // Critical Firebase Cleanup - Automatically kicks out closed/disconnected users instantly
+            onDisconnect(playerRef).remove();
+
+            document.getElementById('lobbyLinkInput').value = window.location.href;
+            switchView('view-lobby');
+            setupFirebaseListeners();
+            setupSwipeToReply();
+        } catch(e) {
+            console.error("Auth failed:", e);
+        }
+    }
+
+    function setupFirebaseListeners() {
+        const playersRef = ref(db, `rooms/${currentRoom}/players`);
+        const stateRef = ref(db, `rooms/${currentRoom}/state`);
+
+        onValue(playersRef, (snapshot) => {
+            const players = snapshot.val() || {};
+            window.globalPlayers = players;
+            
+            // Evict if I got removed
+            if (myUid && !players[myUid] && window.localState.phase !== 'login') {
+                 window.location.href = window.location.pathname;
+                 return;
+            }
+
+            const pKeys = Object.keys(players).sort();
+            if(pKeys.length > 0) {
+                hostId = pKeys[0];
+                amIHost = (hostId === myUid);
+            }
+
+            if (window.localState.phase === 'lobby') renderLobby();
+            if (document.getElementById('zone-circular-board').offsetParent !== null) renderBoardNodes(false);
+            
+            // Check turn resolution (Host only, and if playing)
+            if (amIHost && window.localState.phase === 'playing') checkTurnResolution();
         });
 
-        isConnected = true;
-        setupListeners();
-        startHeartbeat();
+        onValue(stateRef, (snapshot) => {
+            const state = snapshot.val();
+            if(state) {
+                window.localState = state;
+                handleGameState(window.localState);
+                if (amIHost && state.phase === 'playing') checkTurnResolution();
+            } else if (window.localState.phase !== 'login') {
+                window.location.href = window.location.pathname;
+            }
+        });
+    }
 
-        // Boot system state if empty
-        const stateRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'state', 'main');
-        const stateSnap = await getDoc(stateRef);
-        if (!stateSnap.exists()) {
-            await setDoc(stateRef, { phase: 'lobby', chat: [], turnIndex: 0, turnOrder: [], votes: {}, scores: {} });
-        }
-
-        document.getElementById('lobbyLinkInput').value = window.location.href;
-        switchView('view-lobby'); 
-        window.setupSwipeToReply();
+    function updateFirebaseState(updates) {
+        if(!currentRoom) return;
+        update(ref(db, `rooms/${currentRoom}/state`), updates);
+    }
+    
+    function sendSystemMessage(msg) {
+        const chatRef = push(ref(db, `rooms/${currentRoom}/state/chat`));
+        set(chatRef, { u: 'System', m: msg });
     }
 
     function renderLobby() {
         const grid = document.getElementById('lobbyPlayers'); grid.innerHTML = "";
-        Object.keys(window.globalPlayers).forEach(id => grid.innerHTML += `<div class="p-badge">${window.globalPlayers[id].name} ${id===hostUid?'👑':''}</div>`);
         
-        const btnStart = document.getElementById('btnStartGame');
-        if (window.amIHost) {
-            document.getElementById('lobbyStatusText').innerText = "You are the Host! 👑";
-            btnStart.className = "btn-primary"; btnStart.innerText = "Start Game 🚀"; btnStart.disabled = false;
+        // Render current globalPlayers cleanly
+        Object.keys(window.globalPlayers).forEach(id => {
+            grid.innerHTML += `<div class="p-badge">${window.globalPlayers[id].name} ${id===hostId ? '👑' : ''}</div>`;
+        });
+        
+        document.getElementById('lobbyStatusText').innerText = amIHost ? "You are the Host! 👑" : "Waiting for Host to start...";
+        
+        const btn = document.getElementById('btnStartGame');
+        if (amIHost && Object.keys(window.globalPlayers).length > 1) {
+            btn.className = "btn-primary"; btn.innerText = "Start Game 🚀"; btn.disabled = false; btn.style.display = 'block';
+        } else if (amIHost) {
+             btn.className = "btn-disabled"; btn.innerText = "Need more players..."; btn.disabled = true; btn.style.display = 'block';
         } else {
-            document.getElementById('lobbyStatusText').innerText = "Waiting in Lobby...";
-            btnStart.className = "btn-disabled"; btnStart.innerText = "Waiting for Host..."; btnStart.disabled = true;
+             btn.style.display = 'none';
         }
     }
 
-    window.hostStartGame = async function() {
-        if (!window.amIHost) return;
+    window.hostStartGame = function() {
+        if(!amIHost) return;
         playSfx(sfx.start); pendingVoteFruit = null; window.clearReply();
+        
         const keys = Object.keys(window.globalPlayers);
         let shuffledItems = [...items].sort(() => 0.5 - Math.random());
         let playerItems = {}, initScores = {};
         keys.forEach((k, i) => { playerItems[k] = shuffledItems[i % shuffledItems.length]; initScores[k] = 0; });
         
-        await window.updateState({ phase: 'countdown', playerItems: playerItems, countdown: 5, chat: [{u: 'System', m: `🍎 Game started! Memorize your secret fruit.`}], votes: {}, scores: initScores, turnOrder: keys, turnIndex: 0 });
+        // Wipe old chat & state clean on new game
+        set(ref(db, `rooms/${currentRoom}/state`), {
+            phase: 'countdown', 
+            playerItems: playerItems, 
+            countdown: 5, 
+            votes: null, 
+            scores: initScores, 
+            turnOrder: keys, 
+            turnIndex: 0
+        });
+        sendSystemMessage(`🍎 Game started! Memorize your secret fruit.`);
 
         let timer = 5;
         let interval = setInterval(() => {
             timer--;
-            if (timer > 0) { playSfx(sfx.tick); window.updateState({ countdown: timer }); } 
-            else { clearInterval(interval); playSfx(sfx.pop); startTurn(); }
+            if (timer > 0) { 
+                updateFirebaseState({ countdown: timer }); 
+                playSfx(sfx.tick);
+            } 
+            else { 
+                clearInterval(interval); 
+                playSfx(sfx.pop); 
+                startTurn(); 
+            }
         }, 1000);
     }
 
     function startTurn() {
-        if (!window.amIHost) return;
-        const targetId = window.localDB.state.turnOrder[window.localDB.state.turnIndex];
-        pendingVoteFruit = null; 
-        
-        const msg = `🔴 Target Acquired: Guess ${window.globalPlayers[targetId]?.name || 'Someone'}'s fruit!`;
-        window.updateState({ phase: 'playing', votes: {}, chat: [...(window.localDB.state.chat || []), {u: 'System', m: msg}].slice(-50) });
+        if(!amIHost) return;
+        const targetId = window.localState.turnOrder[window.localState.turnIndex];
+        sendSystemMessage(`🔴 Target Acquired: Guess ${window.globalPlayers[targetId].name}'s fruit!`);
+        updateFirebaseState({ phase: 'playing', votes: null });
     }
 
     function handleGameState(state) {
         const isNewPhase = state.phase !== lastPhase;
-        switchView('view-game');
+        switchView(state.phase === 'lobby' ? 'view-lobby' : 'view-game');
         
         const status = document.getElementById('gameStatus');
         const chatBox = document.getElementById('center-chat');
@@ -608,7 +588,7 @@
         const splitView = document.getElementById('game-content-split');
         const resultView = document.getElementById('zone-result');
         
-        const chatValues = Object.values(state.chat || {});
+        const chatValues = state.chat ? Object.values(state.chat) : [];
         chatBox.innerHTML = "";
         chatValues.forEach(msg => {
             if (msg.u === 'System') { chatBox.innerHTML += `<div class="chat-msg chat-system">${msg.m}</div>`; } 
@@ -629,7 +609,7 @@
             lastChatCount = chatValues.length;
         }
 
-        if (state.phase !== 'finished') {
+        if (state.phase !== 'finished' && state.phase !== 'lobby') {
             splitView.classList.remove('hidden');
             resultView.classList.add('hidden');
             document.getElementById('emojiVaultDisplay').classList.remove('hidden');
@@ -643,15 +623,15 @@
             document.getElementById('center-countdown').classList.remove('hidden');
             if(state.playerItems && state.playerItems[myUid]) document.getElementById('bigEmoji').innerText = state.playerItems[myUid].e;
             document.getElementById('countdownDisplay').innerText = `Starts in ${state.countdown}...`;
-            window.renderBoardNodes(isNewPhase); 
+            renderBoardNodes(isNewPhase); 
         }
 
-        if (state.phase === 'playing') {
+        if (state.phase === 'playing' && state.turnOrder) {
             document.getElementById('emojiVaultDisplay').classList.add('hidden'); 
             status.classList.add('hidden'); 
             document.getElementById('center-playing').classList.remove('hidden');
             document.getElementById('playingTargetName').innerText = window.globalPlayers[state.turnOrder[state.turnIndex]]?.name || 'Player';
-            renderVotingUI(); window.renderBoardNodes(isNewPhase); 
+            renderVotingUI(); renderBoardNodes(isNewPhase); 
         }
 
         if (state.phase === 'readingResults') {
@@ -659,7 +639,7 @@
             status.classList.add('hidden'); votingHeader.classList.add('hidden');
             document.getElementById('center-playing').classList.remove('hidden');
             targetMessage.classList.remove('hidden'); targetMessage.innerText = "Turn Ended! Checking Scores...";
-            window.renderBoardNodes(isNewPhase); 
+            renderBoardNodes(isNewPhase); 
         }
 
         if (state.phase === 'turnTransition') {
@@ -667,7 +647,7 @@
             status.classList.add('hidden'); votingHeader.classList.add('hidden'); targetMessage.classList.add('hidden');
             document.getElementById('center-transition').classList.remove('hidden');
             document.getElementById('transitionPlayerName').innerText = state.nextTargetName;
-            window.renderBoardNodes(isNewPhase); 
+            renderBoardNodes(isNewPhase); 
         }
 
         if (state.phase === 'finished') {
@@ -676,14 +656,13 @@
             votingHeader.classList.add('hidden'); targetMessage.classList.add('hidden'); status.classList.add('hidden');
             
             const sortedPlayers = Object.keys(window.globalPlayers).sort((a, b) => (state.scores[b] || 0) - (state.scores[a] || 0));
-            if (sortedPlayers.length > 0) {
-                const winners = sortedPlayers.filter(p => (state.scores[p] || 0) === (state.scores[sortedPlayers[0]] || 0)).map(p => window.globalPlayers[p].name);
-                let chartHtml = `<div style="text-align:left; background:rgba(0,0,0,0.3); padding:15px; border-radius:16px; margin-bottom:20px; font-size:15px;">`;
-                sortedPlayers.forEach((p, i) => { chartHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;"><span><b>#${i+1}</b> ${window.globalPlayers[p].name}</span><span style="color:var(--accent); font-weight:bold;">${state.scores[p] || 0} pts</span></div>`; });
-                document.getElementById('resultText').innerHTML = `<div style="font-size: 38px; font-weight: 900; color: #FFD700; text-shadow: 0 0 25px rgba(255,215,0,0.6); margin-bottom: 5px;">${winners.join(' & ')}</div><div style="font-size: 18px; font-weight: 800; color: var(--success); letter-spacing: 2px; margin-bottom: 20px;">WINNER!</div>${chartHtml}</div>`;
-            }
+            const winners = sortedPlayers.filter(p => (state.scores[p] || 0) === (state.scores[sortedPlayers[0]] || 0)).map(p => window.globalPlayers[p].name);
+            let chartHtml = `<div style="text-align:left; background:rgba(0,0,0,0.3); padding:15px; border-radius:16px; margin-bottom:20px; font-size:15px;">`;
+            sortedPlayers.forEach((p, i) => { chartHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;"><span><b>#${i+1}</b> ${window.globalPlayers[p].name}</span><span style="color:var(--accent); font-weight:bold;">${state.scores[p] || 0} pts</span></div>`; });
             
-            if (window.amIHost) { document.getElementById('host-controls').classList.remove('hidden'); document.getElementById('non-host-message').classList.add('hidden'); }
+            document.getElementById('resultText').innerHTML = `<div style="font-size: 38px; font-weight: 900; color: #FFD700; text-shadow: 0 0 25px rgba(255,215,0,0.6); margin-bottom: 5px;">${winners.join(' & ')}</div><div style="font-size: 18px; font-weight: 800; color: var(--success); letter-spacing: 2px; margin-bottom: 20px;">WINNER!</div>${chartHtml}</div>`;
+            
+            if (amIHost) { document.getElementById('host-controls').classList.remove('hidden'); document.getElementById('non-host-message').classList.add('hidden'); }
             else { document.getElementById('host-controls').classList.add('hidden'); document.getElementById('non-host-message').classList.remove('hidden'); }
             
             if (lastPhase !== 'finished') { playSfx(sfx.win); playSfx(sfx.cheer); createConfetti(); }
@@ -696,78 +675,64 @@
     function renderVotingUI() {
         const container = document.getElementById('voting-fruits'), btnSubmit = document.getElementById('btnSubmitVote');
         const targetMsg = document.getElementById('target-message'), votingHeader = document.getElementById('voting-header');
-        const targetId = window.localDB.state.turnOrder[window.localDB.state.turnIndex];
+        const targetId = window.localState.turnOrder[window.localState.turnIndex];
         
         if (myUid === targetId) { votingHeader.classList.add('hidden'); targetMsg.classList.remove('hidden'); return; } 
         else { votingHeader.classList.remove('hidden'); targetMsg.classList.add('hidden'); }
 
-        const hasVoted = window.localDB.state.votes && window.localDB.state.votes[myUid];
-        if(hasVoted) { container.innerHTML = `<span style="font-weight:bold; color:var(--success); font-size: 14px;">✅ Locked: ${window.localDB.state.votes[myUid]}</span>`; btnSubmit.style.display = 'none'; return; }
+        const hasVoted = window.localState.votes && window.localState.votes[myUid];
+        if(hasVoted) { container.innerHTML = `<span style="font-weight:bold; color:var(--success); font-size: 14px;">✅ Locked: ${window.localState.votes[myUid]}</span>`; btnSubmit.style.display = 'none'; return; }
 
         container.innerHTML = items.map(i => `<div class="fruit-btn ${pendingVoteFruit === i.e ? 'active-vote' : ''}" onclick="window.selectVoteFruit('${i.e}')">${i.e}</div>`).join('');
         btnSubmit.style.display = pendingVoteFruit ? 'block' : 'none';
     }
 
-    window.selectVoteFruit = function(f) { if(window.localDB.state.votes && window.localDB.state.votes[myUid]) return; playSfx(sfx.pop); pendingVoteFruit = f; renderVotingUI(); }
+    window.selectVoteFruit = function(f) { if(window.localState.votes && window.localState.votes[myUid]) return; playSfx(sfx.pop); pendingVoteFruit = f; renderVotingUI(); }
     
-    window.submitVote = async function() {
-        if(!pendingVoteFruit || !user) return;
-        
-        // Optimistic UI lock
-        window.localDB.state.votes = window.localDB.state.votes || {};
-        window.localDB.state.votes[myUid] = pendingVoteFruit;
-        renderVotingUI();
-
-        const payload = { u: 'System', m: `${myName} locked in their vote! ✅` };
-        const stateRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'state', 'main');
-        try {
-            await setDoc(stateRef, {
-                votes: { [myUid]: pendingVoteFruit },
-                chat: [...(window.localDB.state.chat || []), payload].slice(-50)
-            }, { merge: true });
-        } catch(e) {}
+    window.submitVote = function() {
+        if(!pendingVoteFruit || !currentRoom) return;
+        const updates = {};
+        updates[`rooms/${currentRoom}/state/votes/${myUid}`] = pendingVoteFruit;
+        update(ref(db), updates);
+        sendSystemMessage(`${myName} locked in their vote! ✅`);
     }
 
     function checkTurnResolution() {
-        if (!window.amIHost || window.localDB.state.phase !== 'playing') return;
-        const targetId = window.localDB.state.turnOrder[window.localDB.state.turnIndex];
-        const targetFruit = window.localDB.state.playerItems[targetId].e;
+        if (window.localState.phase !== 'playing' || !amIHost) return;
         
-        // Active members counting check
-        const activeKeys = Object.keys(window.globalPlayers);
-        let votesReceived = Object.keys(window.localDB.state.votes || {}).length;
+        const targetId = window.localState.turnOrder[window.localState.turnIndex];
+        const numVotes = Object.keys(window.localState.votes || {}).length;
+        const activePlayers = Object.keys(window.globalPlayers).length;
         
-        // Everyone except target must vote
-        if(votesReceived >= activeKeys.length - 1) {
+        // Host calculates if everyone except target has voted
+        if(numVotes >= activePlayers - 1) {
+            updateFirebaseState({ phase: 'readingResults' });
+            
+            const targetFruit = window.localState.playerItems[targetId]?.e || '❓';
             let correct = [];
-            let newScores = { ...window.localDB.state.scores };
-
-            for(let [pid, vote] of Object.entries(window.localDB.state.votes || {})) {
-                if(vote === targetFruit) {
-                    newScores[pid] = (newScores[pid] || 0) + 10;
-                    if(window.globalPlayers[pid]) correct.push(window.globalPlayers[pid].name);
+            let newScores = { ...window.localState.scores };
+            
+            for(let [pid, vote] of Object.entries(window.localState.votes || {})) {
+                if(vote === targetFruit && window.globalPlayers[pid]) { 
+                    newScores[pid] = (newScores[pid] || 0) + 10; 
+                    correct.push(window.globalPlayers[pid].name); 
                 }
             }
-            const msg = `Target ${window.globalPlayers[targetId]?.name || 'Unknown'} had ${targetFruit}! ` + (correct.length > 0 ? `${correct.join(', ')} guessed correctly (+10)!` : `Nobody guessed correctly (0 pts)!`);
             
-            window.updateState({
-                phase: 'readingResults',
-                scores: newScores,
-                chat: [...(window.localDB.state.chat || []), {u: 'System', m: msg}].slice(-50)
-            });
+            updateFirebaseState({ scores: newScores });
+            sendSystemMessage(`Target ${window.globalPlayers[targetId]?.name || 'Player'} had ${targetFruit}! ` + (correct.length > 0 ? `${correct.join(', ')} guessed correctly (+10)!` : `Nobody guessed correctly (0 pts)!`));
             playSfx(sfx.alert);
             
             setTimeout(() => {
-                let nextTurnIndex = window.localDB.state.turnIndex + 1;
-                if(nextTurnIndex >= activeKeys.length) { 
-                    window.updateState({ phase: 'finished' });
-                }
-                else { 
-                    window.updateState({ 
+                let nextIndex = window.localState.turnIndex + 1;
+                if(nextIndex >= activePlayers) {
+                    updateFirebaseState({ phase: 'finished' });
+                } else { 
+                    updateFirebaseState({ 
                         phase: 'turnTransition', 
-                        nextTargetName: window.globalPlayers[window.localDB.state.turnOrder[nextTurnIndex]]?.name || 'Player',
-                        turnIndex: nextTurnIndex,
-                        votes: {} 
+                        nextTargetName: window.globalPlayers[window.localState.turnOrder[nextIndex]]?.name || 'Player',
+                        turnIndex: nextIndex,
+                        votes: null
                     }); 
                     setTimeout(() => startTurn(), 3000); 
                 }
@@ -775,15 +740,21 @@
         }
     }
 
-    window.renderBoardNodes = function(isNewPhase = false) {
+    function renderBoardNodes(isNewPhase = false) {
         const board = document.getElementById('zone-circular-board');
         if(!board || board.offsetParent === null) return; 
         
         const nodesContainer = document.getElementById('player-nodes-container');
-        const keys = Object.keys(window.globalPlayers);
-        if (keys.length === 0) { nodesContainer.innerHTML = ''; return; }
+        const keys = Object.keys(window.globalPlayers), N = keys.length, angleStep = (Math.PI * 2) / N, startAngle = (N === 2) ? Math.PI : -Math.PI / 2; 
 
-        const N = keys.length, angleStep = (Math.PI * 2) / N, startAngle = (N === 2) ? Math.PI : -Math.PI / 2; 
+        // CRITICAL FIX: Aggressive cleanup of ghost players disconnected from Firebase
+        const existingNodes = document.querySelectorAll('.player-node');
+        existingNodes.forEach(node => {
+            const pid = node.id.replace('node-', '');
+            if (!window.globalPlayers[pid]) {
+                node.remove(); // Safely remove missing players to prevent glitches
+            }
+        });
 
         const minDimension = Math.min(board.clientWidth, board.clientHeight);
         const orbRadius = window.innerWidth >= 1024 ? 110 : (window.innerWidth >= 768 ? 90 : 70);
@@ -792,45 +763,37 @@
 
         if (isNewPhase) nodesContainer.innerHTML = '';
 
-        // FIX FOR "GLITCH" - Remove disconnected players' DOM elements strictly
-        Array.from(nodesContainer.children).forEach(child => {
-            const id = child.id.replace('node-', '');
-            if (!window.globalPlayers[id]) child.remove();
-        });
-
         keys.forEach((pid, index) => {
             const angle = startAngle + (index * angleStep);
             const pData = window.globalPlayers[pid], pColor = getUserColorByName(pData.name);
-            const isActiveTarget = pid === (window.localDB.state.turnOrder ? window.localDB.state.turnOrder[window.localDB.state.turnIndex] : null) && window.localDB.state.phase !== 'countdown' && window.localDB.state.phase !== 'turnTransition';
-            const hasVoted = window.localDB.state.votes && window.localDB.state.votes[pid];
+            const isActiveTarget = pid === (window.localState.turnOrder ? window.localState.turnOrder[window.localState.turnIndex] : null) && window.localState.phase !== 'countdown' && window.localState.phase !== 'turnTransition';
+            const hasVoted = window.localState.votes && window.localState.votes[pid];
             
             let glowClass = isActiveTarget ? 'active-target-glow' : (hasVoted ? 'voted-glow' : '');
             let nodeEl = document.getElementById(`node-${pid}`);
             
             if (!nodeEl) { 
-                nodeEl = document.createElement('div'); 
-                nodeEl.id = `node-${pid}`; 
+                nodeEl = document.createElement('div'); nodeEl.id = `node-${pid}`; 
                 nodesContainer.appendChild(nodeEl); 
                 nodeEl.style.animation = 'popInNode 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; 
             }
 
             if (hasVoted && !nodeEl.classList.contains('voted-glow')) {
-                nodeEl.style.animation = 'none'; void nodeEl.offsetWidth; nodeEl.style.animation = 'votePopAnim 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; 
-                if (pid !== myUid) playSfx(sfx.vote); 
+                nodeEl.style.animation = 'none'; void nodeEl.offsetWidth; nodeEl.style.animation = 'votePopAnim 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; playSfx(sfx.vote); 
             }
 
-            nodeEl.className = `player-node ${glowClass} ${window.localDB.state.phase === 'countdown' ? 'node-blink' : ''}`;
+            nodeEl.className = `player-node ${glowClass} ${window.localState.phase === 'countdown' ? 'node-blink' : ''}`;
             nodeEl.style.left = `calc(50% + ${Math.cos(angle) * radius}px)`; nodeEl.style.top = `calc(50% + ${Math.sin(angle) * radius}px)`;
             nodeEl.style.borderColor = glowClass ? '' : 'var(--glass-border)';
-            nodeEl.innerHTML = `<div class="score-badge">${window.localDB.state.scores?.[pid] || 0}</div><div class="node-color" style="background: ${pColor};"></div><div class="node-name">${pData.name}</div>`;
+            nodeEl.innerHTML = `<div class="score-badge">${window.localState.scores[pid] || 0}</div><div class="node-color" style="background: ${pColor};"></div><div class="node-name">${pData.name}</div>`;
         });
     }
 
     window.addEventListener('resize', () => {
-        if(document.getElementById('zone-circular-board').offsetParent !== null) window.renderBoardNodes(false); 
+        if(document.getElementById('zone-circular-board').offsetParent !== null) renderBoardNodes(false); 
     });
 
-    window.setupSwipeToReply = function() {
+    function setupSwipeToReply() {
         const chatBox = document.getElementById('center-chat'); let startX = 0, swipedElem = null;
         const handleStart = (e, isTouch) => { const el = e.target.closest('.chat-msg'); if(!el || el.classList.contains('chat-system')) return; startX = isTouch ? e.touches[0].clientX : e.clientX; swipedElem = el; swipedElem.style.transition = 'none'; };
         const handleMove = (e, isTouch) => { if(!swipedElem) return; const diffX = (isTouch ? e.touches[0].clientX : e.clientX) - startX; if(diffX > 0 && diffX < 80) swipedElem.style.transform = `translateX(${diffX}px)`; };
@@ -840,24 +803,24 @@
         chatBox.addEventListener('mousedown', e => handleStart(e, false)); window.addEventListener('mousemove', e => handleMove(e, false)); window.addEventListener('mouseup', e => handleEnd(e, false));
     }
 
-    window.setReply = function(r_user, msgText) {
-        if(r_user === myName) return; playSfx(sfx.pop); activeReply = { u: r_user, m: msgText };
-        document.getElementById('reply-user').innerText = `Replying to ${r_user}`; document.getElementById('reply-text').innerText = msgText;
+    window.setReply = function(user, msgText) {
+        if(user === myName) return; playSfx(sfx.pop); activeReply = { u: user, m: msgText };
+        document.getElementById('reply-user').innerText = `Replying to ${user}`; document.getElementById('reply-text').innerText = msgText;
         document.getElementById('reply-indicator').classList.remove('hidden'); document.getElementById('chatInput').focus();
     }
+    
     window.clearReply = function() { playSfx(sfx.pop); activeReply = null; document.getElementById('reply-indicator').classList.add('hidden'); }
 
-    window.sendChatMessage = async function() {
-        const input = document.getElementById('chatInput'); if(!input.value.trim() || !user) return; playSfx(sfx.send); 
+    window.sendChatMessage = function() {
+        const input = document.getElementById('chatInput'); if(!input.value.trim() || !currentRoom) return; playSfx(sfx.send); 
         const payload = { u: myName, m: input.value.trim() }; if(activeReply) { payload.replyTo = activeReply; window.clearReply(); }
         
-        const stateRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'state', 'main');
-        try {
-            await setDoc(stateRef, { chat: [...(window.localDB.state.chat || []), payload].slice(-50) }, { merge: true });
-        } catch(e) {}
+        const chatRef = push(ref(db, `rooms/${currentRoom}/state/chat`));
+        set(chatRef, payload);
         input.value = "";
     }
-    document.getElementById("chatInput").addEventListener("keypress", function(e) { if (e.key === "Enter") { e.preventDefault(); window.sendChatMessage(); } });
+    
+    document.getElementById("chatInput").addEventListener("keypress", function(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); window.sendChatMessage(); } });
 </script>
 </body>
 </html>
