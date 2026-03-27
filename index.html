@@ -71,6 +71,9 @@
             input:focus, textarea:focus { background: rgba(255, 255, 255, 0.8); } 
         }
         
+        input::placeholder, textarea::placeholder { color: #ffffff; opacity: 1; font-weight: 600; }
+        @media (prefers-color-scheme: light) { input::placeholder, textarea::placeholder { color: rgba(0, 0, 0, 0.5); } }
+
         button { 
             width: 100%; padding: 16px; border-radius: 16px; border: none; font-weight: 700; font-size: 16px; 
             cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.8px; text-shadow: none;
@@ -179,7 +182,7 @@
         }
 
         .player-node {
-            position: absolute; width: 55px; height: 55px; border-radius: 50%;
+            position: absolute; width: 65px; height: 65px; border-radius: 50%;
             background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
             border: 2px solid var(--glass-border); display: flex; flex-direction: column; align-items: center; justify-content: center;
             transform: translate(-50%, -50%); z-index: 5; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
@@ -190,7 +193,7 @@
 
         .score-badge {
             position: absolute; top: -6px; right: -6px; background: var(--accent); color: #fff; text-shadow: none;
-            font-size: 11px; font-weight: bold; width: 22px; height: 22px; border-radius: 50%;
+            font-size: 11px; font-weight: bold; width: 24px; height: 24px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center; border: 2px solid rgba(0,0,0,0.4); z-index: 6;
         }
         @media (min-width: 768px) { .score-badge { width: 30px; height: 30px; font-size: 14px; top: -5px; right: -5px; } }
@@ -199,12 +202,12 @@
         .player-node.active-target-glow { border-color: var(--primary) !important; box-shadow: 0 0 20px 5px rgba(255, 59, 48, 0.6), inset 0 0 10px rgba(255, 59, 48, 0.4) !important; }
         .player-node.voted-glow { border-color: var(--success) !important; box-shadow: 0 0 20px 5px rgba(52, 199, 89, 0.6), inset 0 0 10px rgba(52, 199, 89, 0.4) !important; }
 
-        .node-color { width: 12px; height: 12px; border-radius: 50%; margin-bottom: 2px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.4); }
+        .node-color { width: 14px; height: 14px; border-radius: 50%; margin-bottom: 2px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.4); }
         @media (min-width: 768px) { .node-color { width: 18px; height: 18px; margin-bottom: 4px; } }
         @media (min-width: 1024px) { .node-color { width: 22px; height: 22px; margin-bottom: 6px; } }
         
         .node-name {
-            font-size: 10px; font-weight: 800; color: #fff; text-align: center; white-space: nowrap; overflow: hidden; 
+            font-size: 11px; font-weight: 800; color: #fff; text-align: center; white-space: nowrap; overflow: hidden; 
             text-overflow: ellipsis; max-width: 90%; text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 0 2px #000;
         }
         @media (min-width: 768px) { .node-name { font-size: 14px; } }
@@ -215,7 +218,7 @@
         @keyframes votePopAnim { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.2); } }
 
         .center-orb {
-            position: relative; width: 140px; height: 140px; border-radius: 50%; background: rgba(255, 255, 255, 0.15);
+            position: relative; width: 150px; height: 150px; border-radius: 50%; background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid var(--glass-border);
             z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2); overflow: hidden; 
@@ -240,6 +243,13 @@
             display: flex; justify-content: center; align-items: center; gap: 8px;
             font-size: clamp(24px, 7vw, 32px); flex-wrap: nowrap; white-space: nowrap;
             margin-bottom: 10px; text-shadow: none; width: 100%; overflow: hidden;
+        }
+
+        .score-pill {
+            background: rgba(0,0,0,0.25); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border); border-radius: 12px;
+            padding: 4px 10px; font-size: 12px; font-weight: 700;
+            display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
     </style>
 </head>
@@ -295,6 +305,8 @@
                 <div id="target-message" class="hidden" style="color:var(--primary); font-weight:bold; font-size:15px;">🎯 You are the Target! Answer their questions.</div>
             </div>
             
+            <div id="top-scoreboard" class="hidden" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 12px;"></div>
+
             <div id="emojiVaultDisplay" class="emoji-row" style="opacity:0.9;"></div>
 
             <div id="game-content-split" class="game-content-split hidden">
@@ -661,6 +673,7 @@
         ['center-countdown', 'center-transition', 'center-playing', 'center-results'].forEach(id => document.getElementById(id).classList.add('hidden'));
 
         if (state.phase === 'countdown') {
+            document.getElementById('top-scoreboard').classList.add('hidden');
             status.innerText = "Memorize Your Fruit!"; status.classList.remove('hidden');
             votingHeader.classList.add('hidden'); targetMessage.classList.add('hidden');
             document.getElementById('center-countdown').classList.remove('hidden');
@@ -670,6 +683,7 @@
         }
 
         if (state.phase === 'playing') {
+            document.getElementById('top-scoreboard').classList.add('hidden');
             document.getElementById('emojiVaultDisplay').classList.add('hidden'); 
             status.classList.add('hidden'); 
             document.getElementById('center-playing').classList.remove('hidden');
@@ -681,6 +695,7 @@
         }
 
         if (state.phase === 'readingResults') {
+            document.getElementById('top-scoreboard').classList.remove('hidden');
             document.getElementById('emojiVaultDisplay').classList.add('hidden'); 
             status.classList.add('hidden'); votingHeader.classList.add('hidden'); targetMessage.classList.add('hidden');
             document.getElementById('center-results').classList.remove('hidden');
@@ -689,6 +704,7 @@
         }
 
         if (state.phase === 'turnTransition') {
+            document.getElementById('top-scoreboard').classList.remove('hidden');
             document.getElementById('emojiVaultDisplay').classList.add('hidden'); 
             status.classList.add('hidden'); votingHeader.classList.add('hidden'); targetMessage.classList.add('hidden');
             document.getElementById('center-transition').classList.remove('hidden');
@@ -699,6 +715,7 @@
         if (state.phase === 'finished') {
             splitView.classList.add('hidden'); resultView.classList.remove('hidden');
             document.getElementById('emojiVaultDisplay').classList.remove('hidden');
+            document.getElementById('top-scoreboard').classList.add('hidden');
             votingHeader.classList.add('hidden'); targetMessage.classList.add('hidden'); status.classList.add('hidden');
             
             const sortedPlayers = Object.keys(globalPlayers).sort((a, b) => (state.scores[b] || 0) - (state.scores[a] || 0));
@@ -809,8 +826,8 @@
         const startAngle = (N === 2) ? Math.PI : -Math.PI / 2; 
 
         const minDimension = Math.min(board.clientWidth, board.clientHeight);
-        const orbRadius = window.innerWidth >= 1024 ? 130 : (window.innerWidth >= 768 ? 100 : 70);
-        const nodeRadiusOffset = window.innerWidth >= 1024 ? 65 : (window.innerWidth >= 768 ? 55 : 35);
+        const orbRadius = window.innerWidth >= 1024 ? 130 : (window.innerWidth >= 768 ? 100 : 75);
+        const nodeRadiusOffset = window.innerWidth >= 1024 ? 65 : (window.innerWidth >= 768 ? 55 : 42);
         const radius = Math.max(orbRadius + nodeRadiusOffset, (minDimension / 2) - nodeRadiusOffset - 10);
 
         // Strict cleanup strictly enforces UI mapping with Database state
@@ -825,7 +842,7 @@
             const pColor = getUserColorByName(pData.name);
             
             const currentTurnId = (gameState.turnOrder && gameState.turnOrder.length > gameState.turnIndex) ? gameState.turnOrder[gameState.turnIndex] : null;
-            const isActiveTarget = pid === currentTurnId && gameState.phase !== 'countdown' && gameState.phase !== 'turnTransition';
+            const isActiveTarget = pid === currentTurnId && gameState.phase !== 'countdown' && gameState.phase !== 'turnTransition' && gameState.phase !== 'readingResults';
             const hasVoted = gameState.votes && gameState.votes[pid];
             
             let glowClass = isActiveTarget ? 'active-target-glow' : (hasVoted ? 'voted-glow' : '');
@@ -849,6 +866,24 @@
             nodeEl.style.borderColor = glowClass ? '' : 'var(--glass-border)';
             nodeEl.innerHTML = `<div class="score-badge">${gameState.scores[pid] || 0}</div><div class="node-color" style="background: ${pColor};"></div><div class="node-name">${pData.name}</div>`;
         });
+        
+        renderTopScoreboard();
+    }
+
+    function renderTopScoreboard() {
+        const container = document.getElementById('top-scoreboard');
+        if(!container) return;
+        const keys = Object.keys(globalPlayers);
+        if(keys.length === 0) return;
+        
+        const sortedKeys = keys.sort((a,b) => (gameState.scores[b] || 0) - (gameState.scores[a] || 0));
+        container.innerHTML = sortedKeys.map(pid => {
+            const pData = globalPlayers[pid];
+            const pColor = getUserColorByName(pData.name);
+            const score = gameState.scores[pid] || 0;
+            const votedFruit = (gameState.votes && gameState.votes[pid]) ? `<span style="font-size: 15px; margin-left: 4px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">${gameState.votes[pid]}</span>` : '';
+            return `<div class="score-pill"><div class="node-color" style="background: ${pColor}; width: 10px; height: 10px; margin-bottom: 0;"></div><span style="color: #fff; text-shadow:none; display: flex; align-items: center;">${pData.name}${votedFruit}</span><span style="color: var(--success); text-shadow:none;">${score}</span></div>`;
+        }).join('');
     }
 
     window.addEventListener('resize', () => {
