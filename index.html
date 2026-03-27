@@ -328,9 +328,9 @@
                     
                     <div id="center-glass-orb" class="center-orb">
                         
-                        <!-- DYNAMIC CIRCULAR TIMELINE -->
+                        <!-- DYNAMIC CIRCULAR TIMELINE (Thinner and fused to outline) -->
                         <svg id="orb-timer-svg" class="hidden" style="position:absolute; top:0; left:0; width:100%; height:100%; transform:rotate(-90deg); z-index:1; pointer-events:none;" viewBox="0 0 200 200">
-                            <circle id="orb-timer-circle" cx="100" cy="100" r="96" fill="none" stroke="var(--success)" stroke-width="8" stroke-dasharray="603.19" stroke-dashoffset="0" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease;"></circle>
+                            <circle id="orb-timer-circle" cx="100" cy="100" r="99" fill="none" stroke="var(--success)" stroke-width="2" stroke-dasharray="622.04" stroke-dashoffset="0" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease;"></circle>
                         </svg>
 
                         <div id="center-countdown" class="countdown-view hidden" style="z-index: 2;">
@@ -838,9 +838,9 @@
                 const aName = globalPlayers[qna.askers[qna.currentIndex]]?.name || 'Player';
                 
                 let statusMsg = '';
-                if (qna.status === 'ask') statusMsg = `<span style="color:#FFD700;">${aName} is Asking...</span>`;
-                else if (qna.status === 'answer') statusMsg = `<span style="color:var(--success);">${currentTargetData.name} is Answering...</span>`;
-                else if (qna.status === 'vote') statusMsg = `<span style="color:var(--accent);">${aName} is Guessing...</span>`;
+                if (qna.status === 'ask') statusMsg = `<span style="color:#ffffff;">${aName} is Asking...</span>`;
+                else if (qna.status === 'answer') statusMsg = `<span style="color:#ffffff;">${currentTargetData.name} is Answering...</span>`;
+                else if (qna.status === 'vote') statusMsg = `<span style="color:#ffffff;">${aName} is Guessing...</span>`;
 
                 orbHTML += `<br><span style="font-size: 14px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.8); display:block; margin-top:8px;">${statusMsg}</span>`;
             }
@@ -947,7 +947,7 @@
         }
 
         if (orbCircle) {
-            orbCircle.style.strokeDashoffset = 603.19 * (1 - pct);
+            orbCircle.style.strokeDashoffset = 622.04 * (1 - pct);
             orbCircle.style.stroke = color;
         }
     }
