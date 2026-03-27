@@ -180,6 +180,7 @@
 
         .chat-input-area {
             padding: 12px; background: rgba(255, 255, 255, 0.05); border-top: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
         }
         .chat-input-area input, .chat-input-area textarea { margin-bottom: 0; padding: 12px; font-size: 14px; border-radius: 12px; }
         .chat-input-area textarea { height: 60px; min-height: 60px; max-height: 60px; resize: none; overflow-y: auto; line-height: 1.4; scrollbar-width: thin; }
@@ -197,11 +198,8 @@
             font-size: 18px; cursor: pointer; transition: 0.2s; text-shadow: none; flex-shrink: 0;
         }
         @media (min-width: 768px) { .fruit-btn { width: 44px; height: 44px; font-size: 22px; } }
+        .fruit-btn:hover { transform: scale(1.1); background: rgba(255,255,255,0.25); }
         .fruit-btn:active { transform: scale(0.9); }
-        .fruit-btn.active-vote { 
-            border-color: var(--success); background: rgba(52, 199, 89, 0.3); 
-            box-shadow: 0 0 15px rgba(52, 199, 89, 0.5); transform: scale(1.1);
-        }
 
         .player-node {
             position: absolute; width: 65px; height: 65px; border-radius: 50%;
@@ -278,6 +276,21 @@
             padding: 8px 14px; font-size: 15px; font-weight: 700;
             display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
+
+        .revealed-container {
+            margin-top: 15px; padding: 12px; width: 100%;
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(25px) saturate(120%); -webkit-backdrop-filter: blur(25px) saturate(120%);
+            border-radius: 20px; border: 1px solid var(--glass-border); box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        @media (min-width: 768px) { .revealed-container { padding: 16px; border-radius: 24px; } }
+
+        .revealed-badge {
+            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.3); border-radius: 14px; padding: 6px 12px;
+            font-size: 13px; text-shadow: none; display: flex; align-items: center; gap: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); white-space: nowrap; color: #fff;
+        }
+        @media (min-width: 768px) { .revealed-badge { font-size: 15px; padding: 8px 14px; } }
     </style>
 </head>
 <body>
@@ -288,8 +301,7 @@
 
 <div class="app-container">
     
-
-<div id="view-login" class="view-centered" style="margin-top: 20vh;">
+    <div id="view-login" class="view-centered" style="margin-top: 20vh;">
         <h1>ioGame</h1>
         <div class="subtitle">Family Game Night 🎲</div>
         <div class="glass-card">
@@ -298,9 +310,7 @@
         </div>
     </div>
 
-    
-
-<div id="view-lobby" class="view-centered-wide hidden" style="margin-top: 10vh;">
+    <div id="view-lobby" class="view-centered-wide hidden" style="margin-top: 10vh;">
         <div class="glass-card" style="margin-bottom: 15px;">
             <p style="font-size: 14px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; text-align: center;">🔗 Invite Friends & Family</p>
             <div class="link-display-container">
@@ -319,29 +329,14 @@
         </div>
     </div>
 
-    
-
-<div id="view-game" class="hidden">
+    <div id="view-game" class="hidden">
         <div class="game-wrapper">
             
             <div id="status-container">
                 <div id="gameStatus" class="hidden" style="font-weight: 700; color: var(--accent); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">System Ready</div>
                 
-                <div id="voting-header" class="hidden" style="display:flex; flex-direction:row; align-items:flex-start; justify-content:center; gap:12px; margin-bottom: 6px;">
-                    <div id="voting-fruits" style="display:flex; gap:6px; flex-wrap:nowrap; justify-content:center;"></div>
-                    <button id="btnSubmitVote" class="btn-accent" style="padding: 10px 20px; font-size:14px; width:auto; border-radius: 14px; display:none; flex-shrink:0;" onclick="submitVote()">VOTE</button>
-                </div>
-                
                 <div id="target-message" class="hidden" style="color:#ffffff; font-weight:bold; font-size:15px; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 8px;">
                     🎯 You Are The Target! Your Fruit: ❓
-                </div>
-
-                <div id="qna-container" class="hidden glass-card" style="width: 100%; max-width: 500px; padding: 12px; margin-bottom: 10px;">
-                    <div id="qna-status" style="font-size: 14px; font-weight: bold; margin-bottom: 8px; color: var(--accent);"></div>
-                    <div id="qna-input-area" class="hidden" style="display: flex; gap: 8px;">
-                        <input type="text" id="qnaInput" placeholder="Type here..." autocomplete="off" style="margin-bottom: 0; padding: 10px; font-size: 14px; border-radius: 12px;">
-                        <button class="btn-accent" style="width: auto; padding: 10px 16px; font-size: 14px; border-radius: 12px;" id="btnSubmitQnA">Send</button>
-                    </div>
                 </div>
 
                 <div id="top-scoreboard" class="hidden"></div>
@@ -368,7 +363,7 @@
 
                         <div id="center-playing" class="countdown-view hidden">
                             <p style="font-size: 13px; font-weight: 700; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-bottom: 5px; text-transform: uppercase;">Current Target</p>
-                            <div id="playingTargetName" style="font-size: 26px; font-weight: 900; color: var(--accent); text-shadow: none; text-transform: uppercase;">Name</div>
+                            <div id="playingTargetName" style="font-size: 24px; font-weight: 900; color: var(--accent); text-shadow: none; text-transform: uppercase; text-align: center; line-height: 1.1;">Name</div>
                         </div>
 
                         <div id="center-results" class="countdown-view hidden">
@@ -382,7 +377,22 @@
                 <div class="chat-section" id="chat-panel-container">
                     <div id="center-chat" class="chat-scroll"></div>
                     
-                    <div class="chat-input-area">
+                    <!-- DYNAMIC GAME ACTION AREA (Replaces chat input during Q&A) -->
+                    <div id="qna-action-area" class="chat-input-area hidden" style="background: rgba(0, 122, 255, 0.15); border-top: 1px solid var(--accent); position: relative; z-index: 20;">
+                        <div id="qna-action-status" style="font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 8px; text-shadow: 0 1px 3px rgba(0,0,0,0.5);"></div>
+                        
+                        <!-- Input for Ask/Answer -->
+                        <div id="qna-action-input-wrap" class="hidden" style="display: flex; gap: 8px;">
+                            <input type="text" id="qnaActionInput" placeholder="..." autocomplete="off" style="margin-bottom: 0; background: rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.2);">
+                            <button id="btnQnaActionSubmit" class="btn-accent" style="width: auto; padding: 12px 18px;">Send</button>
+                        </div>
+
+                        <!-- Buttons for Voting -->
+                        <div id="qna-action-vote-wrap" class="hidden" style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;"></div>
+                    </div>
+
+                    <!-- STANDARD CHAT INPUT AREA -->
+                    <div id="standard-chat-input-area" class="chat-input-area">
                         <div id="reply-indicator" class="hidden" style="background: rgba(0,0,0,0.3); padding: 5px 10px; margin-bottom: 8px; border-radius: 6px; display:flex; justify-content:space-between; align-items:center; font-size: 11px; text-shadow: none;">
                             <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:85%;">
                                 <b id="reply-user"></b><br>
@@ -400,8 +410,8 @@
 
             </div>
 
-            <div id="revealed-list-container" class="hidden" style="margin-top: 15px; padding: 12px; background: rgba(0,0,0,0.25); border-radius: 16px; border: 1px solid var(--glass-border);">
-                <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; text-align: center;">Revealed Fruits</div>
+            <div id="revealed-list-container" class="revealed-container hidden">
+                <div style="font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; text-align: center; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">Revealed Fruits</div>
                 <div id="revealed-badges" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;"></div>
             </div>
 
@@ -417,7 +427,6 @@
         </div>
     </div>
 </div>
-
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -449,7 +458,7 @@
         }
     }
     
-    // Auto-fill previous name to prevent user confusion after a reload
+    // Auto-fill previous name
     const storedSessionData = sessionStorage.getItem(`iogame_user_${roomId}`);
     if (storedSessionData) {
         try {
@@ -465,7 +474,7 @@
     document.getElementById('lobbyEmojiDisplay').innerHTML = items.map(i => `<span>${i.e}</span>`).join('');
 
     let myKey = null, myName = "", amIHost = false, globalPlayers = {}, gameState = { phase: 'login', votes: {}, scores: {}, turnOrder: [], turnIndex: 0, qna: {}, revealedFruits: {} };
-    let lastPhase = '', lastChatCount = 0, pendingVoteFruit = null, activeReply = null; 
+    let lastPhase = '', lastChatCount = 0, activeReply = null; 
 
     // Sound FX
     let musicPlaying = false;
@@ -533,7 +542,7 @@
         myName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
         playSfx(sfx.pop); if(!musicPlaying) toggleMusic();
         
-        // Recover previous identity to prevent ghost players on reconnect
+        // Recover previous identity
         let storedData = sessionStorage.getItem(`iogame_user_${roomId}`);
         let joinedTime = Date.now();
         if (storedData) {
@@ -562,7 +571,6 @@
         }
         document.getElementById('lobbyLinkInput').value = displayUrl;
         
-        // Robust automatic reconnection system
         if (!window.connectionListenerAdded) {
             window.connectionListenerAdded = true;
             onValue(ref(db, ".info/connected"), (snap) => {
@@ -589,11 +597,9 @@
                 renderBoardNodes(false); 
             }
             
-            if (amIHost) {
-                if (gameState.phase === 'qna') {
-                    checkTurnResolution();
-                    checkHostAutoSkip();
-                }
+            if (amIHost && gameState.phase === 'qna') {
+                checkTurnResolution();
+                checkHostAutoSkip();
             }
         });
 
@@ -615,11 +621,9 @@
                 };
                 handleGameState(gameState);
                 
-                if (amIHost) {
-                    if (gameState.phase === 'qna') {
-                        checkTurnResolution();
-                        checkHostAutoSkip();
-                    }
+                if (amIHost && gameState.phase === 'qna') {
+                    checkTurnResolution();
+                    checkHostAutoSkip();
                 }
             }
         });
@@ -666,7 +670,7 @@
 
     window.hostStartGame = function() {
         if (!amIHost) return;
-        playSfx(sfx.start); pendingVoteFruit = null; clearReply();
+        playSfx(sfx.start); clearReply();
         const keys = Object.keys(globalPlayers);
         let shuffledItems = [...items].sort(() => 0.5 - Math.random());
         let playerItems = {}, initScores = {};
@@ -708,7 +712,7 @@
             const targetId = s.turnOrder[s.turnIndex];
             const targetName = globalPlayers[targetId] ? globalPlayers[targetId].name : 'Someone';
             
-            sendSystemMessage(`🔴 Target Acquired: ${targetName}! Questioning phase started.`);
+            sendSystemMessage(`🔴 Target Acquired: ${targetName}! The interrogation begins.`);
             
             const askers = s.turnOrder.filter(id => id !== targetId && globalPlayers[id]);
             if (askers.length > 0) {
@@ -756,7 +760,6 @@
         switchView('view-game');
         
         const status = document.getElementById('gameStatus');
-        const votingHeader = document.getElementById('voting-header');
         const targetMessage = document.getElementById('target-message');
         const splitView = document.getElementById('game-content-split');
         const resultView = document.getElementById('zone-result');
@@ -772,25 +775,33 @@
         if (state.phase === 'countdown') {
             document.getElementById('top-scoreboard').classList.add('hidden');
             status.classList.add('hidden'); 
-            votingHeader.classList.add('hidden'); targetMessage.classList.add('hidden');
+            targetMessage.classList.add('hidden');
             document.getElementById('center-countdown').classList.remove('hidden');
             if(state.playerItems && state.playerItems[myKey]) document.getElementById('bigEmoji').innerText = state.playerItems[myKey].e;
             document.getElementById('countdownDisplay').innerText = `Starts in ${state.countdown}...`;
+            renderQnAUI(); // Will hide QnA controls
             renderBoardNodes(isNewPhase); 
         }
 
         if (state.phase === 'qna') {
-            if (isNewPhase) pendingVoteFruit = null; 
             document.getElementById('top-scoreboard').classList.add('hidden');
             document.getElementById('emojiVaultDisplay').classList.add('hidden'); 
             status.classList.add('hidden'); 
             document.getElementById('center-playing').classList.remove('hidden');
             
             const curTargetId = state.turnOrder[state.turnIndex];
-            document.getElementById('playingTargetName').innerText = globalPlayers[curTargetId] ? globalPlayers[curTargetId].name : 'Offline User';
+            const currentTargetData = globalPlayers[curTargetId];
             
-            renderQnAUI();
+            // Update Center Orb text to show Target and Current Asker
+            const qna = state.qna;
+            let orbHTML = currentTargetData ? currentTargetData.name : 'Offline User';
+            if (qna && qna.askers && qna.askers[qna.currentIndex]) {
+                const aName = globalPlayers[qna.askers[qna.currentIndex]]?.name || 'Player';
+                orbHTML += `<br><span style="font-size: 14px; color: var(--text-muted); font-weight: 600;">Asker: ${aName}</span>`;
+            }
+            document.getElementById('playingTargetName').innerHTML = orbHTML;
             
+            // Show target message up top only for the target
             if (myKey === curTargetId) {
                 const myFruit = (state.playerItems && state.playerItems[myKey]) ? state.playerItems[myKey].e : '❓';
                 targetMessage.innerHTML = `🎯 You Are The Target! Your Fruit: <span style="font-size:1.4em; filter:drop-shadow(0 2px 2px rgba(0,0,0,0.4));">${myFruit}</span>`;
@@ -798,24 +809,28 @@
             } else {
                 targetMessage.classList.add('hidden');
             }
+            
+            renderQnAUI();
             renderBoardNodes(isNewPhase); 
         }
 
         if (state.phase === 'readingResults') {
             document.getElementById('top-scoreboard').classList.remove('hidden');
             document.getElementById('emojiVaultDisplay').classList.add('hidden'); 
-            status.classList.add('hidden'); votingHeader.classList.add('hidden'); targetMessage.classList.add('hidden');
+            status.classList.add('hidden'); targetMessage.classList.add('hidden');
             document.getElementById('center-results').classList.remove('hidden');
             document.getElementById('revealedFruit').innerText = state.lastTargetFruit || '❓';
+            renderQnAUI(); 
             renderBoardNodes(isNewPhase); 
         }
 
         if (state.phase === 'turnTransition') {
             document.getElementById('top-scoreboard').classList.remove('hidden');
             document.getElementById('emojiVaultDisplay').classList.add('hidden'); 
-            status.classList.add('hidden'); votingHeader.classList.add('hidden'); targetMessage.classList.add('hidden');
+            status.classList.add('hidden'); targetMessage.classList.add('hidden');
             document.getElementById('center-transition').classList.remove('hidden');
             document.getElementById('transitionPlayerName').innerText = state.nextTargetName;
+            renderQnAUI(); 
             renderBoardNodes(isNewPhase); 
         }
 
@@ -823,7 +838,7 @@
             splitView.classList.add('hidden'); resultView.classList.remove('hidden');
             document.getElementById('emojiVaultDisplay').classList.remove('hidden');
             document.getElementById('top-scoreboard').classList.add('hidden');
-            votingHeader.classList.add('hidden'); targetMessage.classList.add('hidden'); status.classList.add('hidden');
+            targetMessage.classList.add('hidden'); status.classList.add('hidden');
             
             const sortedPlayers = Object.keys(globalPlayers).sort((a, b) => (state.scores[b] || 0) - (state.scores[a] || 0));
             const winners = sortedPlayers.filter(p => (state.scores[p] || 0) === (state.scores[sortedPlayers[0]] || 0)).map(p => globalPlayers[p].name);
@@ -846,33 +861,105 @@
         lastPhase = state.phase;
     }
 
-    function renderVotingUI() {
-        const container = document.getElementById('voting-fruits'), btnSubmit = document.getElementById('btnSubmitVote');
+    function renderQnAUI() {
+        const actionArea = document.getElementById('qna-action-area');
+        const standardChat = document.getElementById('standard-chat-input-area');
         
-        const hasVoted = gameState.votes && gameState.votes[myKey];
-        if(hasVoted) { 
-            container.innerHTML = `<span style="font-weight:bold; color:#ffffff; font-size: 14px;">✅ Locked: ${gameState.votes[myKey]}</span>`; 
-            btnSubmit.style.display = 'none'; 
-            return; 
+        if (gameState.phase !== 'qna') {
+            actionArea.classList.add('hidden');
+            standardChat.classList.remove('hidden');
+            return;
         }
 
-        container.innerHTML = items.map(i => `<div class="fruit-btn ${pendingVoteFruit === i.e ? 'active-vote' : ''}" onclick="selectVoteFruit('${i.e}')">${i.e}</div>`).join('');
-        btnSubmit.style.display = pendingVoteFruit ? 'block' : 'none';
+        const qna = gameState.qna;
+        if (!qna || !qna.askers || qna.status === 'resolving') {
+            actionArea.classList.add('hidden');
+            standardChat.classList.remove('hidden');
+            return;
+        }
+
+        const targetId = gameState.turnOrder[gameState.turnIndex];
+        const askerId = qna.askers[qna.currentIndex];
+        const targetName = globalPlayers[targetId]?.name || 'Target';
+        const askerName = globalPlayers[askerId]?.name || 'Player';
+
+        const statusEl = document.getElementById('qna-action-status');
+        const inputWrap = document.getElementById('qna-action-input-wrap');
+        const voteWrap = document.getElementById('qna-action-vote-wrap');
+        const actionInput = document.getElementById('qnaActionInput');
+        const btnSubmit = document.getElementById('btnQnaActionSubmit');
+
+        // Reset to safely start
+        actionArea.classList.add('hidden');
+        standardChat.classList.remove('hidden');
+        inputWrap.classList.add('hidden');
+        voteWrap.classList.add('hidden');
+        btnSubmit.onclick = null;
+
+        if (qna.status === 'ask') {
+            if (myKey === askerId) {
+                actionArea.classList.remove('hidden');
+                standardChat.classList.add('hidden');
+                inputWrap.classList.remove('hidden');
+                statusEl.innerHTML = `🗣️ Your turn to ask ${targetName} a question:`;
+                actionInput.placeholder = `Ask your question...`;
+                btnSubmit.onclick = () => {
+                    const text = actionInput.value.trim();
+                    if (!text) return;
+                    updateState({ 'qna/status': 'answer', 'qna/currentQuestion': text });
+                    actionInput.value = '';
+                };
+            }
+        } else if (qna.status === 'answer') {
+            if (myKey === targetId) {
+                actionArea.classList.remove('hidden');
+                standardChat.classList.add('hidden');
+                inputWrap.classList.remove('hidden');
+                statusEl.innerHTML = `💬 ${askerName} asked: <span style="font-weight:normal;">"${qna.currentQuestion}"</span>`;
+                actionInput.placeholder = `Answer ${askerName}...`;
+                btnSubmit.onclick = () => {
+                    const text = actionInput.value.trim();
+                    if (!text) return;
+                    push(ref(db, `rooms/${roomId}/chat`), { u: 'System', m: `💬 ${askerName}: ${qna.currentQuestion}\n🗣️ ${targetName}: ${text}` });
+                    updateState({ 'qna/status': 'vote' });
+                    actionInput.value = '';
+                };
+            }
+        } else if (qna.status === 'vote') {
+            if (myKey === askerId) {
+                actionArea.classList.remove('hidden');
+                standardChat.classList.add('hidden');
+                voteWrap.classList.remove('hidden');
+                statusEl.innerHTML = `🎯 Based on the answer, guess ${targetName}'s fruit!`;
+                
+                // Render fruit buttons directly in chat action area
+                voteWrap.innerHTML = items.map(i => `<div class="fruit-btn" style="background:rgba(255,255,255,0.2);" onclick="submitSequentialVote('${i.e}')">${i.e}</div>`).join('');
+            }
+        }
     }
 
-    window.selectVoteFruit = function(f) { if(gameState.votes && gameState.votes[myKey]) return; playSfx(sfx.pop); pendingVoteFruit = f; renderVotingUI(); }
-    
-    window.submitVote = function() {
-        if(!pendingVoteFruit) return;
-        set(ref(db, `rooms/${roomId}/state/votes/${myKey}`), pendingVoteFruit).then(() => {
-            sendSystemMessage(`${myName} locked in their vote! ✅`);
+    document.getElementById("qnaActionInput").addEventListener("keypress", function(e) { 
+        if (e.key === "Enter") { 
+            e.preventDefault(); 
+            const btn = document.getElementById('btnQnaActionSubmit');
+            if (btn.onclick) btn.onclick();
+        } 
+    });
+
+    window.submitSequentialVote = function(fruit) {
+        if (gameState.phase !== 'qna' || gameState.qna.status !== 'vote') return;
+        playSfx(sfx.pop); 
+        
+        set(ref(db, `rooms/${roomId}/state/votes/${myKey}`), fruit).then(() => {
+            sendSystemMessage(`${myName} locked in their guess! ✅`);
             
-            // Advance the QnA phase to the next person automatically after the current asker votes
-            if (gameState.phase === 'qna' && gameState.qna.status === 'vote' && myKey === gameState.qna.askers[gameState.qna.currentIndex]) {
-                const nextIndex = gameState.qna.currentIndex + 1;
-                if (nextIndex < gameState.qna.askers.length) {
-                    updateState({ 'qna/status': 'ask', 'qna/currentIndex': nextIndex, 'qna/currentQuestion': '' });
-                }
+            const qna = gameState.qna;
+            const nextIndex = qna.currentIndex + 1;
+            
+            if (nextIndex < qna.askers.length) {
+                updateState({ 'qna/status': 'ask', 'qna/currentIndex': nextIndex, 'qna/currentQuestion': '' });
+            } else {
+                updateState({ 'qna/status': 'resolving' }); 
             }
         });
     }
@@ -880,26 +967,30 @@
     function checkHostAutoSkip() {
         if (!amIHost || gameState.phase !== 'qna') return;
         const qna = gameState.qna;
-        if (!qna || !qna.askers) return;
+        if (!qna || !qna.askers || qna.status === 'resolving') return;
         
         const targetId = gameState.turnOrder[gameState.turnIndex];
         const askerId = qna.askers[qna.currentIndex];
         
-        // Auto-skip logic in case a player disconnects in the middle of QnA
-        if ((qna.status === 'ask' || qna.status === 'vote') && !globalPlayers[askerId]) {
-            set(ref(db, `rooms/${roomId}/state/votes/${askerId}`), 'Skipped');
-            const nextIndex = qna.currentIndex + 1;
-            if (nextIndex < qna.askers.length) {
-                updateState({ 'qna/status': 'ask', 'qna/currentIndex': nextIndex, 'qna/currentQuestion': '' });
-            }
-        } else if (qna.status === 'answer' && !globalPlayers[targetId]) {
-            // Target left. Skip all remaining votes to trigger resolution
+        // Target Disconnects = Skip everyone else
+        if (!globalPlayers[targetId]) {
             let missingVotes = {};
             qna.askers.forEach(id => {
                 if(!gameState.votes || !gameState.votes[id]) missingVotes[id] = 'Skipped';
             });
-            if(Object.keys(missingVotes).length > 0) {
-                update(ref(db, `rooms/${roomId}/state/votes`), missingVotes);
+            if(Object.keys(missingVotes).length > 0) update(ref(db, `rooms/${roomId}/state/votes`), missingVotes);
+            updateState({ 'qna/status': 'resolving' });
+            return;
+        }
+
+        // Asker Disconnects = Auto-Skip them
+        if (!globalPlayers[askerId] && (qna.status === 'ask' || qna.status === 'vote')) {
+            set(ref(db, `rooms/${roomId}/state/votes/${askerId}`), 'Skipped');
+            const nextIndex = qna.currentIndex + 1;
+            if (nextIndex < qna.askers.length) {
+                updateState({ 'qna/status': 'ask', 'qna/currentIndex': nextIndex, 'qna/currentQuestion': '' });
+            } else {
+                updateState({ 'qna/status': 'resolving' });
             }
         }
     }
@@ -907,16 +998,18 @@
     function checkTurnResolution() {
         if (!amIHost || gameState.phase !== 'qna') return;
         
+        const qna = gameState.qna;
+        if (!qna || !qna.askers) return;
+
         const s = gameState;
         const currentPlayers = Object.keys(globalPlayers);
-        const activeVotes = Object.keys(s.votes || {}).filter(k => currentPlayers.includes(k));
-        const targetId = s.turnOrder[s.turnIndex];
-        const requiredVotes = currentPlayers.length - (currentPlayers.includes(targetId) ? 1 : 0);
+        const requiredAskers = qna.askers.filter(id => currentPlayers.includes(id));
+        const allVoted = requiredAskers.every(id => s.votes && s.votes[id]);
         
-        if (activeVotes.length >= requiredVotes && requiredVotes > 0) {
+        if (qna.status === 'resolving' || allVoted) {
+            const targetId = s.turnOrder[s.turnIndex];
             const targetFruit = s.playerItems[targetId] ? s.playerItems[targetId].e : '❓';
 
-            // Deep copy to safely calculate before updating Firebase
             let correct = [];
             let newScores = { ...(s.scores || {}) };
             
@@ -933,8 +1026,7 @@
             let newRevealed = { ...(s.revealedFruits || {}) };
             newRevealed[targetId] = targetFruit;
 
-            // Atomic Update: We update the phase AND the calculated scores in exactly the same payload 
-            // so no player's screen accidentally renders the old scores on the results screen.
+            // Atomic Resolution
             gameState.phase = 'readingResults';
             updateState({ 
                 phase: 'readingResults', 
@@ -948,27 +1040,19 @@
             
             setTimeout(() => {
                 let nextIndex = s.turnIndex + 1;
-                
-                while (nextIndex < s.turnOrder.length && !globalPlayers[s.turnOrder[nextIndex]]) {
-                    nextIndex++;
-                }
+                while (nextIndex < s.turnOrder.length && !globalPlayers[s.turnOrder[nextIndex]]) { nextIndex++; }
 
                 if (nextIndex >= s.turnOrder.length) {
                     updateState({ phase: 'finished' });
                 } else {
-                    // Activate the transition phase to give players a moment to read the scoreboard properly
                     const nextTargetName = globalPlayers[s.turnOrder[nextIndex]] ? globalPlayers[s.turnOrder[nextIndex]].name : 'Player';
                     updateState({ 
                         phase: 'turnTransition', 
                         turnIndex: nextIndex,
                         nextTargetName: nextTargetName
-                    }).then(() => {
-                        setTimeout(() => {
-                            startTurn();
-                        }, 2500); // Brief pause before the next guessing phase
-                    });
+                    }).then(() => { setTimeout(() => { startTurn(); }, 2500); });
                 }
-            }, 4500); // Increased wait time on results so players can see the score updates
+            }, 4500);
         }
     }
 
@@ -1002,7 +1086,7 @@
             const pColor = getUserColorByName(pData.name);
             
             const currentTurnId = (gameState.turnOrder && gameState.turnOrder.length > gameState.turnIndex) ? gameState.turnOrder[gameState.turnIndex] : null;
-            const isActiveTarget = pid === currentTurnId && (gameState.phase === 'playing' || gameState.phase === 'readingResults');
+            const isActiveTarget = pid === currentTurnId && (gameState.phase === 'qna' || gameState.phase === 'readingResults');
             const hasVoted = gameState.votes && gameState.votes[pid];
             
             let glowClass = isActiveTarget ? 'active-target-glow' : (hasVoted ? 'voted-glow' : '');
@@ -1039,85 +1123,11 @@
         
         const badgesHtml = Object.entries(gameState.revealedFruits).map(([pid, fruit]) => {
             const pName = globalPlayers[pid]?.name || 'Offline';
-            return `<div style="background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 12px; font-size: 14px; text-shadow:none; border: 1px solid rgba(255,255,255,0.2);"><b>${pName}</b>: ${fruit}</div>`;
+            return `<div class="revealed-badge"><b>${pName}</b> <span style="font-size: 1.2em; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));">${fruit}</span></div>`;
         }).join('');
         
         document.getElementById('revealed-badges').innerHTML = badgesHtml;
     }
-
-    function renderQnAUI() {
-        const container = document.getElementById('qna-container');
-        const votingHeader = document.getElementById('voting-header');
-        
-        if (gameState.phase !== 'qna') {
-            container.classList.add('hidden');
-            votingHeader.classList.add('hidden');
-            return;
-        }
-        container.classList.remove('hidden');
-        
-        const qna = gameState.qna;
-        const targetId = gameState.turnOrder[gameState.turnIndex];
-        const askerId = qna.askers[qna.currentIndex];
-        const targetName = globalPlayers[targetId]?.name || 'Target';
-        const askerName = globalPlayers[askerId]?.name || 'Player';
-        
-        const statusEl = document.getElementById('qna-status');
-        const inputArea = document.getElementById('qna-input-area');
-        const inputEl = document.getElementById('qnaInput');
-        const btnSubmit = document.getElementById('btnSubmitQnA');
-        
-        inputArea.classList.add('hidden');
-        votingHeader.classList.add('hidden');
-        btnSubmit.onclick = null;
-        
-        if (qna.status === 'ask') {
-            if (myKey === askerId) {
-                statusEl.innerHTML = `Your turn to ask ${targetName} a question!`;
-                inputArea.classList.remove('hidden');
-                inputEl.placeholder = `Ask ${targetName} something...`;
-                inputEl.value = '';
-                btnSubmit.onclick = () => {
-                    if(!inputEl.value.trim()) return;
-                    updateState({ 'qna/status': 'answer', 'qna/currentQuestion': inputEl.value.trim() });
-                };
-            } else {
-                statusEl.innerHTML = `Waiting for ${askerName} to ask a question...`;
-            }
-        } else if (qna.status === 'answer') {
-            if (myKey === targetId) {
-                statusEl.innerHTML = `<span style="color:#fff;">${askerName} asks:</span> "${qna.currentQuestion}"`;
-                inputArea.classList.remove('hidden');
-                inputEl.placeholder = `Answer ${askerName}...`;
-                inputEl.value = '';
-                btnSubmit.onclick = () => {
-                    if(!inputEl.value.trim()) return;
-                    const answerText = inputEl.value.trim();
-                    push(ref(db, `rooms/${roomId}/chat`), { u: 'System', m: `💬 ${askerName}: ${qna.currentQuestion}\n🗣️ ${targetName}: ${answerText}` });
-                    // Transition straight to the voting step for the current asker
-                    updateState({ 'qna/status': 'vote' });
-                };
-            } else {
-                statusEl.innerHTML = `<span style="color:#fff;">${askerName} asked:</span> "${qna.currentQuestion}"<br><span style="font-size:12px; margin-top:4px; display:block;">Waiting for ${targetName} to answer...</span>`;
-            }
-        } else if (qna.status === 'vote') {
-            if (myKey === askerId) {
-                statusEl.innerHTML = `Time to guess! What fruit does ${targetName} have?`;
-                votingHeader.classList.remove('hidden');
-                renderVotingUI(); 
-            } else {
-                statusEl.innerHTML = `Waiting for ${askerName} to lock in their guess...`;
-            }
-        }
-    }
-
-    document.getElementById("qnaInput").addEventListener("keypress", function(e) { 
-        if (e.key === "Enter") { 
-            e.preventDefault(); 
-            const btn = document.getElementById('btnSubmitQnA');
-            if (btn.onclick) btn.onclick();
-        } 
-    });
 
     function renderTopScoreboard() {
         const container = document.getElementById('top-scoreboard');
