@@ -171,7 +171,7 @@
         }
         
         .chat-reply-quote {
-            background: rgba(0, 0, 0, 0.2); border-left: 3px solid; padding: 4px 8px;
+            background: rgba(255, 255, 255, 0.1); border-left: 3px solid; padding: 4px 8px;
             border-radius: 4px; margin-bottom: 4px; font-size: 11px; color: rgba(255, 255, 255, 0.95); text-shadow: none;
         }
         .chat-system { 
@@ -380,7 +380,7 @@
                     </div>
 
                     <div id="standard-chat-input-area" class="chat-input-area">
-                        <div id="reply-indicator" class="hidden" style="background: rgba(0, 0, 0, 0.25); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); padding: 8px 12px; margin-bottom: 10px; border-radius: 12px; display:flex; justify-content:space-between; align-items:center; font-size: 12px; text-shadow: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                        <div id="reply-indicator" class="hidden" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); padding: 8px 12px; margin-bottom: 10px; border-radius: 12px; display:flex; justify-content:space-between; align-items:center; font-size: 12px; text-shadow: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
                             <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:85%;">
                                 <b id="reply-user"></b><br>
                                 <span id="reply-text" style="color:rgba(255,255,255,0.85);"></span>
@@ -681,7 +681,14 @@
         const onlineKeys = keys.filter(k => globalPlayers[k].online !== false);
         const hostKey = onlineKeys.length > 0 ? onlineKeys.sort((a,b) => globalPlayers[a].joinedAt - globalPlayers[b].joinedAt)[0] : null;
 
-        keys.forEach(id => {
+        // Sort keys so the host always appears first
+        const sortedKeys = keys.sort((a, b) => {
+            if (a === hostKey) return -1;
+            if (b === hostKey) return 1;
+            return (globalPlayers[a].joinedAt || 0) - (globalPlayers[b].joinedAt || 0);
+        });
+
+        sortedKeys.forEach(id => {
             const isOffline = globalPlayers[id].online === false;
             const style = isOffline ? 'opacity: 0.5;' : '';
             grid.innerHTML += `<div class="p-badge" style="${style}">${globalPlayers[id].name} ${id === hostKey ? '👑' : ''}</div>`;
