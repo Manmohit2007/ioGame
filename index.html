@@ -237,7 +237,7 @@
     <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3" type="audio/mpeg">
 </audio>
 
-<div class="music-toggle" onclick="window.toggleMusic()" id="musicBtn">🎵</div>
+<div class="music-toggle" onclick="toggleMusic()" id="musicBtn">🎵</div>
 
 <div class="app-container">
     <!-- VIEW: LOGIN -->
@@ -246,7 +246,7 @@
         <div class="subtitle">Family Game Night 🎲</div>
         <div class="glass-card">
             <input type="text" id="userName" placeholder="Enter Your Nickname" maxlength="12">
-            <button class="btn-primary" onclick="window.joinGame()">Enter Lobby</button>
+            <button class="btn-primary" onclick="joinGame()">Enter Lobby</button>
         </div>
     </div>
 
@@ -256,7 +256,7 @@
             <p style="font-size: 14px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; text-align: center;">🔗 Invite Friends & Family</p>
             <div class="link-display-container">
                 <input type="text" id="lobbyLinkInput" readonly value="">
-                <button class="btn-accent" style="width: auto; padding: 0 20px; font-size: 14px;" onclick="window.copyInviteLink(this)">Copy</button>
+                <button class="btn-accent" style="width: auto; padding: 0 20px; font-size: 14px;" onclick="copyInviteLink(this)">Copy</button>
             </div>
         </div>
         
@@ -265,8 +265,8 @@
             <h2 id="lobbyStatusText" style="font-size: 18px; margin-bottom: 20px; text-align: center;">Waiting in Lobby...</h2>
             <div class="player-grid" id="lobbyPlayers"></div>
             
-            <button id="btnStartGame" class="btn-disabled" onclick="window.hostStartGame()" style="display:none;">Start Game 🔒</button>
-            <button class="btn-danger" style="margin-top: 12px;" onclick="window.leaveRoom()">Leave Room</button>
+            <button id="btnStartGame" class="btn-disabled" onclick="hostStartGame()" style="display: none;">Start Game 🔒</button>
+            <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room</button>
         </div>
     </div>
 
@@ -279,7 +279,7 @@
                 
                 <div id="voting-header" class="hidden" style="display:flex; align-items:center; justify-content:center; gap:8px;">
                     <div id="voting-fruits" style="display:flex; gap:6px; flex-wrap:nowrap;"></div>
-                    <button id="btnSubmitVote" class="btn-accent" style="padding: 10px 14px; font-size:12px; width:auto; border-radius: 12px; display:none; flex-shrink:0;" onclick="window.submitVote()">VOTE</button>
+                    <button id="btnSubmitVote" class="btn-accent" style="padding: 10px 14px; font-size:12px; width:auto; border-radius: 12px; display:none; flex-shrink:0;" onclick="submitVote()">VOTE</button>
                 </div>
                 
                 <div id="target-message" class="hidden" style="color:var(--primary); font-weight:bold; font-size:15px;">🎯 You are the Target! Answer their questions.</div>
@@ -320,12 +320,12 @@
                                 <b id="reply-user" style="color:var(--accent);"></b><br>
                                 <span id="reply-text" style="color:#aaa;"></span>
                             </div>
-                            <button onclick="window.clearReply()" style="background:none; border:none; color:white; width:auto; padding:0; font-size:18px; text-shadow:none;">×</button>
+                            <button onclick="clearReply()" style="background:none; border:none; color:white; width:auto; padding:0; font-size:18px; text-shadow:none;">×</button>
                         </div>
 
                         <div style="display: flex; gap: 8px;">
                             <textarea id="chatInput" placeholder="Message..." autocomplete="off"></textarea>
-                            <button class="btn-primary" style="width: auto;" onclick="window.sendChatMessage()">Send</button>
+                            <button class="btn-primary" style="width: auto;" onclick="sendChatMessage()">Send</button>
                         </div>
                     </div>
                 </div>
@@ -337,8 +337,8 @@
                 <h2 id="resultText" style="margin-bottom: 20px; font-size: 24px; font-weight: 800; line-height: 1.2;"></h2>
                 
                 <div id="host-controls" class="hidden">
-                    <button id="btnPlayAgain" class="btn-primary" onclick="window.hostStartGame()">Play Again 🚀</button>
-                    <button class="btn-danger" style="margin-top: 12px;" onclick="window.leaveRoom()">Leave Room</button>
+                    <button id="btnPlayAgain" class="btn-primary" onclick="hostStartGame()">Play Again 🚀</button>
+                    <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room</button>
                 </div>
                 <div id="non-host-message" class="hidden" style="color:var(--text-muted); font-weight:bold;">Waiting for Host...</div>
             </div>
@@ -346,48 +346,54 @@
     </div>
 </div>
 
+<!-- FIREBASE MULTIPLAYER LOGIC -->
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-    import { getDatabase, ref, set, onValue, onDisconnect, remove, update, push } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getDatabase, ref, set, update, onValue, onDisconnect, push, remove, get } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-    // Initialize Firebase exactly as provided
+    // Initialize Firebase from provided configuration
     const firebaseConfig = {
-      apiKey: "AIzaSyAVREmzFgrnE_1NP9Ke-Ybtyn1S1Ka-HNk",
-      authDomain: "iogame-145c9.firebaseapp.com",
-      databaseURL: "https://iogame-145c9-default-rtdb.firebaseio.com",
-      projectId: "iogame-145c9",
-      storageBucket: "iogame-145c9.firebasestorage.app",
-      messagingSenderId: "1024963573565",
-      appId: "1:1024963573565:web:907f671f3fad2c56443754",
-      measurementId: "G-N1J57G3WS6"
+        apiKey: "AIzaSyAVREmzFgrnE_1NP9Ke-Ybtynls1Ka-HNk",
+        authDomain: "iogame-145c9.firebaseapp.com",
+        databaseURL: "https://iogame-145c9-default-rtdb.firebaseio.com",
+        projectId: "iogame-145c9",
+        storageBucket: "iogame-145c9.firebasestorage.app",
+        messagingSenderId: "1024963573565",
+        appId: "1:1024963573565:web:907f671f3fad2c56443754"
     };
-
+    
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // Global Logic State
-    window.globalPlayers = {};
-    window.localState = { phase: 'login', chat: {}, votes: {}, scores: {}, turnIndex: 0, turnOrder: [] };
+    // Setup Room URL safely for blob/iframe environments
+    let roomId = new URLSearchParams(window.location.search).get('room');
+    if (!roomId) {
+        roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.set('room', roomId);
+            window.history.replaceState({path:url.href}, '', url.href);
+        } catch (e) {
+            console.warn("Cannot rewrite URL in this sandboxed environment. Using memory roomId.");
+        }
+    }
     
     const items = [ {e:"🍎", n:"Apple"}, {e:"🥭", n:"Mango"}, {e:"🍉", n:"Watermelon"}, {e:"🍇", n:"Grapes"}, {e:"🍓", n:"Strawberry"}, {e:"🍊", n:"Orange"} ];
     document.getElementById('emojiVaultDisplay').innerText = items.map(i => i.e).join(' ');
     document.getElementById('lobbyEmojiDisplay').innerText = items.map(i => i.e).join(' ');
 
+    let myKey = null, myName = "", amIHost = false, globalPlayers = {}, gameState = { phase: 'login', votes: {}, scores: {}, turnIndex: 0, turnOrder: [] };
+    let lastPhase = '', lastChatCount = 0, pendingVoteFruit = null, activeReply = null; 
+
+    // Sound FX
     let musicPlaying = false;
     const bgm = document.getElementById('bgMusic'); bgm.volume = 0.15; 
     const sfx = {
-        pop: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'), 
-        circlePop: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'), 
-        vote: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'),      
-        send: new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3'),     
-        receive: new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3'),   
-        start: new Audio('https://assets.mixkit.co/active_storage/sfx/2586/2586-preview.mp3'), 
-        win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),       
-        cheer: new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3'),
-        tick: new Audio('https://assets.mixkit.co/active_storage/sfx/2574/2574-preview.mp3'), 
-        alert: new Audio('https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3')
+        pop: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'), circlePop: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'), 
+        vote: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'), send: new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3'),     
+        receive: new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3'), start: new Audio('https://assets.mixkit.co/active_storage/sfx/2586/2586-preview.mp3'), 
+        win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'), cheer: new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3'),
+        tick: new Audio('https://assets.mixkit.co/active_storage/sfx/2574/2574-preview.mp3'), alert: new Audio('https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3')
     };
     Object.values(sfx).forEach(sound => sound.volume = 0.6);
     const playSfx = (sound) => { if(sound) { const c = sound.cloneNode(); c.volume = sound.volume; c.play().catch(()=>{}); } };
@@ -399,12 +405,9 @@
         musicPlaying = !musicPlaying;
     }
 
-    let myUid, myName, currentRoom = new URLSearchParams(window.location.search).get('room');
-    let amIHost = false, hostId = null, lastPhase = '', lastChatCount = 0, pendingVoteFruit = null, activeReply = null; 
-
     function getUserColorByName(name) {
-        const keys = Object.keys(window.globalPlayers);
-        const index = keys.findIndex(k => window.globalPlayers[k].name === name);
+        const keys = Object.keys(globalPlayers);
+        const index = keys.findIndex(k => globalPlayers[k].name === name);
         if (index === -1) { let h = 0; for(let i=0; i<name.length; i++) h=name.charCodeAt(i)+((h<<5)-h); return `hsl(${Math.abs(h)%360}, 85%, 65%)`; }
         return `hsl(${index * (360 / keys.length)}, 85%, 65%)`;
     }
@@ -420,11 +423,14 @@
         document.getElementById(viewId).classList.remove('hidden');
         if(viewId === 'view-game') setTimeout(() => renderBoardNodes(false), 100); 
     }
-    
+
     window.leaveRoom = function() { 
         playSfx(sfx.pop); 
-        const baseUrl = window.location.href.split('?')[0];
-        window.location.replace(baseUrl); 
+        if (myKey) {
+            remove(ref(db, `rooms/${roomId}/players/${myKey}`)).then(() => window.location.reload());
+        } else {
+            window.location.reload();
+        }
     }
 
     function createConfetti() {
@@ -437,142 +443,137 @@
         }
     }
 
-    window.joinGame = async function() {
+    window.joinGame = function() {
         let rawName = document.getElementById('userName').value.trim(); 
         if(!rawName) return;
-        myName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
-
-        playSfx(sfx.pop); if(!musicPlaying) window.toggleMusic();
         
+        myName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+        playSfx(sfx.pop); if(!musicPlaying) toggleMusic();
+        
+        // Generate User ID
+        myKey = 'user_' + Math.random().toString(36).substr(2, 9);
+        
+        // Construct shareable URL safely for display
+        let displayUrl = window.location.href;
         try {
-            const userCred = await signInAnonymously(auth);
-            myUid = userCred.user.uid;
-            
-            if (!currentRoom) {
-                currentRoom = Math.random().toString(36).substring(2, 8).toUpperCase();
-                await set(ref(db, `rooms/${currentRoom}/state`), { phase: 'lobby' });
-            }
-            
-            const playerRef = ref(db, `rooms/${currentRoom}/players/${myUid}`);
-            await set(playerRef, { name: myName });
-            
-            // Critical Firebase Cleanup - Automatically kicks out closed/disconnected users instantly
-            onDisconnect(playerRef).remove();
-
-            const baseUrl = window.location.href.split('?')[0];
-            document.getElementById('lobbyLinkInput').value = `${baseUrl}?room=${currentRoom}`;
-            switchView('view-lobby');
-            setupFirebaseListeners();
-            setupSwipeToReply();
+            const url = new URL(window.location.href);
+            url.searchParams.set('room', roomId);
+            displayUrl = url.href;
+            if (displayUrl.startsWith('blob:')) throw new Error('blob environment'); // Trigger catch for blob environments
         } catch(e) {
-            console.error("Auth failed:", e);
-            const nameInput = document.getElementById('userName');
-            nameInput.value = "";
-            nameInput.placeholder = "Auth Error - Check Firebase settings!";
-            nameInput.style.borderColor = "var(--primary)";
+            displayUrl = `https://play-iogame.com/?room=${roomId}`; // Fallback fake URL so UI stays clean in sandbox
         }
-    }
-
-    function setupFirebaseListeners() {
-        const playersRef = ref(db, `rooms/${currentRoom}/players`);
-        const stateRef = ref(db, `rooms/${currentRoom}/state`);
-
-        onValue(playersRef, (snapshot) => {
-            const players = snapshot.val() || {};
-            window.globalPlayers = players;
-            
-            // Evict if I got removed
-            if (myUid && !players[myUid] && window.localState.phase !== 'login') {
-                 const baseUrl = window.location.href.split('?')[0];
-                 window.location.replace(baseUrl);
-                 return;
-            }
-
-            const pKeys = Object.keys(players).sort();
-            if(pKeys.length > 0) {
-                hostId = pKeys[0];
-                amIHost = (hostId === myUid);
-            }
-
-            if (window.localState.phase === 'lobby') renderLobby();
-            if (document.getElementById('zone-circular-board').offsetParent !== null) renderBoardNodes(false);
-            
-            // Check turn resolution (Host only, and if playing)
-            if (amIHost && window.localState.phase === 'playing') checkTurnResolution();
+        document.getElementById('lobbyLinkInput').value = displayUrl;
+        
+        const playerRef = ref(db, `rooms/${roomId}/players/${myKey}`);
+        
+        // Setup OnDisconnect to strictly remove the player node immediately when leaving
+        onDisconnect(playerRef).remove().then(() => {
+            set(playerRef, { name: myName, joinedAt: Date.now() });
         });
 
-        onValue(stateRef, (snapshot) => {
-            const state = snapshot.val();
-            if(state) {
-                window.localState = state;
-                handleGameState(window.localState);
-                if (amIHost && state.phase === 'playing') checkTurnResolution();
-            } else if (window.localState.phase !== 'login') {
-                const baseUrl = window.location.href.split('?')[0];
-                window.location.replace(baseUrl);
+        // Listen for Realtime Players Sync
+        onValue(ref(db, `rooms/${roomId}/players`), (snap) => {
+            globalPlayers = snap.val() || {};
+            const pKeys = Object.keys(globalPlayers);
+            
+            if (pKeys.length > 0) {
+                const oldestKey = pKeys.sort((a,b) => globalPlayers[a].joinedAt - globalPlayers[b].joinedAt)[0];
+                amIHost = (oldestKey === myKey);
+            }
+            
+            renderLobby();
+            if(gameState.phase !== 'login' && gameState.phase !== 'lobby') {
+                renderBoardNodes(false); // Update nodes immediately dynamically mapping to current players
+            }
+            
+            // Recheck votes if a player drops during active turn
+            if (gameState.phase === 'playing' && amIHost) {
+                checkTurnResolution();
             }
         });
+
+        // Listen for Realtime State Sync
+        onValue(ref(db, `rooms/${roomId}/state`), (snap) => {
+            const s = snap.val();
+            if (s) {
+                gameState = { ...gameState, ...s };
+                if (!gameState.votes) gameState.votes = {};
+                if (!gameState.scores) gameState.scores = {};
+                if (!gameState.playerItems) gameState.playerItems = {};
+                if (!gameState.turnOrder) gameState.turnOrder = [];
+                handleGameState(gameState);
+            }
+        });
+
+        // Listen for Realtime Chat Sync
+        onValue(ref(db, `rooms/${roomId}/chat`), (snap) => {
+            const chats = snap.val() || {};
+            renderChat(Object.values(chats));
+        });
+
+        switchView('view-lobby'); setupSwipeToReply();
     }
 
-    function updateFirebaseState(updates) {
-        if(!currentRoom) return;
-        update(ref(db, `rooms/${currentRoom}/state`), updates);
+    function updateState(updates) {
+        update(ref(db, `rooms/${roomId}/state`), updates);
     }
-    
+
     function sendSystemMessage(msg) {
-        const chatRef = push(ref(db, `rooms/${currentRoom}/state/chat`));
-        set(chatRef, { u: 'System', m: msg });
+        push(ref(db, `rooms/${roomId}/chat`), { u: 'System', m: msg });
     }
 
     function renderLobby() {
         const grid = document.getElementById('lobbyPlayers'); grid.innerHTML = "";
-        
-        // Render current globalPlayers cleanly
-        Object.keys(window.globalPlayers).forEach(id => {
-            grid.innerHTML += `<div class="p-badge">${window.globalPlayers[id].name} ${id===hostId ? '👑' : ''}</div>`;
+        const keys = Object.keys(globalPlayers);
+        const hostKey = keys.sort((a,b) => globalPlayers[a].joinedAt - globalPlayers[b].joinedAt)[0];
+
+        keys.forEach(id => {
+            grid.innerHTML += `<div class="p-badge">${globalPlayers[id].name} ${id === hostKey ? '👑' : ''}</div>`;
         });
         
-        document.getElementById('lobbyStatusText').innerText = amIHost ? "You are the Host! 👑" : "Waiting for Host to start...";
-        
-        const btn = document.getElementById('btnStartGame');
-        if (amIHost && Object.keys(window.globalPlayers).length > 1) {
-            btn.className = "btn-primary"; btn.innerText = "Start Game 🚀"; btn.disabled = false; btn.style.display = 'block';
-        } else if (amIHost) {
-             btn.className = "btn-disabled"; btn.innerText = "Need more players..."; btn.disabled = true; btn.style.display = 'block';
+        playSfx(sfx.pop); 
+        const btnStart = document.getElementById('btnStartGame');
+        const statusText = document.getElementById('lobbyStatusText');
+
+        if (amIHost) {
+            statusText.innerText = "You are the Host! 👑";
+            btnStart.className = "btn-primary"; btnStart.innerText = "Start Game 🚀"; 
+            btnStart.disabled = false; btnStart.style.display = 'block';
         } else {
-             btn.style.display = 'none';
+            statusText.innerText = "Waiting for Host to start...";
+            btnStart.className = "btn-disabled"; btnStart.innerText = "Waiting for Host..."; 
+            btnStart.disabled = true; btnStart.style.display = 'none';
         }
     }
 
     window.hostStartGame = function() {
-        if(!amIHost) return;
-        playSfx(sfx.start); pendingVoteFruit = null; window.clearReply();
-        
-        const keys = Object.keys(window.globalPlayers);
+        if (!amIHost) return;
+        playSfx(sfx.start); pendingVoteFruit = null; clearReply();
+        const keys = Object.keys(globalPlayers);
         let shuffledItems = [...items].sort(() => 0.5 - Math.random());
         let playerItems = {}, initScores = {};
         keys.forEach((k, i) => { playerItems[k] = shuffledItems[i % shuffledItems.length]; initScores[k] = 0; });
         
-        // Wipe old chat & state clean on new game
-        set(ref(db, `rooms/${currentRoom}/state`), {
+        sendSystemMessage(`🍎 Game started! Memorize your secret fruit.`);
+
+        updateState({ 
             phase: 'countdown', 
             playerItems: playerItems, 
             countdown: 5, 
-            votes: null, 
+            votes: {}, 
             scores: initScores, 
             turnOrder: keys, 
-            turnIndex: 0
+            turnIndex: 0 
         });
-        sendSystemMessage(`🍎 Game started! Memorize your secret fruit.`);
 
         let timer = 5;
         let interval = setInterval(() => {
             timer--;
             if (timer > 0) { 
-                updateFirebaseState({ countdown: timer }); 
-                playSfx(sfx.tick);
-            } 
-            else { 
+                playSfx(sfx.tick); 
+                updateState({ countdown: timer }); 
+            } else { 
                 clearInterval(interval); 
                 playSfx(sfx.pop); 
                 startTurn(); 
@@ -581,24 +582,20 @@
     }
 
     function startTurn() {
-        if(!amIHost) return;
-        const targetId = window.localState.turnOrder[window.localState.turnIndex];
-        sendSystemMessage(`🔴 Target Acquired: Guess ${window.globalPlayers[targetId].name}'s fruit!`);
-        updateFirebaseState({ phase: 'playing', votes: null });
+        if (!amIHost) return;
+        get(ref(db, `rooms/${roomId}/state`)).then(snap => {
+            const s = snap.val();
+            if(!s || !s.turnOrder) return;
+            const targetId = s.turnOrder[s.turnIndex];
+            const targetName = globalPlayers[targetId] ? globalPlayers[targetId].name : 'Someone';
+            
+            sendSystemMessage(`🔴 Target Acquired: Guess ${targetName}'s fruit!`);
+            updateState({ phase: 'playing', votes: {} });
+        });
     }
 
-    function handleGameState(state) {
-        const isNewPhase = state.phase !== lastPhase;
-        switchView(state.phase === 'lobby' ? 'view-lobby' : 'view-game');
-        
-        const status = document.getElementById('gameStatus');
+    function renderChat(chatValues) {
         const chatBox = document.getElementById('center-chat');
-        const votingHeader = document.getElementById('voting-header');
-        const targetMessage = document.getElementById('target-message');
-        const splitView = document.getElementById('game-content-split');
-        const resultView = document.getElementById('zone-result');
-        
-        const chatValues = state.chat ? Object.values(state.chat) : [];
         chatBox.innerHTML = "";
         chatValues.forEach(msg => {
             if (msg.u === 'System') { chatBox.innerHTML += `<div class="chat-msg chat-system">${msg.m}</div>`; } 
@@ -612,14 +609,24 @@
         });
         setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
 
-        if (chatValues.length < lastChatCount) lastChatCount = 0;
         if (chatValues.length > lastChatCount) {
             const lastMsg = chatValues[chatValues.length - 1];
             if (lastMsg.u !== myName && lastMsg.u !== 'System' && lastChatCount !== 0) playSfx(sfx.receive);
-            lastChatCount = chatValues.length;
         }
+        lastChatCount = chatValues.length;
+    }
 
-        if (state.phase !== 'finished' && state.phase !== 'lobby') {
+    function handleGameState(state) {
+        const isNewPhase = state.phase !== lastPhase;
+        switchView('view-game');
+        
+        const status = document.getElementById('gameStatus');
+        const votingHeader = document.getElementById('voting-header');
+        const targetMessage = document.getElementById('target-message');
+        const splitView = document.getElementById('game-content-split');
+        const resultView = document.getElementById('zone-result');
+
+        if (state.phase !== 'finished') {
             splitView.classList.remove('hidden');
             resultView.classList.add('hidden');
             document.getElementById('emojiVaultDisplay').classList.remove('hidden');
@@ -631,16 +638,19 @@
             status.innerText = "Memorize Your Fruit!"; status.classList.remove('hidden');
             votingHeader.classList.add('hidden'); targetMessage.classList.add('hidden');
             document.getElementById('center-countdown').classList.remove('hidden');
-            if(state.playerItems && state.playerItems[myUid]) document.getElementById('bigEmoji').innerText = state.playerItems[myUid].e;
+            if(state.playerItems && state.playerItems[myKey]) document.getElementById('bigEmoji').innerText = state.playerItems[myKey].e;
             document.getElementById('countdownDisplay').innerText = `Starts in ${state.countdown}...`;
             renderBoardNodes(isNewPhase); 
         }
 
-        if (state.phase === 'playing' && state.turnOrder) {
+        if (state.phase === 'playing') {
             document.getElementById('emojiVaultDisplay').classList.add('hidden'); 
             status.classList.add('hidden'); 
             document.getElementById('center-playing').classList.remove('hidden');
-            document.getElementById('playingTargetName').innerText = window.globalPlayers[state.turnOrder[state.turnIndex]]?.name || 'Player';
+            
+            const curTargetId = state.turnOrder[state.turnIndex];
+            document.getElementById('playingTargetName').innerText = globalPlayers[curTargetId] ? globalPlayers[curTargetId].name : 'Offline User';
+            
             renderVotingUI(); renderBoardNodes(isNewPhase); 
         }
 
@@ -665,16 +675,15 @@
             document.getElementById('emojiVaultDisplay').classList.remove('hidden');
             votingHeader.classList.add('hidden'); targetMessage.classList.add('hidden'); status.classList.add('hidden');
             
-            const sortedPlayers = Object.keys(window.globalPlayers).sort((a, b) => (state.scores[b] || 0) - (state.scores[a] || 0));
-            const winners = sortedPlayers.filter(p => (state.scores[p] || 0) === (state.scores[sortedPlayers[0]] || 0)).map(p => window.globalPlayers[p].name);
+            const sortedPlayers = Object.keys(globalPlayers).sort((a, b) => (state.scores[b] || 0) - (state.scores[a] || 0));
+            const winners = sortedPlayers.filter(p => (state.scores[p] || 0) === (state.scores[sortedPlayers[0]] || 0)).map(p => globalPlayers[p].name);
             let chartHtml = `<div style="text-align:left; background:rgba(0,0,0,0.3); padding:15px; border-radius:16px; margin-bottom:20px; font-size:15px;">`;
-            sortedPlayers.forEach((p, i) => { chartHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;"><span><b>#${i+1}</b> ${window.globalPlayers[p].name}</span><span style="color:var(--accent); font-weight:bold;">${state.scores[p] || 0} pts</span></div>`; });
+            sortedPlayers.forEach((p, i) => { chartHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;"><span><b>#${i+1}</b> ${globalPlayers[p].name}</span><span style="color:var(--accent); font-weight:bold;">${state.scores[p] || 0} pts</span></div>`; });
             
             document.getElementById('resultText').innerHTML = `<div style="font-size: 38px; font-weight: 900; color: #FFD700; text-shadow: 0 0 25px rgba(255,215,0,0.6); margin-bottom: 5px;">${winners.join(' & ')}</div><div style="font-size: 18px; font-weight: 800; color: var(--success); letter-spacing: 2px; margin-bottom: 20px;">WINNER!</div>${chartHtml}</div>`;
             
             if (amIHost) { document.getElementById('host-controls').classList.remove('hidden'); document.getElementById('non-host-message').classList.add('hidden'); }
             else { document.getElementById('host-controls').classList.add('hidden'); document.getElementById('non-host-message').classList.remove('hidden'); }
-            
             if (lastPhase !== 'finished') { playSfx(sfx.win); playSfx(sfx.cheer); createConfetti(); }
         }
         
@@ -685,105 +694,119 @@
     function renderVotingUI() {
         const container = document.getElementById('voting-fruits'), btnSubmit = document.getElementById('btnSubmitVote');
         const targetMsg = document.getElementById('target-message'), votingHeader = document.getElementById('voting-header');
-        const targetId = window.localState.turnOrder[window.localState.turnIndex];
+        const targetId = gameState.turnOrder[gameState.turnIndex];
         
-        if (myUid === targetId) { votingHeader.classList.add('hidden'); targetMsg.classList.remove('hidden'); return; } 
+        if (myKey === targetId) { votingHeader.classList.add('hidden'); targetMsg.classList.remove('hidden'); return; } 
         else { votingHeader.classList.remove('hidden'); targetMsg.classList.add('hidden'); }
 
-        const hasVoted = window.localState.votes && window.localState.votes[myUid];
-        if(hasVoted) { container.innerHTML = `<span style="font-weight:bold; color:var(--success); font-size: 14px;">✅ Locked: ${window.localState.votes[myUid]}</span>`; btnSubmit.style.display = 'none'; return; }
+        const hasVoted = gameState.votes && gameState.votes[myKey];
+        if(hasVoted) { container.innerHTML = `<span style="font-weight:bold; color:var(--success); font-size: 14px;">✅ Locked: ${gameState.votes[myKey]}</span>`; btnSubmit.style.display = 'none'; return; }
 
-        container.innerHTML = items.map(i => `<div class="fruit-btn ${pendingVoteFruit === i.e ? 'active-vote' : ''}" onclick="window.selectVoteFruit('${i.e}')">${i.e}</div>`).join('');
+        container.innerHTML = items.map(i => `<div class="fruit-btn ${pendingVoteFruit === i.e ? 'active-vote' : ''}" onclick="selectVoteFruit('${i.e}')">${i.e}</div>`).join('');
         btnSubmit.style.display = pendingVoteFruit ? 'block' : 'none';
     }
 
-    window.selectVoteFruit = function(f) { if(window.localState.votes && window.localState.votes[myUid]) return; playSfx(sfx.pop); pendingVoteFruit = f; renderVotingUI(); }
+    window.selectVoteFruit = function(f) { if(gameState.votes && gameState.votes[myKey]) return; playSfx(sfx.pop); pendingVoteFruit = f; renderVotingUI(); }
     
     window.submitVote = function() {
-        if(!pendingVoteFruit || !currentRoom) return;
-        const updates = {};
-        updates[`rooms/${currentRoom}/state/votes/${myUid}`] = pendingVoteFruit;
-        update(ref(db), updates);
-        sendSystemMessage(`${myName} locked in their vote! ✅`);
+        if(!pendingVoteFruit) return;
+        set(ref(db, `rooms/${roomId}/state/votes/${myKey}`), pendingVoteFruit).then(() => {
+            sendSystemMessage(`${myName} locked in their vote! ✅`);
+            checkTurnResolution();
+        });
     }
 
     function checkTurnResolution() {
-        if (window.localState.phase !== 'playing' || !amIHost) return;
+        if (!amIHost) return;
         
-        const targetId = window.localState.turnOrder[window.localState.turnIndex];
-        const numVotes = Object.keys(window.localState.votes || {}).length;
-        const activePlayers = Object.keys(window.globalPlayers).length;
-        
-        // Host calculates if everyone except target has voted
-        if(numVotes >= activePlayers - 1) {
-            updateFirebaseState({ phase: 'readingResults' });
+        get(ref(db, `rooms/${roomId}/state`)).then(snap => {
+            const s = snap.val();
+            if (!s || s.phase !== 'playing') return;
             
-            const targetFruit = window.localState.playerItems[targetId]?.e || '❓';
-            let correct = [];
-            let newScores = { ...window.localState.scores };
+            const currentPlayers = Object.keys(globalPlayers);
+            const activeVotes = Object.keys(s.votes || {}).filter(k => currentPlayers.includes(k));
+            const targetId = s.turnOrder[s.turnIndex];
+            const requiredVotes = currentPlayers.length - (currentPlayers.includes(targetId) ? 1 : 0);
             
-            for(let [pid, vote] of Object.entries(window.localState.votes || {})) {
-                if(vote === targetFruit && window.globalPlayers[pid]) { 
-                    newScores[pid] = (newScores[pid] || 0) + 10; 
-                    correct.push(window.globalPlayers[pid].name); 
+            if (activeVotes.length >= requiredVotes && requiredVotes > 0) {
+                updateState({ phase: 'readingResults' });
+                const targetFruit = s.playerItems[targetId] ? s.playerItems[targetId].e : '❓';
+                let correct = [];
+                let newScores = s.scores || {};
+                
+                for(let [pid, vote] of Object.entries(s.votes || {})) {
+                    if(vote === targetFruit) { 
+                        newScores[pid] = (newScores[pid] || 0) + 10; 
+                        if (globalPlayers[pid]) correct.push(globalPlayers[pid].name); 
+                    }
                 }
+                
+                const targetName = globalPlayers[targetId] ? globalPlayers[targetId].name : 'Disconnected User';
+                sendSystemMessage(`Target ${targetName} had ${targetFruit}! ` + (correct.length > 0 ? `${correct.join(', ')} guessed correctly (+10)!` : `Nobody guessed correctly (0 pts)!`));
+                
+                updateState({ scores: newScores });
+                playSfx(sfx.alert);
+                
+                setTimeout(() => {
+                    let nextIndex = s.turnIndex + 1;
+                    
+                    // Skip any target who disconnected entirely during the game
+                    while (nextIndex < s.turnOrder.length && !globalPlayers[s.turnOrder[nextIndex]]) {
+                        nextIndex++;
+                    }
+
+                    if (nextIndex >= s.turnOrder.length) {
+                        updateState({ phase: 'finished' });
+                    } else {
+                        const nextTargetName = globalPlayers[s.turnOrder[nextIndex]].name;
+                        updateState({ phase: 'turnTransition', nextTargetName: nextTargetName, turnIndex: nextIndex, votes: {} });
+                        setTimeout(() => startTurn(), 3000);
+                    }
+                }, 4000);
             }
-            
-            updateFirebaseState({ scores: newScores });
-            sendSystemMessage(`Target ${window.globalPlayers[targetId]?.name || 'Player'} had ${targetFruit}! ` + (correct.length > 0 ? `${correct.join(', ')} guessed correctly (+10)!` : `Nobody guessed correctly (0 pts)!`));
-            playSfx(sfx.alert);
-            
-            setTimeout(() => {
-                let nextIndex = window.localState.turnIndex + 1;
-                if(nextIndex >= activePlayers) {
-                    updateFirebaseState({ phase: 'finished' });
-                } else { 
-                    updateFirebaseState({ 
-                        phase: 'turnTransition', 
-                        nextTargetName: window.globalPlayers[window.localState.turnOrder[nextIndex]]?.name || 'Player',
-                        turnIndex: nextIndex,
-                        votes: null
-                    }); 
-                    setTimeout(() => startTurn(), 3000); 
-                }
-            }, 4000);
-        }
+        });
     }
 
+    // Bug Fix: Dynamic node syncing specifically prevents UI rendering glitches with missing/ghost player cards
     function renderBoardNodes(isNewPhase = false) {
         const board = document.getElementById('zone-circular-board');
         if(!board || board.offsetParent === null) return; 
         
         const nodesContainer = document.getElementById('player-nodes-container');
-        const keys = Object.keys(window.globalPlayers), N = keys.length, angleStep = (Math.PI * 2) / N, startAngle = (N === 2) ? Math.PI : -Math.PI / 2; 
+        const keys = Object.keys(globalPlayers);
+        const N = keys.length;
+        if (N === 0) return;
 
-        // CRITICAL FIX: Aggressive cleanup of ghost players disconnected from Firebase
-        const existingNodes = document.querySelectorAll('.player-node');
-        existingNodes.forEach(node => {
-            const pid = node.id.replace('node-', '');
-            if (!window.globalPlayers[pid]) {
-                node.remove(); // Safely remove missing players to prevent glitches
-            }
-        });
+        const angleStep = (Math.PI * 2) / N;
+        const startAngle = (N === 2) ? Math.PI : -Math.PI / 2; 
 
         const minDimension = Math.min(board.clientWidth, board.clientHeight);
         const orbRadius = window.innerWidth >= 1024 ? 110 : (window.innerWidth >= 768 ? 90 : 70);
         const nodeRadiusOffset = window.innerWidth >= 768 ? 40 : 30;
         const radius = Math.max(orbRadius + nodeRadiusOffset, (minDimension / 2) - nodeRadiusOffset - 10);
 
-        if (isNewPhase) nodesContainer.innerHTML = '';
+        // Strict cleanup strictly enforces UI mapping with Database state
+        Array.from(nodesContainer.children).forEach(child => {
+            const id = child.id.replace('node-', '');
+            if (!keys.includes(id)) child.remove();
+        });
 
         keys.forEach((pid, index) => {
             const angle = startAngle + (index * angleStep);
-            const pData = window.globalPlayers[pid], pColor = getUserColorByName(pData.name);
-            const isActiveTarget = pid === (window.localState.turnOrder ? window.localState.turnOrder[window.localState.turnIndex] : null) && window.localState.phase !== 'countdown' && window.localState.phase !== 'turnTransition';
-            const hasVoted = window.localState.votes && window.localState.votes[pid];
+            const pData = globalPlayers[pid];
+            const pColor = getUserColorByName(pData.name);
+            
+            const currentTurnId = (gameState.turnOrder && gameState.turnOrder.length > gameState.turnIndex) ? gameState.turnOrder[gameState.turnIndex] : null;
+            const isActiveTarget = pid === currentTurnId && gameState.phase !== 'countdown' && gameState.phase !== 'turnTransition';
+            const hasVoted = gameState.votes && gameState.votes[pid];
             
             let glowClass = isActiveTarget ? 'active-target-glow' : (hasVoted ? 'voted-glow' : '');
             let nodeEl = document.getElementById(`node-${pid}`);
             
+            // Re-create node entirely dynamically if missing
             if (!nodeEl) { 
-                nodeEl = document.createElement('div'); nodeEl.id = `node-${pid}`; 
+                nodeEl = document.createElement('div'); 
+                nodeEl.id = `node-${pid}`; 
                 nodesContainer.appendChild(nodeEl); 
                 nodeEl.style.animation = 'popInNode 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; 
             }
@@ -792,10 +815,11 @@
                 nodeEl.style.animation = 'none'; void nodeEl.offsetWidth; nodeEl.style.animation = 'votePopAnim 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; playSfx(sfx.vote); 
             }
 
-            nodeEl.className = `player-node ${glowClass} ${window.localState.phase === 'countdown' ? 'node-blink' : ''}`;
-            nodeEl.style.left = `calc(50% + ${Math.cos(angle) * radius}px)`; nodeEl.style.top = `calc(50% + ${Math.sin(angle) * radius}px)`;
+            nodeEl.className = `player-node ${glowClass} ${gameState.phase === 'countdown' ? 'node-blink' : ''}`;
+            nodeEl.style.left = `calc(50% + ${Math.cos(angle) * radius}px)`; 
+            nodeEl.style.top = `calc(50% + ${Math.sin(angle) * radius}px)`;
             nodeEl.style.borderColor = glowClass ? '' : 'var(--glass-border)';
-            nodeEl.innerHTML = `<div class="score-badge">${window.localState.scores[pid] || 0}</div><div class="node-color" style="background: ${pColor};"></div><div class="node-name">${pData.name}</div>`;
+            nodeEl.innerHTML = `<div class="score-badge">${gameState.scores[pid] || 0}</div><div class="node-color" style="background: ${pColor};"></div><div class="node-name">${pData.name}</div>`;
         });
     }
 
@@ -807,13 +831,13 @@
         const chatBox = document.getElementById('center-chat'); let startX = 0, swipedElem = null;
         const handleStart = (e, isTouch) => { const el = e.target.closest('.chat-msg'); if(!el || el.classList.contains('chat-system')) return; startX = isTouch ? e.touches[0].clientX : e.clientX; swipedElem = el; swipedElem.style.transition = 'none'; };
         const handleMove = (e, isTouch) => { if(!swipedElem) return; const diffX = (isTouch ? e.touches[0].clientX : e.clientX) - startX; if(diffX > 0 && diffX < 80) swipedElem.style.transform = `translateX(${diffX}px)`; };
-        const handleEnd = (e, isTouch) => { if(!swipedElem) return; const diffX = (isTouch ? e.changedTouches[0].clientX : e.clientX) - startX; swipedElem.style.transition = 'transform 0.2s ease'; swipedElem.style.transform = 'translateX(0)'; if(diffX > 40) window.setReply(swipedElem.getAttribute('data-u'), swipedElem.getAttribute('data-m')); swipedElem = null; };
+        const handleEnd = (e, isTouch) => { if(!swipedElem) return; const diffX = (isTouch ? e.changedTouches[0].clientX : e.clientX) - startX; swipedElem.style.transition = 'transform 0.2s ease'; swipedElem.style.transform = 'translateX(0)'; if(diffX > 40) setReply(swipedElem.getAttribute('data-u'), swipedElem.getAttribute('data-m')); swipedElem = null; };
 
         chatBox.addEventListener('touchstart', e => handleStart(e, true), {passive: true}); chatBox.addEventListener('touchmove', e => handleMove(e, true), {passive: true}); chatBox.addEventListener('touchend', e => handleEnd(e, true));
         chatBox.addEventListener('mousedown', e => handleStart(e, false)); window.addEventListener('mousemove', e => handleMove(e, false)); window.addEventListener('mouseup', e => handleEnd(e, false));
     }
 
-    window.setReply = function(user, msgText) {
+    function setReply(user, msgText) {
         if(user === myName) return; playSfx(sfx.pop); activeReply = { u: user, m: msgText };
         document.getElementById('reply-user').innerText = `Replying to ${user}`; document.getElementById('reply-text').innerText = msgText;
         document.getElementById('reply-indicator').classList.remove('hidden'); document.getElementById('chatInput').focus();
@@ -822,15 +846,13 @@
     window.clearReply = function() { playSfx(sfx.pop); activeReply = null; document.getElementById('reply-indicator').classList.add('hidden'); }
 
     window.sendChatMessage = function() {
-        const input = document.getElementById('chatInput'); if(!input.value.trim() || !currentRoom) return; playSfx(sfx.send); 
-        const payload = { u: myName, m: input.value.trim() }; if(activeReply) { payload.replyTo = activeReply; window.clearReply(); }
-        
-        const chatRef = push(ref(db, `rooms/${currentRoom}/state/chat`));
-        set(chatRef, payload);
+        const input = document.getElementById('chatInput'); if(!input.value.trim()) return; playSfx(sfx.send); 
+        const payload = { u: myName, m: input.value.trim() }; if(activeReply) { payload.replyTo = activeReply; clearReply(); }
+        push(ref(db, `rooms/${roomId}/chat`), payload);
         input.value = "";
     }
     
-    document.getElementById("chatInput").addEventListener("keypress", function(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); window.sendChatMessage(); } });
+    document.getElementById("chatInput").addEventListener("keypress", function(e) { if (e.key === "Enter") { e.preventDefault(); sendChatMessage(); } });
 </script>
 </body>
 </html>
