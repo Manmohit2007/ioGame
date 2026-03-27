@@ -101,6 +101,7 @@
             flex: 0.8; /* Reduced flex ratio to give more space to chat */
             position: relative; display: flex; align-items: center; justify-content: center;
             min-height: 260px; margin-top: 0; flex-shrink: 0;
+            z-index: 10; /* Added to ensure circle appears above chat on mobile */
         }
 
         /* Push the board section slightly down exclusively on mobile portrait without altering flex height */
@@ -111,6 +112,8 @@
         }
 
         .chat-section {
+            position: relative;
+            z-index: 5; /* Keep chat below the board section */
             display: flex; flex-direction: column; flex: 1.5; /* Increased flex ratio */
             min-height: 250px; max-height: none; /* Removed max-height on mobile to expand */
             flex-shrink: 0;
@@ -118,6 +121,23 @@
             border-radius: 20px; border: 1px solid var(--glass-border);
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        /* Tablet Portrait Specific Optimization */
+        @media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
+            .game-content-split {
+                gap: 30px; 
+                margin-top: 3vh;
+            }
+            .board-section {
+                flex: 1;
+                min-height: 400px; /* Give much more space to the circle so it doesn't overlap at all */
+                transform: none;
+            }
+            .chat-section {
+                flex: 1;
+                min-height: 350px;
+            }
         }
 
         @media (min-width: 768px) and (orientation: landscape) { 
