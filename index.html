@@ -56,7 +56,7 @@
             font-family: inherit;
         }
         
-        input:focus, textarea:focus { border-color: rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.15); }
+        input:focus, textarea:focus { border-color: transparent; background: rgba(255, 255, 255, 0.15); outline: none !important; box-shadow: none !important; }
         
         input::placeholder, textarea::placeholder { color: #ffffff; opacity: 1; font-weight: 600; }
 
@@ -348,7 +348,11 @@
                     <div id="center-chat" class="chat-scroll"></div>
                     
                     <!-- DYNAMIC GAME ACTION AREA (Replaces chat input during Q&A) -->
-                    <div id="qna-action-area" class="chat-input-area hidden" style="background: rgba(0, 122, 255, 0.15); border-top: 1px solid var(--accent); position: relative; z-index: 20;">
+                    <div id="qna-action-area" class="chat-input-area hidden" style="background: rgba(0, 122, 255, 0.15); border-top: none; padding-top: 16px; position: relative; z-index: 20;">
+                        
+                        <!-- DYNAMIC TIMELINE PROGRESS BAR -->
+                        <div id="qna-timer-bar" style="position: absolute; top: 0; left: 0; height: 4px; background: var(--success); width: 100%; transition: width 0.1s linear, background-color 0.3s ease; border-top-left-radius: 12px; border-top-right-radius: 12px;"></div>
+
                         <div id="qna-action-status" style="font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 8px; text-shadow: 0 1px 3px rgba(0,0,0,0.5);"></div>
                         
                         <!-- Input for Ask/Answer -->
@@ -381,7 +385,7 @@
             </div>
 
             <div id="zone-result" class="view-centered-wide hidden" style="margin-top: 10vh; animation: popIn 0.5s ease;">
-                <div class="glass-card" style="text-align: center;">
+                <div style="text-align: center;">
                     <div id="resultEmoji" style="font-size: 70px; margin-bottom: 10px; animation: float 2s infinite;">🎉</div>
                     <div id="resultText" style="margin-bottom: 20px; font-size: 24px; font-weight: 800; line-height: 1.2;"></div>
                     
@@ -441,7 +445,12 @@
 
     let myKey = null, myName = "", amIHost = false, globalPlayers = {}, gameState = { phase: 'login', votes: {}, scores: {}, turnOrder: [], turnIndex: 0, qna: {}, revealedFruits: {} };
     let lastPhase = '', lastChatCount = 0, activeReply = null; 
-    let skipTimers = {}; // Professional delay for reconnects
+    
+    // Professional Stability Master Variables
+    let skipTimers = {}; 
+    let hostTimerIds = { main: null, countdown: null }; 
+    let uiTimerInterval = null;
+    let hostQnaTimer = null;
 
     // Sound FX
     let musicPlaying = false;
@@ -538,8 +547,7 @@
         }
         document.getElementById('lobbyLinkInput').value = displayUrl;
         
-        // PROFESSIONAL CONNECTION STABILITY SYSTEM:
-        // Uses a soft presence flag instead of brutally deleting users when connection fluctuates
+        // PROFESSIONAL CONNECTION STABILITY SYSTEM
         if (!window.connectionListenerAdded) {
             window.connectionListenerAdded = true;
             onValue(ref(db, ".info/connected"), (snap) => {
@@ -559,6 +567,8 @@
             globalPlayers = snap.val() || {};
             const pKeys = Object.keys(globalPlayers);
             
+            let wasIHost = amIHost;
+
             // Only assign host to a currently online player
             const onlineKeys = pKeys.filter(k => globalPlayers[k].online !== false);
             if (onlineKeys.length > 0) {
@@ -573,6 +583,11 @@
                 renderBoardNodes(false); 
             }
             
+            // HOST MIGRATION RECOVERY
+            if (!wasIHost && amIHost) { 
+                resumeHostDuties();
+            }
+
             if (amIHost && gameState.phase === 'qna') {
                 checkTurnResolution();
                 checkHostAutoSkip();
@@ -618,6 +633,25 @@
 
     function sendSystemMessage(msg) {
         push(ref(db, `rooms/${roomId}/chat`), { u: 'System', m: msg });
+    }
+
+    // Host Migration Duty Transfer System
+    function resumeHostDuties() {
+        if (!amIHost) return;
+        clearTimeout(hostTimerIds.main);
+        clearInterval(hostTimerIds.countdown);
+        
+        // Recover lost background timers on migration
+        if (gameState.phase === 'countdown') {
+            window.startCountdown();
+        } else if (gameState.phase === 'readingResults') {
+            hostTimerIds.main = setTimeout(window.executeTurnTransition, 3000); 
+        } else if (gameState.phase === 'turnTransition') {
+            hostTimerIds.main = setTimeout(window.startTurn, 1500); 
+        } else if (gameState.phase === 'qna') {
+            checkTurnResolution();
+            checkHostAutoSkip();
+        }
     }
 
     function renderLobby() {
@@ -669,23 +703,27 @@
             qna: null,
             revealedFruits: {}
         });
+    }
 
-        let timer = 5;
-        let interval = setInterval(() => {
+    window.startCountdown = function() {
+        if (!amIHost) return;
+        clearInterval(hostTimerIds.countdown);
+        let timer = gameState.countdown || 5;
+        hostTimerIds.countdown = setInterval(() => {
             timer--;
             if (timer > 0) { 
                 playSfx(sfx.tick); 
                 updateState({ countdown: timer }); 
             } else { 
-                clearInterval(interval); 
+                clearInterval(hostTimerIds.countdown); 
                 playSfx(sfx.pop); 
-                startTurn(); 
+                window.startTurn(); 
             }
         }, 1000);
     }
 
-    function startTurn() {
-        if (!amIHost) return;
+    window.startTurn = function() {
+        if (!amIHost || (gameState.phase !== 'turnTransition' && gameState.phase !== 'countdown')) return;
         get(ref(db, `rooms/${roomId}/state`)).then(snap => {
             const s = snap.val();
             if(!s || !s.turnOrder) return;
@@ -694,17 +732,40 @@
             
             sendSystemMessage(`🔴 Target Acquired: ${targetName}! The interrogation begins.`);
             
-            const askers = s.turnOrder.filter(id => id !== targetId && globalPlayers[id]);
+            // Exclude offline players from being askers
+            const askers = s.turnOrder.filter(id => id !== targetId && globalPlayers[id] && globalPlayers[id].online !== false);
             if (askers.length > 0) {
                 updateState({ 
                     phase: 'qna', 
                     votes: null,
-                    qna: { askers: askers, currentIndex: 0, status: 'ask', currentQuestion: '' }
+                    qna: { askers: askers, currentIndex: 0, status: 'ask', currentQuestion: '', deadline: Date.now() + 30000 }
                 });
             } else {
                 updateState({ phase: 'readingResults', lastTargetFruit: s.playerItems[targetId]?.e || '❓', scores: s.scores || {} });
             }
         });
+    }
+
+    window.executeTurnTransition = function() {
+        if (!amIHost || gameState.phase !== 'readingResults') return;
+        const s = gameState;
+        let nextIndex = s.turnIndex + 1;
+        
+        // Skip over disconnected players so the game doesn't stall
+        while (nextIndex < s.turnOrder.length && (!globalPlayers[s.turnOrder[nextIndex]] || globalPlayers[s.turnOrder[nextIndex]].online === false)) { 
+            nextIndex++; 
+        }
+
+        if (nextIndex >= s.turnOrder.length) {
+            updateState({ phase: 'finished' });
+        } else {
+            const nextTargetName = globalPlayers[s.turnOrder[nextIndex]] ? globalPlayers[s.turnOrder[nextIndex]].name : 'Player';
+            updateState({ 
+                phase: 'turnTransition', 
+                turnIndex: nextIndex,
+                nextTargetName: nextTargetName
+            });
+        }
     }
 
     function renderChat(chatValues) {
@@ -753,7 +814,7 @@
             document.getElementById('center-countdown').classList.remove('hidden');
             if(state.playerItems && state.playerItems[myKey]) document.getElementById('bigEmoji').innerText = state.playerItems[myKey].e;
             document.getElementById('countdownDisplay').innerText = `Starts in ${state.countdown}...`;
-            renderQnAUI(); // Will hide QnA controls
+            renderQnAUI(); 
             renderBoardNodes(isNewPhase); 
         }
 
@@ -763,7 +824,6 @@
             const curTargetId = state.turnOrder[state.turnIndex];
             const currentTargetData = globalPlayers[curTargetId] || { name: 'Player' };
             
-            // Update Center Orb text to show Target and Current Asker
             const qna = state.qna;
             let orbHTML = currentTargetData.name;
             if (qna && qna.askers && qna.askers[qna.currentIndex]) {
@@ -796,7 +856,11 @@
             const sortedPlayers = Object.keys(globalPlayers).sort((a, b) => (state.scores[b] || 0) - (state.scores[a] || 0));
             const winners = sortedPlayers.filter(p => (state.scores[p] || 0) === (state.scores[sortedPlayers[0]] || 0)).map(p => globalPlayers[p].name);
             let chartHtml = `<div style="text-align:left; background:rgba(255, 255, 255, 0.15); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border: 1px solid var(--glass-border); padding:15px; border-radius:16px; margin-bottom:20px; font-size:15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-shadow: none;">`;
-            sortedPlayers.forEach((p, i) => { chartHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;"><span><b>#${i+1}</b> ${globalPlayers[p].name}</span><span style="color:var(--success); font-weight:bold;">${state.scores[p] || 0} pts</span></div>`; });
+            sortedPlayers.forEach((p, i) => { 
+                const isLast = i === sortedPlayers.length - 1;
+                const borderStyle = isLast ? '' : 'border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:8px; padding-bottom:8px;';
+                chartHtml += `<div style="display:flex; justify-content:space-between; ${borderStyle}"><span><b>#${i+1}</b> ${globalPlayers[p].name}</span><span style="color:var(--success); font-weight:bold;">${state.scores[p] || 0} pts</span></div>`; 
+            });
             
             document.getElementById('resultText').innerHTML = `<div style="font-size: 38px; font-weight: 900; color: #FFD700; text-shadow: 0 0 25px rgba(255,215,0,0.6); margin-bottom: 5px;">${winners.join(' & ')}</div><div style="font-size: 18px; font-weight: 800; color: #ffffff; letter-spacing: 2px; margin-bottom: 20px;">WINNER!</div>${chartHtml}</div>`;
             
@@ -809,9 +873,55 @@
             if (lastPhase !== 'finished') { playSfx(sfx.win); playSfx(sfx.cheer); createConfetti(); }
         }
         
+        // Host Action centralized Timers for stable synchronization
+        if (amIHost) {
+            clearInterval(hostQnaTimer);
+            if (state.phase === 'qna') {
+                hostQnaTimer = setInterval(checkHostAutoSkip, 1000);
+            }
+            if (isNewPhase) {
+                clearTimeout(hostTimerIds.main);
+                clearInterval(hostTimerIds.countdown);
+                if (state.phase === 'countdown') {
+                    window.startCountdown();
+                } else if (state.phase === 'readingResults') {
+                    hostTimerIds.main = setTimeout(window.executeTurnTransition, 4500);
+                } else if (state.phase === 'turnTransition') {
+                    hostTimerIds.main = setTimeout(window.startTurn, 2500);
+                }
+            }
+        }
+
+        // Timeline UI Update Loop
+        clearInterval(uiTimerInterval);
+        if (state.phase === 'qna') {
+            uiTimerInterval = setInterval(updateTimelineUI, 100);
+        }
+
         renderRevealedFruits();
         if (isNewPhase && lastPhase !== '') playSfx(sfx.circlePop);
         lastPhase = state.phase;
+    }
+
+    function updateTimelineUI() {
+        const bar = document.getElementById('qna-timer-bar');
+        if (!bar || gameState.phase !== 'qna' || !gameState.qna || !gameState.qna.deadline) return;
+
+        const now = Date.now();
+        let timeLeft = gameState.qna.deadline - now;
+        if (timeLeft < 0) timeLeft = 0;
+        
+        let totalTime = (gameState.qna.status === 'vote') ? 15000 : 30000;
+        let pct = (timeLeft / totalTime) * 100;
+        bar.style.width = pct + '%';
+
+        if (pct > 50) {
+            bar.style.backgroundColor = 'var(--success)';
+        } else if (pct > 20) {
+            bar.style.backgroundColor = '#FFD700'; // Yellow
+        } else {
+            bar.style.backgroundColor = 'var(--primary)'; // Red
+        }
     }
 
     function renderQnAUI() {
@@ -859,7 +969,7 @@
                 btnSubmit.onclick = () => {
                     const text = actionInput.value.trim();
                     if (!text) return;
-                    updateState({ 'qna/status': 'answer', 'qna/currentQuestion': text });
+                    updateState({ 'qna/status': 'answer', 'qna/currentQuestion': text, 'qna/deadline': Date.now() + 30000 });
                     actionInput.value = '';
                 };
             }
@@ -874,7 +984,7 @@
                     const text = actionInput.value.trim();
                     if (!text) return;
                     push(ref(db, `rooms/${roomId}/chat`), { u: 'System', m: `💬 ${askerName}: ${qna.currentQuestion}\n🗣️ ${targetName}: ${text}` });
-                    updateState({ 'qna/status': 'vote' });
+                    updateState({ 'qna/status': 'vote', 'qna/deadline': Date.now() + 15000 });
                     actionInput.value = '';
                 };
             }
@@ -910,7 +1020,7 @@
             const nextIndex = qna.currentIndex + 1;
             
             if (nextIndex < qna.askers.length) {
-                updateState({ 'qna/status': 'ask', 'qna/currentIndex': nextIndex, 'qna/currentQuestion': '' });
+                updateState({ 'qna/status': 'ask', 'qna/currentIndex': nextIndex, 'qna/currentQuestion': '', 'qna/deadline': Date.now() + 30000 });
             } else {
                 updateState({ 'qna/status': 'resolving' }); 
             }
@@ -925,6 +1035,34 @@
         const targetId = gameState.turnOrder[gameState.turnIndex];
         const askerId = qna.askers[qna.currentIndex];
         
+        const now = Date.now();
+        const isTimeUp = qna.deadline && now >= qna.deadline;
+
+        // Auto-skip logic based on TIMEOUT
+        if (isTimeUp) {
+            if (qna.status === 'ask') {
+                set(ref(db, `rooms/${roomId}/state/votes/${askerId}`), 'Skipped');
+                const nextIndex = qna.currentIndex + 1;
+                if (nextIndex < qna.askers.length) {
+                    updateState({ 'qna/status': 'ask', 'qna/currentIndex': nextIndex, 'qna/currentQuestion': '', 'qna/deadline': now + 30000 });
+                } else {
+                    updateState({ 'qna/status': 'resolving' });
+                }
+            } else if (qna.status === 'answer') {
+                push(ref(db, `rooms/${roomId}/chat`), { u: 'System', m: `⏳ Time's up for ${globalPlayers[targetId]?.name || 'Target'} to answer!` });
+                updateState({ 'qna/status': 'vote', 'qna/deadline': now + 15000 });
+            } else if (qna.status === 'vote') {
+                set(ref(db, `rooms/${roomId}/state/votes/${askerId}`), 'Skipped');
+                const nextIndex = qna.currentIndex + 1;
+                if (nextIndex < qna.askers.length) {
+                    updateState({ 'qna/status': 'ask', 'qna/currentIndex': nextIndex, 'qna/currentQuestion': '', 'qna/deadline': now + 30000 });
+                } else {
+                    updateState({ 'qna/status': 'resolving' });
+                }
+            }
+            return; // Exit early if time is up, skip offline checks below
+        }
+
         // Target Offline = Grace period of 5s before skipping everyone else
         if (!globalPlayers[targetId] || globalPlayers[targetId].online === false) {
             if (!skipTimers[targetId]) {
@@ -948,7 +1086,7 @@
                     set(ref(db, `rooms/${roomId}/state/votes/${askerId}`), 'Skipped');
                     const nextIndex = qna.currentIndex + 1;
                     if (nextIndex < qna.askers.length) {
-                        updateState({ 'qna/status': 'ask', 'qna/currentIndex': nextIndex, 'qna/currentQuestion': '' });
+                        updateState({ 'qna/status': 'ask', 'qna/currentIndex': nextIndex, 'qna/currentQuestion': '', 'qna/deadline': Date.now() + 30000 });
                     } else {
                         updateState({ 'qna/status': 'resolving' });
                     }
@@ -990,7 +1128,7 @@
             let newRevealed = { ...(s.revealedFruits || {}) };
             newRevealed[targetId] = targetFruit;
 
-            // Atomic Resolution
+            // Atomic Resolution (The handleGameState func will catch this and boot the transition timers automatically)
             gameState.phase = 'readingResults';
             updateState({ 
                 phase: 'readingResults', 
@@ -1001,22 +1139,6 @@
             });
             
             playSfx(sfx.alert);
-            
-            setTimeout(() => {
-                let nextIndex = s.turnIndex + 1;
-                while (nextIndex < s.turnOrder.length && !globalPlayers[s.turnOrder[nextIndex]]) { nextIndex++; }
-
-                if (nextIndex >= s.turnOrder.length) {
-                    updateState({ phase: 'finished' });
-                } else {
-                    const nextTargetName = globalPlayers[s.turnOrder[nextIndex]] ? globalPlayers[s.turnOrder[nextIndex]].name : 'Player';
-                    updateState({ 
-                        phase: 'turnTransition', 
-                        turnIndex: nextIndex,
-                        nextTargetName: nextTargetName
-                    }).then(() => { setTimeout(() => { startTurn(); }, 2500); });
-                }
-            }, 4500);
         }
     }
 
