@@ -105,21 +105,13 @@
 
         .board-section {
             flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
-            min-height: 250px; 
+            min-height: 0; 
         }
-        @media (min-width: 768px) and (orientation: landscape) { .board-section { flex: 1.5; min-height: 0; } }
-        @media (min-width: 1024px) { .board-section { flex: 2; min-height: 0; } }
 
         .chat-section {
-            display: flex; flex-direction: column; flex: 1; min-height: 200px; max-height: 40vh;
+            display: flex; flex-direction: column; flex: 1; min-height: 0;
             background: rgba(0,0,0,0.15); border-radius: 20px; border: 1px solid var(--glass-border);
-            overflow: hidden; flex-shrink: 0;
-        }
-        @media (min-width: 768px) and (orientation: landscape) { 
-            .chat-section { width: 320px; height: 100%; max-height: none; flex: none; min-height: 0; } 
-        }
-        @media (min-width: 1024px) { 
-            .chat-section { width: 380px; height: 100%; max-height: none; flex: none; min-height: 0; } 
+            overflow: hidden;
         }
 
         .chat-scroll {
@@ -506,6 +498,11 @@
                 if (!gameState.playerItems) gameState.playerItems = {};
                 if (!gameState.turnOrder) gameState.turnOrder = [];
                 handleGameState(gameState);
+                
+                // Host automatically checks for turn completion when state updates
+                if (amIHost && gameState.phase === 'playing') {
+                    checkTurnResolution();
+                }
             }
         });
 
@@ -715,59 +712,56 @@
         if(!pendingVoteFruit) return;
         set(ref(db, `rooms/${roomId}/state/votes/${myKey}`), pendingVoteFruit).then(() => {
             sendSystemMessage(`${myName} locked in their vote! ✅`);
-            checkTurnResolution();
         });
     }
 
     function checkTurnResolution() {
-        if (!amIHost) return;
+        if (!amIHost || gameState.phase !== 'playing') return;
         
-        get(ref(db, `rooms/${roomId}/state`)).then(snap => {
-            const s = snap.val();
-            if (!s || s.phase !== 'playing') return;
+        const s = gameState;
+        const currentPlayers = Object.keys(globalPlayers);
+        const activeVotes = Object.keys(s.votes || {}).filter(k => currentPlayers.includes(k));
+        const targetId = s.turnOrder[s.turnIndex];
+        const requiredVotes = currentPlayers.length - (currentPlayers.includes(targetId) ? 1 : 0);
+        
+        if (activeVotes.length >= requiredVotes && requiredVotes > 0) {
+            gameState.phase = 'readingResults'; // local prevention of double triggers
+            updateState({ phase: 'readingResults' });
             
-            const currentPlayers = Object.keys(globalPlayers);
-            const activeVotes = Object.keys(s.votes || {}).filter(k => currentPlayers.includes(k));
-            const targetId = s.turnOrder[s.turnIndex];
-            const requiredVotes = currentPlayers.length - (currentPlayers.includes(targetId) ? 1 : 0);
+            const targetFruit = s.playerItems[targetId] ? s.playerItems[targetId].e : '❓';
+            let correct = [];
+            let newScores = s.scores || {};
             
-            if (activeVotes.length >= requiredVotes && requiredVotes > 0) {
-                updateState({ phase: 'readingResults' });
-                const targetFruit = s.playerItems[targetId] ? s.playerItems[targetId].e : '❓';
-                let correct = [];
-                let newScores = s.scores || {};
-                
-                for(let [pid, vote] of Object.entries(s.votes || {})) {
-                    if(vote === targetFruit) { 
-                        newScores[pid] = (newScores[pid] || 0) + 10; 
-                        if (globalPlayers[pid]) correct.push(globalPlayers[pid].name); 
-                    }
+            for(let [pid, vote] of Object.entries(s.votes || {})) {
+                if(vote === targetFruit) { 
+                    newScores[pid] = (newScores[pid] || 0) + 10; 
+                    if (globalPlayers[pid]) correct.push(globalPlayers[pid].name); 
                 }
-                
-                const targetName = globalPlayers[targetId] ? globalPlayers[targetId].name : 'Disconnected User';
-                sendSystemMessage(`Target ${targetName} had ${targetFruit}! ` + (correct.length > 0 ? `${correct.join(', ')} guessed correctly (+10)!` : `Nobody guessed correctly (0 pts)!`));
-                
-                updateState({ scores: newScores });
-                playSfx(sfx.alert);
-                
-                setTimeout(() => {
-                    let nextIndex = s.turnIndex + 1;
-                    
-                    // Skip any target who disconnected entirely during the game
-                    while (nextIndex < s.turnOrder.length && !globalPlayers[s.turnOrder[nextIndex]]) {
-                        nextIndex++;
-                    }
-
-                    if (nextIndex >= s.turnOrder.length) {
-                        updateState({ phase: 'finished' });
-                    } else {
-                        const nextTargetName = globalPlayers[s.turnOrder[nextIndex]].name;
-                        updateState({ phase: 'turnTransition', nextTargetName: nextTargetName, turnIndex: nextIndex, votes: {} });
-                        setTimeout(() => startTurn(), 3000);
-                    }
-                }, 4000);
             }
-        });
+            
+            const targetName = globalPlayers[targetId] ? globalPlayers[targetId].name : 'Disconnected User';
+            sendSystemMessage(`Target ${targetName} had ${targetFruit}! ` + (correct.length > 0 ? `${correct.join(', ')} guessed correctly (+10)!` : `Nobody guessed correctly (0 pts)!`));
+            
+            updateState({ scores: newScores });
+            playSfx(sfx.alert);
+            
+            setTimeout(() => {
+                let nextIndex = s.turnIndex + 1;
+                
+                // Skip any target who disconnected entirely during the game
+                while (nextIndex < s.turnOrder.length && !globalPlayers[s.turnOrder[nextIndex]]) {
+                    nextIndex++;
+                }
+
+                if (nextIndex >= s.turnOrder.length) {
+                    updateState({ phase: 'finished' });
+                } else {
+                    const nextTargetName = globalPlayers[s.turnOrder[nextIndex]].name;
+                    updateState({ phase: 'turnTransition', nextTargetName: nextTargetName, turnIndex: nextIndex, votes: {} });
+                    setTimeout(() => startTurn(), 3000);
+                }
+            }, 4000);
+        }
     }
 
     // Bug Fix: Dynamic node syncing specifically prevents UI rendering glitches with missing/ghost player cards
