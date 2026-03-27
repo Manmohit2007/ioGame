@@ -604,7 +604,7 @@
                 const btnPlayAgain = document.getElementById('btnPlayAgain');
                 if (btnPlayAgain) {
                     if (amIHost) { 
-                        if (onlineKeys.length >= 2) {
+                        if (pKeys.length >= 2) { // FIXED: Count ALL players in room
                             btnPlayAgain.className = "btn-primary"; btnPlayAgain.innerText = "Play Again"; btnPlayAgain.disabled = false;
                         } else {
                             btnPlayAgain.className = "btn-disabled"; btnPlayAgain.innerText = "Need 2+ Players to Replay"; btnPlayAgain.disabled = true;
@@ -708,7 +708,7 @@
         const statusText = document.getElementById('lobbyStatusText');
 
         if (amIHost) {
-            if (onlineKeys.length >= 2) {
+            if (keys.length >= 2) { // FIXED: Let host start if roster has 2+ people regardless of connection status
                 statusText.innerText = "You are the Host! 👑";
                 btnStart.className = "btn-primary"; btnStart.innerText = "Start Game"; 
                 btnStart.disabled = false;
@@ -727,14 +727,14 @@
     window.hostStartGame = function() {
         if (!amIHost) return;
         
-        const onlineKeys = Object.keys(globalPlayers).filter(k => globalPlayers[k].online !== false);
-        if (onlineKeys.length < 2) return; // Safety check: strictly prevent 1-player starts
+        const allKeys = Object.keys(globalPlayers); // FIXED: Grab everyone
+        if (allKeys.length < 2) return; 
         
         playSfx(sfx.start); clearReply();
         
         let shuffledItems = [...items].sort(() => 0.5 - Math.random());
         let playerItems = {}, initScores = {};
-        onlineKeys.forEach((k, i) => { playerItems[k] = shuffledItems[i % shuffledItems.length]; initScores[k] = 0; });
+        allKeys.forEach((k, i) => { playerItems[k] = shuffledItems[i % shuffledItems.length]; initScores[k] = 0; });
         
         sendSystemMessage(`🍎 Game started! Memorize your secret fruit.`);
 
@@ -744,7 +744,7 @@
             countdown: 5, 
             votes: null, 
             scores: initScores, 
-            turnOrder: onlineKeys, 
+            turnOrder: allKeys, // FIXED: Offline players stay in turn order
             turnIndex: 0,
             qna: null,
             revealedFruits: {}
@@ -778,8 +778,8 @@
             
             sendSystemMessage(`🔴 Target Acquired: ${targetName}! The interrogation begins.`);
             
-            // Exclude offline players from being askers
-            const askers = s.turnOrder.filter(id => id !== targetId && globalPlayers[id] && globalPlayers[id].online !== false);
+            // FIXED: Include offline players as askers! They must play or time out!
+            const askers = s.turnOrder.filter(id => id !== targetId && globalPlayers[id]);
             if (askers.length > 0) {
                 updateState({ 
                     phase: 'qna', 
@@ -797,11 +797,8 @@
         const s = gameState;
         let nextIndex = s.turnIndex + 1;
         
-        // Skip over disconnected players so the game doesn't stall
-        while (nextIndex < s.turnOrder.length && (!globalPlayers[s.turnOrder[nextIndex]] || globalPlayers[s.turnOrder[nextIndex]].online === false)) { 
-            nextIndex++; 
-        }
-
+        // FIXED: Removed the loop skipping offline players as targets. They will stand trial!
+        
         if (nextIndex >= s.turnOrder.length) {
             updateState({ phase: 'finished' });
         } else {
@@ -920,10 +917,10 @@
             document.getElementById('resultText').innerHTML = `<div style="font-size: 38px; font-weight: 900; color: #FFD700; text-shadow: 0 0 25px rgba(255,215,0,0.6); margin-bottom: 5px;">${winners.join(' & ')}</div><div style="font-size: 18px; font-weight: 800; color: #ffffff; letter-spacing: 2px; margin-bottom: 20px;">${resultTitle}</div>${chartHtml}</div>`;
             
             const btnPlayAgain = document.getElementById('btnPlayAgain');
-            const onlineCount = Object.keys(globalPlayers).filter(k => globalPlayers[k].online !== false).length;
+            const totalCount = Object.keys(globalPlayers).length; // FIXED
             
             if (amIHost) { 
-                if (onlineCount >= 2) {
+                if (totalCount >= 2) {
                     btnPlayAgain.className = "btn-primary"; btnPlayAgain.innerText = "Play Again"; btnPlayAgain.disabled = false;
                 } else {
                     btnPlayAgain.className = "btn-disabled"; btnPlayAgain.innerText = "Need 2+ Players to Replay"; btnPlayAgain.disabled = true;
@@ -1144,7 +1141,8 @@
         const now = Date.now();
         const isTimeUp = qna.deadline && now >= qna.deadline;
 
-        // Auto-skip logic based on TIMEOUT
+        // Auto-skip logic based strictly on TIMEOUT!
+        // No fast-skips for offline players - they must suffer the full timeline to get 0 points!
         if (isTimeUp) {
             if (qna.status === 'ask') {
                 push(ref(db, `rooms/${roomId}/chat`), { u: 'System', m: `⏳ Time Out! ${globalPlayers[askerId]?.name || 'Asker'} failed to ask.` });
@@ -1168,40 +1166,6 @@
                     updateState({ 'qna/status': 'resolving' });
                 }
             }
-            return; // Exit early if time is up, skip offline checks below
-        }
-
-        // Target Offline = Grace period of 5s before skipping everyone else
-        if (!globalPlayers[targetId] || globalPlayers[targetId].online === false) {
-            if (!skipTimers[targetId]) {
-                skipTimers[targetId] = setTimeout(() => {
-                    let missingVotes = {};
-                    qna.askers.forEach(id => {
-                        if(!gameState.votes || !gameState.votes[id]) missingVotes[id] = 'Skipped';
-                    });
-                    if(Object.keys(missingVotes).length > 0) update(ref(db, `rooms/${roomId}/state/votes`), missingVotes);
-                    updateState({ 'qna/status': 'resolving' });
-                }, 5000);
-            }
-        } else {
-            if (skipTimers[targetId]) { clearTimeout(skipTimers[targetId]); skipTimers[targetId] = null; }
-        }
-
-        // Asker Offline = Auto-Skip them after a 5s grace period
-        if ((!globalPlayers[askerId] || globalPlayers[askerId].online === false) && (qna.status === 'ask' || qna.status === 'vote')) {
-            if (!skipTimers[askerId]) {
-                skipTimers[askerId] = setTimeout(() => {
-                    set(ref(db, `rooms/${roomId}/state/votes/${askerId}`), 'Skipped');
-                    const nextIndex = qna.currentIndex + 1;
-                    if (nextIndex < qna.askers.length) {
-                        updateState({ 'qna/status': 'ask', 'qna/currentIndex': nextIndex, 'qna/currentQuestion': '', 'qna/deadline': Date.now() + 30000 });
-                    } else {
-                        updateState({ 'qna/status': 'resolving' });
-                    }
-                }, 5000);
-            }
-        } else {
-            if (skipTimers[askerId]) { clearTimeout(skipTimers[askerId]); skipTimers[askerId] = null; }
         }
     }
 
