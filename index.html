@@ -330,11 +330,11 @@
                     <div id="center-glass-orb" class="center-orb">
                         
                         <!-- NEW PRECISION SVG TIMELINE -->
-                        <svg id="orb-timer-svg" class="hidden" style="position:absolute; top:0; left:0; width:100%; height:100%; transform:rotate(-90deg); z-index:1; pointer-events:none; overflow:visible;">
+                        <svg id="orb-timer-svg" class="hidden" viewBox="0 0 100 100" style="position:absolute; top:-2px; left:-2px; width:calc(100% + 4px); height:calc(100% + 4px); transform:rotate(-90deg); z-index:1; pointer-events:none; overflow:visible;">
                             <!-- Faint Track Layer -->
-                            <circle id="orb-timer-track" fill="none" stroke="rgba(255, 255, 255, 0.1)" stroke-width="4"></circle>
+                            <circle id="orb-timer-track" cx="50" cy="50" r="48" fill="none" stroke="rgba(255, 255, 255, 0.1)" stroke-width="3"></circle>
                             <!-- Sharp Solid Progress Layer -->
-                            <circle id="orb-timer-circle" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear;"></circle>
+                            <circle id="orb-timer-circle" cx="50" cy="50" r="48" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear;"></circle>
                         </svg>
 
                         <div id="center-countdown" class="countdown-view hidden" style="z-index: 2;">
@@ -904,11 +904,8 @@
                 const isLast = i === sortedPlayers.length - 1;
                 const borderStyle = isLast ? '' : 'border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:8px; padding-bottom:8px;';
                 
-                // Color names with 0 points red ("inked")
-                const nameColor = score === 0 ? 'var(--primary)' : 'inherit';
-                
                 chartHtml += `<div style="display:flex; justify-content:space-between; ${borderStyle}">
-                    <span style="color: ${nameColor};"><b>#${i+1}</b> ${globalPlayers[p].name}</span>
+                    <span><b>#${i+1}</b> ${globalPlayers[p].name}</span>
                     <span style="color:var(--success); font-weight:bold;">${score} pts</span>
                 </div>`; 
             });
@@ -1010,19 +1007,8 @@
         }
 
         if (orbCircle && orbTrack && orb && orbSvg) {
-            // Precise width measurement for perfect alignment
-            const rect = orb.getBoundingClientRect();
-            const size = rect.width; 
-            
-            const center = size / 2;
-            const radius = center - 2; // Snaps to sit perfectly clean just inside the border
-            const circumference = 2 * Math.PI * radius;
-            
-            [orbCircle, orbTrack].forEach(c => {
-                c.setAttribute('cx', center);
-                c.setAttribute('cy', center);
-                c.setAttribute('r', radius);
-            });
+            // Using precise percentages based on SVG viewBox (0 0 100 100) with r=48
+            const circumference = 2 * Math.PI * 48;
             
             orbCircle.style.strokeDasharray = circumference;
             orbCircle.style.strokeDashoffset = circumference * (1 - pct);
