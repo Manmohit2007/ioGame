@@ -987,9 +987,15 @@
         let totalTime = (gameState.qna.status === 'vote') ? 15000 : 30000;
         let pct = (timeLeft / totalTime);
         
-        // Set fixed Blue Accent Color for timeline
-        let color = 'var(--accent)';
-        let rgbColor = '0, 122, 255';
+        let color = 'var(--success)';
+        let rgbColor = '52, 199, 89';
+        if (pct <= 0.2) {
+            color = 'var(--primary)'; // Red
+            rgbColor = '255, 59, 48';
+        } else if (pct <= 0.5) {
+            color = '#FFD700'; // Yellow
+            rgbColor = '255, 215, 0';
+        }
 
         if (bar) {
             bar.style.width = (pct * 100) + '%';
