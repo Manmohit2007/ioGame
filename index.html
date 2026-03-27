@@ -244,7 +244,7 @@
             backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 2px solid var(--glass-border);
             z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2);
-            animation: popIn 0.5s ease; transition: width 0.3s, height 0.3s;
+            animation: popIn 0.5s ease; transition: width 0.3s, height 0.3s, box-shadow 0.3s ease, border-color 0.3s ease;
         }
         @media (min-width: 768px) { .center-orb { width: 200px; height: 200px; } }
         @media (min-width: 1024px) { .center-orb { width: 260px; height: 260px; } }
@@ -498,9 +498,20 @@
     }
 
     window.copyInviteLink = function(btn) { 
-        const linkInput = document.getElementById('lobbyLinkInput'); linkInput.select(); navigator.clipboard.writeText(linkInput.value); 
-        playSfx(sfx.pop); const originalText = btn.innerText; btn.innerText = "Copied!"; btn.style.background = "var(--success)";
-        setTimeout(() => { btn.innerText = originalText; btn.style.background = "var(--accent)"; }, 1500);
+        if (btn.innerText === "Copied!") return; // Prevent spam-clicking glitch
+        
+        const linkInput = document.getElementById('lobbyLinkInput'); 
+        linkInput.select(); 
+        navigator.clipboard.writeText(linkInput.value); 
+        playSfx(sfx.pop); 
+        
+        btn.innerText = "Copied!"; 
+        btn.style.background = "var(--success)";
+        
+        setTimeout(() => { 
+            btn.innerText = "Copy"; 
+            btn.style.background = "var(--accent)"; 
+        }, 1500);
     }
 
     function switchView(viewId) {
@@ -896,7 +907,8 @@
             splitView.classList.add('hidden'); resultView.classList.remove('hidden');
             
             const sortedPlayers = Object.keys(globalPlayers).sort((a, b) => (state.scores[b] || 0) - (state.scores[a] || 0));
-            const winners = sortedPlayers.filter(p => (state.scores[p] || 0) === (state.scores[sortedPlayers[0]] || 0)).map(p => globalPlayers[p].name);
+            const maxScore = state.scores[sortedPlayers[0]] || 0;
+            const winners = sortedPlayers.filter(p => (state.scores[p] || 0) === maxScore).map(p => globalPlayers[p].name);
             let chartHtml = `<div style="text-align:left; background:rgba(255, 255, 255, 0.15); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border: 1px solid var(--glass-border); padding:15px; border-radius:16px; margin-bottom:20px; font-size:15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-shadow: none;">`;
             sortedPlayers.forEach((p, i) => { 
                 const isLast = i === sortedPlayers.length - 1;
@@ -904,7 +916,8 @@
                 chartHtml += `<div style="display:flex; justify-content:space-between; ${borderStyle}"><span><b>#${i+1}</b> ${globalPlayers[p].name}</span><span style="color:var(--success); font-weight:bold;">${state.scores[p] || 0} pts</span></div>`; 
             });
             
-            document.getElementById('resultText').innerHTML = `<div style="font-size: 38px; font-weight: 900; color: #FFD700; text-shadow: 0 0 25px rgba(255,215,0,0.6); margin-bottom: 5px;">${winners.join(' & ')}</div><div style="font-size: 18px; font-weight: 800; color: #ffffff; letter-spacing: 2px; margin-bottom: 20px;">WINNER!</div>${chartHtml}</div>`;
+            const resultTitle = maxScore === 0 ? "LOSER!" : "WINNER!";
+            document.getElementById('resultText').innerHTML = `<div style="font-size: 38px; font-weight: 900; color: #FFD700; text-shadow: 0 0 25px rgba(255,215,0,0.6); margin-bottom: 5px;">${winners.join(' & ')}</div><div style="font-size: 18px; font-weight: 800; color: #ffffff; letter-spacing: 2px; margin-bottom: 20px;">${resultTitle}</div>${chartHtml}</div>`;
             
             const btnPlayAgain = document.getElementById('btnPlayAgain');
             const onlineCount = Object.keys(globalPlayers).filter(k => globalPlayers[k].online !== false).length;
@@ -960,7 +973,11 @@
         if (gameState.phase !== 'qna' || !gameState.qna || !gameState.qna.deadline) {
             if (bar) bar.style.width = '0%';
             if (orbSvg) orbSvg.classList.add('hidden');
-            if (orb) orb.style.boxShadow = 'inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2)';
+            if (orb) {
+                // Reset orb styling
+                orb.style.boxShadow = 'inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2)';
+                orb.style.borderColor = 'var(--glass-border)';
+            }
             return;
         }
 
@@ -988,28 +1005,28 @@
             bar.style.backgroundColor = color;
         }
 
-        // Dynamically calculate radius so it perfectly overlaps the border at ANY screen size
         if (orbCircle && orb && orbSvg) {
             const size = orb.offsetWidth; 
-            orbSvg.style.width = size + 'px';
-            orbSvg.style.height = size + 'px';
+            orbSvg.style.width = (size + 4) + 'px';
+            orbSvg.style.height = (size + 4) + 'px';
             
-            const radius = (size / 2) - 1; // 1px inset to center stroke perfectly over 2px border
+            const radius = size / 2; // Matches exact edge since svg is larger
             const circumference = 2 * Math.PI * radius;
             
-            orbCircle.setAttribute('cx', size / 2);
-            orbCircle.setAttribute('cy', size / 2);
-            orbCircle.setAttribute('r', Math.max(0, radius));
+            orbCircle.setAttribute('cx', (size / 2) + 2);
+            orbCircle.setAttribute('cy', (size / 2) + 2);
+            orbCircle.setAttribute('r', radius);
             
             orbCircle.style.strokeDasharray = circumference;
             orbCircle.style.strokeDashoffset = circumference * (1 - pct);
             orbCircle.style.stroke = color;
             
-            // Dual drop-shadow creates the exact intense neon glow effect
-            orbCircle.style.filter = `drop-shadow(0 0 6px rgba(${rgbColor}, 0.8)) drop-shadow(0 0 12px rgba(${rgbColor}, 0.6))`;
+            // EXACT matching glow applied to the orb itself
+            orb.style.boxShadow = `0 0 20px 5px rgba(${rgbColor}, 0.6), inset 0 0 10px rgba(${rgbColor}, 0.4), inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2)`;
+            orb.style.borderColor = 'transparent'; // Hide native border so SVG ring takes over completely
             
-            // Subtle inner glow matching the smaller nodes
-            orb.style.boxShadow = `inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2), inset 0 0 15px rgba(${rgbColor}, 0.3)`;
+            // Add a slight drop shadow to the SVG itself so the tip of the line glows
+            orbCircle.style.filter = `drop-shadow(0 0 4px rgba(${rgbColor}, 0.8))`;
         }
     }
 
