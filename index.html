@@ -58,7 +58,7 @@
         @media (min-width: 768px) { h1 { font-size: 52px; } .subtitle { font-size: 18px; } }
         
         input, textarea { 
-            width: 100%; background: rgba(0, 0, 0, 0.35); border: 1.5px solid transparent; 
+            width: 100%; background: rgba(0, 0, 0, 0.2); border: 1.5px solid transparent; 
             padding: 16px; border-radius: 16px; color: #fff; outline: none; text-shadow: none;
             font-size: 16px; font-weight: 500; margin-bottom: 12px; transition: 0.3s ease; 
             font-family: inherit;
@@ -66,7 +66,7 @@
         @media (prefers-color-scheme: light) { 
             input, textarea { background: rgba(0, 0, 0, 0.08); color: #000; } 
         }
-        input:focus, textarea:focus { border-color: var(--accent); background: rgba(0, 0, 0, 0.5); transform: translateY(-2px); }
+        input:focus, textarea:focus { border-color: var(--accent); background: rgba(0, 0, 0, 0.3); transform: translateY(-2px); }
         @media (prefers-color-scheme: light) { 
             input:focus, textarea:focus { background: rgba(0, 0, 0, 0.12); } 
         }
@@ -91,7 +91,8 @@
         @media (min-width: 1024px) { .player-grid { grid-template-columns: repeat(4, 1fr); } }
 
         .p-badge { 
-            background: rgba(150, 150, 150, 0.15); border: 1px solid var(--glass-border); border-radius: 14px; 
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border); border-radius: 14px; 
             padding: 12px; text-align: center; font-weight: 600; font-size: 14px; 
             animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
@@ -115,8 +116,10 @@
 
         .chat-section {
             display: flex; flex-direction: column; flex: 1.5; min-height: 0;
-            background: rgba(0,0,0,0.15); border-radius: 20px; border: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.25); backdrop-filter: blur(25px) saturate(120%); -webkit-backdrop-filter: blur(25px) saturate(120%);
+            border-radius: 20px; border: 1px solid var(--glass-border);
             overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         }
 
         @media (min-width: 768px) and (orientation: landscape) { 
@@ -233,6 +236,12 @@
         @keyframes popInNode { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
         @keyframes slideUp { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+        .emoji-row {
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+            font-size: clamp(24px, 7vw, 32px); flex-wrap: nowrap; white-space: nowrap;
+            margin-bottom: 10px; text-shadow: none; width: 100%; overflow: hidden;
+        }
     </style>
 </head>
 <body>
@@ -263,11 +272,11 @@
         </div>
         
         <div class="glass-card">
-            <div id="lobbyEmojiDisplay" style="font-size: 32px; letter-spacing: 5px; text-align: center; margin-bottom: 10px; animation: float 3s infinite; text-shadow:none;"></div>
+            <div id="lobbyEmojiDisplay" class="emoji-row" style="animation: float 3s infinite;"></div>
             <h2 id="lobbyStatusText" style="font-size: 18px; margin-bottom: 20px; text-align: center;">Waiting in Lobby...</h2>
             <div class="player-grid" id="lobbyPlayers"></div>
             
-            <button id="btnStartGame" class="btn-disabled" onclick="hostStartGame()" style="display: none;">Start Game 🔒</button>
+            <button id="btnStartGame" class="btn-disabled" onclick="hostStartGame()">Waiting for Host...</button>
             <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room 🚪</button>
         </div>
     </div>
@@ -279,15 +288,15 @@
             <div id="status-container">
                 <div id="gameStatus" class="hidden" style="font-weight: 700; color: var(--accent); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">System Ready</div>
                 
-                <div id="voting-header" class="hidden" style="display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;">
-                    <div id="voting-fruits" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
-                    <button id="btnSubmitVote" class="btn-accent" style="padding: 10px 14px; font-size:12px; width:auto; border-radius: 12px; display:none; flex-shrink:0;" onclick="submitVote()">VOTE</button>
+                <div id="voting-header" class="hidden" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;">
+                    <div id="voting-fruits" style="display:flex; gap:6px; flex-wrap:nowrap; justify-content:center;"></div>
+                    <button id="btnSubmitVote" class="btn-accent" style="padding: 10px 24px; font-size:14px; width:auto; border-radius: 14px; display:none; flex-shrink:0;" onclick="submitVote()">VOTE</button>
                 </div>
                 
                 <div id="target-message" class="hidden" style="color:var(--primary); font-weight:bold; font-size:15px;">🎯 You are the Target! Answer their questions.</div>
             </div>
             
-            <div id="emojiVaultDisplay" style="text-align:center; font-size: 32px; letter-spacing: 5px; text-shadow:none; margin-bottom:10px; opacity:0.9;"></div>
+            <div id="emojiVaultDisplay" class="emoji-row" style="opacity:0.9;"></div>
 
             <div id="game-content-split" class="game-content-split hidden">
                 
@@ -309,6 +318,12 @@
                         <div id="center-playing" class="countdown-view hidden">
                             <p style="font-size: 13px; font-weight: 700; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-bottom: 5px; text-transform: uppercase;">Current Target</p>
                             <div id="playingTargetName" style="font-size: 26px; font-weight: 900; color: #66B2FF; text-shadow: 0 2px 4px rgba(0,0,0,0.9), 0 0 15px rgba(0,122,255,0.8); text-transform: uppercase;">Name</div>
+                        </div>
+
+                        <div id="center-results" class="countdown-view hidden">
+                            <p style="font-size: 13px; font-weight: 700; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-bottom: 5px; text-transform: uppercase;">Target's Fruit</p>
+                            <div id="revealedFruit" style="font-size: 55px; line-height: 1.1; text-shadow: 0 5px 15px rgba(0,0,0,0.3);">❓</div>
+                            <div id="revealedText" style="font-size: 15px; font-weight: 900; color: var(--success); text-shadow: 0 2px 4px rgba(0,0,0,0.9); margin-top:5px;">Scores Updated!</div>
                         </div>
                     </div>
                 </div>
@@ -338,11 +353,11 @@
                 <div id="resultEmoji" style="font-size: 70px; margin-bottom: 10px; animation: float 2s infinite;">🎉</div>
                 <h2 id="resultText" style="margin-bottom: 20px; font-size: 24px; font-weight: 800; line-height: 1.2;"></h2>
                 
-                <div id="host-controls" class="hidden">
+                <div id="end-controls">
                     <button id="btnPlayAgain" class="btn-primary" onclick="hostStartGame()">Play Again 🚀</button>
                     <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room 🚪</button>
                 </div>
-                <div id="non-host-message" class="hidden" style="color:var(--text-muted); font-weight:bold;">Waiting for Host...</div>
+                <div id="non-host-message" class="hidden" style="color:var(--text-muted); font-weight:bold; margin-top: 12px;">Waiting for Host...</div>
             </div>
         </div>
     </div>
@@ -381,8 +396,8 @@
     }
     
     const items = [ {e:"🍎", n:"Apple"}, {e:"🥭", n:"Mango"}, {e:"🍉", n:"Watermelon"}, {e:"🍇", n:"Grapes"}, {e:"🍓", n:"Strawberry"}, {e:"🍊", n:"Orange"} ];
-    document.getElementById('emojiVaultDisplay').innerText = items.map(i => i.e).join(' ');
-    document.getElementById('lobbyEmojiDisplay').innerText = items.map(i => i.e).join(' ');
+    document.getElementById('emojiVaultDisplay').innerHTML = items.map(i => `<span>${i.e}</span>`).join('');
+    document.getElementById('lobbyEmojiDisplay').innerHTML = items.map(i => `<span>${i.e}</span>`).join('');
 
     let myKey = null, myName = "", amIHost = false, globalPlayers = {}, gameState = { phase: 'login', votes: {}, scores: {}, turnIndex: 0, turnOrder: [] };
     let lastPhase = '', lastChatCount = 0, pendingVoteFruit = null, activeReply = null; 
@@ -499,11 +514,17 @@
         onValue(ref(db, `rooms/${roomId}/state`), (snap) => {
             const s = snap.val();
             if (s) {
-                gameState = { ...gameState, ...s };
-                if (!gameState.votes) gameState.votes = {};
-                if (!gameState.scores) gameState.scores = {};
-                if (!gameState.playerItems) gameState.playerItems = {};
-                if (!gameState.turnOrder) gameState.turnOrder = [];
+                gameState = { 
+                    phase: s.phase || 'login', 
+                    countdown: s.countdown || 0,
+                    playerItems: s.playerItems || {},
+                    votes: s.votes || {}, 
+                    scores: s.scores || {}, 
+                    turnOrder: s.turnOrder || [],
+                    turnIndex: s.turnIndex || 0,
+                    nextTargetName: s.nextTargetName || '',
+                    lastTargetFruit: s.lastTargetFruit || ''
+                };
                 handleGameState(gameState);
                 
                 // Host automatically checks for turn completion when state updates
@@ -546,11 +567,11 @@
         if (amIHost) {
             statusText.innerText = "You are the Host! 👑";
             btnStart.className = "btn-primary"; btnStart.innerText = "Start Game 🚀"; 
-            btnStart.disabled = false; btnStart.style.display = 'block';
+            btnStart.disabled = false;
         } else {
             statusText.innerText = "Waiting for Host to start...";
             btnStart.className = "btn-disabled"; btnStart.innerText = "Waiting for Host..."; 
-            btnStart.disabled = true; btnStart.style.display = 'none';
+            btnStart.disabled = true;
         }
     }
 
@@ -568,7 +589,7 @@
             phase: 'countdown', 
             playerItems: playerItems, 
             countdown: 5, 
-            votes: {}, 
+            votes: null, 
             scores: initScores, 
             turnOrder: keys, 
             turnIndex: 0 
@@ -597,7 +618,7 @@
             const targetName = globalPlayers[targetId] ? globalPlayers[targetId].name : 'Someone';
             
             sendSystemMessage(`🔴 Target Acquired: Guess ${targetName}'s fruit!`);
-            updateState({ phase: 'playing', votes: {} });
+            updateState({ phase: 'playing', votes: null });
         });
     }
 
@@ -639,7 +660,7 @@
             document.getElementById('emojiVaultDisplay').classList.remove('hidden');
         }
 
-        ['center-countdown', 'center-transition', 'center-playing'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        ['center-countdown', 'center-transition', 'center-playing', 'center-results'].forEach(id => document.getElementById(id).classList.add('hidden'));
 
         if (state.phase === 'countdown') {
             status.innerText = "Memorize Your Fruit!"; status.classList.remove('hidden');
@@ -663,9 +684,9 @@
 
         if (state.phase === 'readingResults') {
             document.getElementById('emojiVaultDisplay').classList.add('hidden'); 
-            status.classList.add('hidden'); votingHeader.classList.add('hidden');
-            document.getElementById('center-playing').classList.remove('hidden');
-            targetMessage.classList.remove('hidden'); targetMessage.innerText = "Turn Ended! Checking Scores...";
+            status.classList.add('hidden'); votingHeader.classList.add('hidden'); targetMessage.classList.add('hidden');
+            document.getElementById('center-results').classList.remove('hidden');
+            document.getElementById('revealedFruit').innerText = state.lastTargetFruit || '❓';
             renderBoardNodes(isNewPhase); 
         }
 
@@ -684,13 +705,19 @@
             
             const sortedPlayers = Object.keys(globalPlayers).sort((a, b) => (state.scores[b] || 0) - (state.scores[a] || 0));
             const winners = sortedPlayers.filter(p => (state.scores[p] || 0) === (state.scores[sortedPlayers[0]] || 0)).map(p => globalPlayers[p].name);
-            let chartHtml = `<div style="text-align:left; background:rgba(0,0,0,0.3); padding:15px; border-radius:16px; margin-bottom:20px; font-size:15px;">`;
+            let chartHtml = `<div style="text-align:left; background:rgba(0,0,0,0.25); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border: 1px solid var(--glass-border); padding:15px; border-radius:16px; margin-bottom:20px; font-size:15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">`;
             sortedPlayers.forEach((p, i) => { chartHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;"><span><b>#${i+1}</b> ${globalPlayers[p].name}</span><span style="color:var(--accent); font-weight:bold;">${state.scores[p] || 0} pts</span></div>`; });
             
             document.getElementById('resultText').innerHTML = `<div style="font-size: 38px; font-weight: 900; color: #FFD700; text-shadow: 0 0 25px rgba(255,215,0,0.6); margin-bottom: 5px;">${winners.join(' & ')}</div><div style="font-size: 18px; font-weight: 800; color: var(--success); letter-spacing: 2px; margin-bottom: 20px;">WINNER!</div>${chartHtml}</div>`;
             
-            if (amIHost) { document.getElementById('host-controls').classList.remove('hidden'); document.getElementById('non-host-message').classList.add('hidden'); }
-            else { document.getElementById('host-controls').classList.add('hidden'); document.getElementById('non-host-message').classList.remove('hidden'); }
+            const btnPlayAgain = document.getElementById('btnPlayAgain');
+            if (amIHost) { 
+                btnPlayAgain.className = "btn-primary"; btnPlayAgain.innerText = "Play Again 🚀"; btnPlayAgain.disabled = false;
+                document.getElementById('non-host-message').classList.add('hidden'); 
+            } else { 
+                btnPlayAgain.className = "btn-disabled"; btnPlayAgain.innerText = "Waiting for Host..."; btnPlayAgain.disabled = true;
+                document.getElementById('non-host-message').classList.remove('hidden'); 
+            }
             if (lastPhase !== 'finished') { playSfx(sfx.win); playSfx(sfx.cheer); createConfetti(); }
         }
         
@@ -732,10 +759,11 @@
         const requiredVotes = currentPlayers.length - (currentPlayers.includes(targetId) ? 1 : 0);
         
         if (activeVotes.length >= requiredVotes && requiredVotes > 0) {
-            gameState.phase = 'readingResults'; // local prevention of double triggers
-            updateState({ phase: 'readingResults' });
-            
             const targetFruit = s.playerItems[targetId] ? s.playerItems[targetId].e : '❓';
+
+            gameState.phase = 'readingResults'; // local prevention of double triggers
+            updateState({ phase: 'readingResults', lastTargetFruit: targetFruit });
+            
             let correct = [];
             let newScores = s.scores || {};
             
@@ -764,7 +792,7 @@
                     updateState({ phase: 'finished' });
                 } else {
                     const nextTargetName = globalPlayers[s.turnOrder[nextIndex]].name;
-                    updateState({ phase: 'turnTransition', nextTargetName: nextTargetName, turnIndex: nextIndex, votes: {} });
+                    updateState({ phase: 'turnTransition', nextTargetName: nextTargetName, turnIndex: nextIndex, votes: null });
                     setTimeout(() => startTurn(), 3000);
                 }
             }, 4000);
