@@ -100,7 +100,7 @@
         @media (min-width: 768px) { #view-game > .game-wrapper { padding: 24px; } }
 
         .game-content-split {
-            display: flex; flex-direction: column; flex: 1; gap: 12px; min-height: 0;
+            display: flex; flex-direction: column; flex: 1; gap: 6px; min-height: 0;
         }
 
         @media (min-width: 768px) and (orientation: landscape), (min-width: 1024px) {
@@ -109,7 +109,7 @@
 
         .board-section {
             flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
-            min-height: 240px; 
+            min-height: 230px; max-height: 35vh;
         }
 
         .chat-section {
@@ -121,10 +121,11 @@
         }
 
         @media (min-width: 768px) and (orientation: landscape) { 
-            .board-section { flex: 1; }
+            .board-section { flex: 1; max-height: none; }
             .chat-section { width: 320px; height: 100%; flex: none; } 
         }
         @media (min-width: 1024px) { 
+            .board-section { max-height: none; }
             .chat-section { width: 380px; height: 100%; flex: none; } 
         }
 
@@ -286,9 +287,9 @@
             <div id="status-container">
                 <div id="gameStatus" class="hidden" style="font-weight: 700; color: var(--accent); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">System Ready</div>
                 
-                <div id="voting-header" class="hidden" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;">
+                <div id="voting-header" class="hidden" style="display:flex; flex-direction:row; align-items:center; justify-content:center; gap:12px;">
                     <div id="voting-fruits" style="display:flex; gap:6px; flex-wrap:nowrap; justify-content:center;"></div>
-                    <button id="btnSubmitVote" class="btn-accent" style="padding: 10px 24px; font-size:14px; width:auto; border-radius: 14px; display:none; flex-shrink:0;" onclick="submitVote()">VOTE</button>
+                    <button id="btnSubmitVote" class="btn-accent" style="padding: 10px 20px; font-size:14px; width:auto; border-radius: 14px; display:none; flex-shrink:0;" onclick="submitVote()">VOTE</button>
                 </div>
                 
                 <div id="target-message" class="hidden" style="color:var(--primary); font-weight:bold; font-size:15px;">🎯 You are the Target! Answer their questions.</div>
@@ -355,7 +356,6 @@
                     <button id="btnPlayAgain" class="btn-primary" onclick="hostStartGame()">Play Again 🚀</button>
                     <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room 🚪</button>
                 </div>
-                <div id="non-host-message" class="hidden" style="color:var(--text-muted); font-weight:bold; margin-top: 12px;">Waiting for Host...</div>
             </div>
         </div>
     </div>
@@ -711,10 +711,8 @@
             const btnPlayAgain = document.getElementById('btnPlayAgain');
             if (amIHost) { 
                 btnPlayAgain.className = "btn-primary"; btnPlayAgain.innerText = "Play Again 🚀"; btnPlayAgain.disabled = false;
-                document.getElementById('non-host-message').classList.add('hidden'); 
             } else { 
                 btnPlayAgain.className = "btn-disabled"; btnPlayAgain.innerText = "Waiting for Host..."; btnPlayAgain.disabled = true;
-                document.getElementById('non-host-message').classList.remove('hidden'); 
             }
             if (lastPhase !== 'finished') { playSfx(sfx.win); playSfx(sfx.cheer); createConfetti(); }
         }
