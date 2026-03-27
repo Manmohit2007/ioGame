@@ -63,7 +63,6 @@
             box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.25) !important; 
         }
         
-        /* Fix for Android/Webkit Autofill turning inputs solid white */
         input:-webkit-autofill,
         input:-webkit-autofill:hover, 
         input:-webkit-autofill:focus, 
@@ -329,11 +328,9 @@
                     
                     <div id="center-glass-orb" class="center-orb">
                         
-                        <!-- NEW PRECISION SVG TIMELINE -->
+                        <!-- NEW PRECISION SVG TIMELINE (No White Track/Outline) -->
                         <svg id="orb-timer-svg" class="hidden" viewBox="0 0 100 100" style="position:absolute; top:-2px; left:-2px; width:calc(100% + 4px); height:calc(100% + 4px); transform:rotate(-90deg); z-index:1; pointer-events:none; overflow:visible;">
-                            <!-- Faint Track Layer -->
-                            <circle id="orb-timer-track" cx="50" cy="50" r="48" fill="none" stroke="rgba(255, 255, 255, 0.1)" stroke-width="3"></circle>
-                            <!-- Sharp Solid Progress Layer -->
+                            <!-- Sharp Solid Progress Layer Only -->
                             <circle id="orb-timer-circle" cx="50" cy="50" r="48" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear;"></circle>
                         </svg>
 
@@ -362,7 +359,7 @@
 
                 <div class="chat-section" id="chat-panel-container">
                     
-                    <!-- REVEALED FRUITS IN CHAT TOP -->
+                    <!-- REVEALED FRUITS IN CHAT TOP (Always visible during game now) -->
                     <div id="revealed-list-container" class="hidden" style="background: rgba(255, 255, 255, 0.05); padding: 8px 12px; border-bottom: 1px solid var(--glass-border); z-index: 10;">
                         <div id="revealed-badges" style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;"></div>
                     </div>
@@ -613,6 +610,7 @@
 
             if(gameState.phase !== 'login' && gameState.phase !== 'lobby') {
                 renderBoardNodes(false); 
+                renderRevealedFruits();
             }
             
             if (!wasIHost && amIHost) { 
@@ -976,13 +974,13 @@
         const bar = document.getElementById('qna-timer-bar');
         const orbSvg = document.getElementById('orb-timer-svg');
         const orbCircle = document.getElementById('orb-timer-circle');
-        const orbTrack = document.getElementById('orb-timer-track');
         const orb = document.getElementById('center-glass-orb');
 
         if (gameState.phase !== 'qna' || !gameState.qna || !gameState.qna.deadline) {
             if (bar) bar.style.width = '0%';
             if (orbSvg) orbSvg.classList.add('hidden');
             if (orb) {
+                // Restore standard border
                 orb.style.boxShadow = 'inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2)';
                 orb.style.borderColor = 'var(--glass-border)';
             }
@@ -1006,7 +1004,7 @@
             bar.style.backgroundColor = color;
         }
 
-        if (orbCircle && orbTrack && orb && orbSvg) {
+        if (orbCircle && orb && orbSvg) {
             // Using precise percentages based on SVG viewBox (0 0 100 100) with r=48
             const circumference = 2 * Math.PI * 48;
             
@@ -1015,7 +1013,8 @@
             orbCircle.style.stroke = color;
 
             orb.style.boxShadow = `inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2)`;
-            orb.style.borderColor = `var(--glass-border)`; 
+            // Remove the white border completely when the timer is active to avoid any white outline showing through
+            orb.style.borderColor = `transparent`; 
         }
     }
 
@@ -1267,18 +1266,47 @@
 
     function renderRevealedFruits() {
         const container = document.getElementById('revealed-list-container');
-        if (!gameState.revealedFruits || Object.keys(gameState.revealedFruits).length === 0 || gameState.phase === 'login' || gameState.phase === 'lobby') {
+        
+        // Show by default as long as the game is actively running
+        if (gameState.phase === 'login' || gameState.phase === 'lobby') {
             container.classList.add('hidden');
             return;
         }
-        container.classList.remove('hidden');
         
-        const badgesHtml = Object.entries(gameState.revealedFruits).map(([pid, fruit]) => {
+        container.classList.remove('hidden');
+
+        // Compile list of fruits to display (Mine + officially revealed ones)
+        let displayList = {};
+
+        // 1. Add my own fruit
+        if (gameState.playerItems && gameState.playerItems[myKey]) {
+            displayList[myKey] = gameState.playerItems[myKey].e;
+        }
+
+        // 2. Add revealed fruits from other players
+        if (gameState.revealedFruits) {
+            Object.entries(gameState.revealedFruits).forEach(([pid, fruit]) => {
+                displayList[pid] = fruit;
+            });
+        }
+        
+        // Map everything to HTML
+        const badgesHtml = Object.entries(displayList).map(([pid, fruit]) => {
             const pName = globalPlayers[pid]?.name || 'Offline';
-            return `<div class="revealed-badge"><b>${pName}:</b> <span style="font-size: 1.2em; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));">${fruit}</span></div>`;
+            const isMe = pid === myKey;
+            
+            // Add a subtle highlight for your own badge
+            const highlightStyle = isMe ? 'border-color: var(--accent); background: rgba(0, 122, 255, 0.15);' : '';
+            
+            return `<div class="revealed-badge" style="${highlightStyle}"><b>${pName}:</b> <span style="font-size: 1.2em; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));">${fruit}</span></div>`;
         }).join('');
         
-        document.getElementById('revealed-badges').innerHTML = badgesHtml;
+        const badgeContainer = document.getElementById('revealed-badges');
+        if (badgesHtml === '') {
+            badgeContainer.innerHTML = `<div style="font-size: 13px; color: var(--text-muted); padding: 4px;">Fruits will appear here...</div>`;
+        } else {
+            badgeContainer.innerHTML = badgesHtml;
+        }
     }
 
     window.addEventListener('resize', () => {
