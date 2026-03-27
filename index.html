@@ -329,9 +329,12 @@
                     
                     <div id="center-glass-orb" class="center-orb">
                         
-                        <!-- DYNAMIC CIRCULAR TIMELINE (Perfectly bound to border-box) -->
+                        <!-- NEW PRECISION SVG TIMELINE -->
                         <svg id="orb-timer-svg" class="hidden" style="position:absolute; top:0; left:0; width:100%; height:100%; transform:rotate(-90deg); z-index:1; pointer-events:none; overflow:visible;">
-                            <circle id="orb-timer-circle" fill="none" stroke-width="2" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease, filter 0.3s ease;"></circle>
+                            <!-- Blurred Glow Layer -->
+                            <circle id="orb-timer-circle-glow" fill="none" stroke-width="8" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease; filter: blur(8px); opacity: 0.7;"></circle>
+                            <!-- Sharp Solid Stroke Layer -->
+                            <circle id="orb-timer-circle" fill="none" stroke-width="4" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease;"></circle>
                         </svg>
 
                         <div id="center-countdown" class="countdown-view hidden" style="z-index: 2;">
@@ -366,7 +369,7 @@
 
                     <div id="center-chat" class="chat-scroll"></div>
                     
-                    <!-- DYNAMIC GAME ACTION AREA (Replaces chat input during Q&A) -->
+                    <!-- DYNAMIC GAME ACTION AREA -->
                     <div id="qna-action-area" class="chat-input-area hidden" style="background: rgba(0, 122, 255, 0.15); border-top: none; padding-top: 16px; position: relative; z-index: 20;">
                         
                         <!-- DYNAMIC TIMELINE PROGRESS BAR -->
@@ -421,7 +424,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getDatabase, ref, set, update, onValue, onDisconnect, push, remove, get } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-    // Initialize Firebase from provided configuration
     const firebaseConfig = {
         apiKey: "AIzaSyAVREmzFgrnE_1NP9Ke-Ybtynls1Ka-HNk",
         authDomain: "iogame-145c9.firebaseapp.com",
@@ -464,13 +466,11 @@
     let myKey = null, myName = "", amIHost = false, globalPlayers = {}, gameState = { phase: 'login', votes: {}, scores: {}, turnOrder: [], turnIndex: 0, qna: {}, revealedFruits: {} };
     let lastPhase = '', lastChatCount = 0, activeReply = null; 
     
-    // Professional Stability Master Variables
     let skipTimers = {}; 
     let hostTimerIds = { main: null, countdown: null }; 
     let uiTimerInterval = null;
     let hostQnaTimer = null;
 
-    // Sound FX
     let musicPlaying = false;
     const bgm = document.getElementById('bgMusic'); bgm.volume = 0.15; 
     const sfx = {
@@ -498,7 +498,7 @@
     }
 
     window.copyInviteLink = function(btn) { 
-        if (btn.innerText === "Copied!") return; // Prevent spam-clicking glitch
+        if (btn.innerText === "Copied!") return;
         
         const linkInput = document.getElementById('lobbyLinkInput'); 
         linkInput.select(); 
@@ -537,7 +537,6 @@
         myName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
         playSfx(sfx.pop); if(!musicPlaying) toggleMusic();
         
-        // Recover previous identity
         let storedData = sessionStorage.getItem(`iogame_user_${roomId}`);
         let joinedTime = Date.now();
         if (storedData) {
@@ -566,7 +565,6 @@
         }
         document.getElementById('lobbyLinkInput').value = displayUrl;
         
-        // PROFESSIONAL CONNECTION STABILITY SYSTEM
         if (!window.connectionListenerAdded) {
             window.connectionListenerAdded = true;
             onValue(ref(db, ".info/connected"), (snap) => {
@@ -574,7 +572,7 @@
                     const playerRef = ref(db, `rooms/${roomId}/players/${myKey}`);
                     const onlineRef = ref(db, `rooms/${roomId}/players/${myKey}/online`);
                     
-                    onDisconnect(playerRef).cancel(); // Ensure hard remove is disabled
+                    onDisconnect(playerRef).cancel();
                     onDisconnect(onlineRef).set(false).then(() => {
                         update(playerRef, { name: myName, joinedAt: joinedTime, online: true });
                     });
@@ -588,7 +586,6 @@
             
             let wasIHost = amIHost;
 
-            // Only assign host to a currently online player
             const onlineKeys = pKeys.filter(k => globalPlayers[k].online !== false);
             if (onlineKeys.length > 0) {
                 const oldestKey = onlineKeys.sort((a,b) => globalPlayers[a].joinedAt - globalPlayers[b].joinedAt)[0];
@@ -599,12 +596,11 @@
             
             renderLobby();
             
-            // Dynamically update the Play Again button if players join/leave during the results screen
             if (gameState.phase === 'finished') {
                 const btnPlayAgain = document.getElementById('btnPlayAgain');
                 if (btnPlayAgain) {
                     if (amIHost) { 
-                        if (pKeys.length >= 2) { // FIXED: Count ALL players in room
+                        if (pKeys.length >= 2) { 
                             btnPlayAgain.className = "btn-primary"; btnPlayAgain.innerText = "Play Again"; btnPlayAgain.disabled = false;
                         } else {
                             btnPlayAgain.className = "btn-disabled"; btnPlayAgain.innerText = "Need 2+ Players to Replay"; btnPlayAgain.disabled = true;
@@ -619,7 +615,6 @@
                 renderBoardNodes(false); 
             }
             
-            // HOST MIGRATION RECOVERY
             if (!wasIHost && amIHost) { 
                 resumeHostDuties();
             }
@@ -671,13 +666,11 @@
         push(ref(db, `rooms/${roomId}/chat`), { u: 'System', m: msg });
     }
 
-    // Host Migration Duty Transfer System
     function resumeHostDuties() {
         if (!amIHost) return;
         clearTimeout(hostTimerIds.main);
         clearInterval(hostTimerIds.countdown);
         
-        // Recover lost background timers on migration
         if (gameState.phase === 'countdown') {
             window.startCountdown();
         } else if (gameState.phase === 'readingResults') {
@@ -708,7 +701,7 @@
         const statusText = document.getElementById('lobbyStatusText');
 
         if (amIHost) {
-            if (keys.length >= 2) { // FIXED: Let host start if roster has 2+ people regardless of connection status
+            if (keys.length >= 2) { 
                 statusText.innerText = "You are the Host! 👑";
                 btnStart.className = "btn-primary"; btnStart.innerText = "Start Game"; 
                 btnStart.disabled = false;
@@ -727,7 +720,7 @@
     window.hostStartGame = function() {
         if (!amIHost) return;
         
-        const allKeys = Object.keys(globalPlayers); // FIXED: Grab everyone
+        const allKeys = Object.keys(globalPlayers); 
         if (allKeys.length < 2) return; 
         
         playSfx(sfx.start); clearReply();
@@ -744,7 +737,7 @@
             countdown: 5, 
             votes: null, 
             scores: initScores, 
-            turnOrder: allKeys, // FIXED: Offline players stay in turn order
+            turnOrder: allKeys,
             turnIndex: 0,
             qna: null,
             revealedFruits: {}
@@ -778,7 +771,6 @@
             
             sendSystemMessage(`🔴 Target Acquired: ${targetName}! The interrogation begins.`);
             
-            // FIXED: Include offline players as askers! They must play or time out!
             const askers = s.turnOrder.filter(id => id !== targetId && globalPlayers[id]);
             if (askers.length > 0) {
                 updateState({ 
@@ -796,8 +788,6 @@
         if (!amIHost || gameState.phase !== 'readingResults') return;
         const s = gameState;
         let nextIndex = s.turnIndex + 1;
-        
-        // FIXED: Removed the loop skipping offline players as targets. They will stand trial!
         
         if (nextIndex >= s.turnOrder.length) {
             updateState({ phase: 'finished' });
@@ -917,7 +907,7 @@
             document.getElementById('resultText').innerHTML = `<div style="font-size: 38px; font-weight: 900; color: #FFD700; text-shadow: 0 0 25px rgba(255,215,0,0.6); margin-bottom: 5px;">${winners.join(' & ')}</div><div style="font-size: 18px; font-weight: 800; color: #ffffff; letter-spacing: 2px; margin-bottom: 20px;">${resultTitle}</div>${chartHtml}</div>`;
             
             const btnPlayAgain = document.getElementById('btnPlayAgain');
-            const totalCount = Object.keys(globalPlayers).length; // FIXED
+            const totalCount = Object.keys(globalPlayers).length;
             
             if (amIHost) { 
                 if (totalCount >= 2) {
@@ -931,7 +921,6 @@
             if (lastPhase !== 'finished') { playSfx(sfx.win); playSfx(sfx.cheer); createConfetti(); }
         }
         
-        // Host Action centralized Timers for stable synchronization
         if (amIHost) {
             clearInterval(hostQnaTimer);
             if (state.phase === 'qna') {
@@ -950,7 +939,6 @@
             }
         }
 
-        // Timeline UI Update Loop
         clearInterval(uiTimerInterval);
         if (state.phase === 'qna') {
             uiTimerInterval = setInterval(updateTimelineUI, 100);
@@ -963,15 +951,15 @@
 
     function updateTimelineUI() {
         const bar = document.getElementById('qna-timer-bar');
-        const orbCircle = document.getElementById('orb-timer-circle');
         const orbSvg = document.getElementById('orb-timer-svg');
+        const orbCircle = document.getElementById('orb-timer-circle');
+        const orbCircleGlow = document.getElementById('orb-timer-circle-glow');
         const orb = document.getElementById('center-glass-orb');
 
         if (gameState.phase !== 'qna' || !gameState.qna || !gameState.qna.deadline) {
             if (bar) bar.style.width = '0%';
             if (orbSvg) orbSvg.classList.add('hidden');
             if (orb) {
-                // Reset orb styling
                 orb.style.boxShadow = 'inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2)';
                 orb.style.borderColor = 'var(--glass-border)';
             }
@@ -987,14 +975,14 @@
         let totalTime = (gameState.qna.status === 'vote') ? 15000 : 30000;
         let pct = (timeLeft / totalTime);
         
-        let color = 'var(--success)';
-        let rgbColor = '52, 199, 89';
-        if (pct <= 0.2) {
-            color = 'var(--primary)'; // Red
+        // Default color (Blue)
+        let color = 'var(--accent)';
+        let rgbColor = '0, 122, 255';
+
+        // Turn Red if time is running out (< 25%)
+        if (pct < 0.25) {
+            color = 'var(--primary)';
             rgbColor = '255, 59, 48';
-        } else if (pct <= 0.5) {
-            color = '#FFD700'; // Yellow
-            rgbColor = '255, 215, 0';
         }
 
         if (bar) {
@@ -1002,31 +990,35 @@
             bar.style.backgroundColor = color;
         }
 
-        // Dynamically calculate radius so it perfectly overlaps the 2px border at ANY screen size
-        if (orbCircle && orb && orbSvg) {
-            const size = orb.offsetWidth; 
-            orbSvg.style.width = '100%';
-            orbSvg.style.height = '100%';
-            orbSvg.style.top = '0';
-            orbSvg.style.left = '0';
+        if (orbCircle && orbCircleGlow && orb && orbSvg) {
+            // Precise width measurement
+            const rect = orb.getBoundingClientRect();
+            const size = rect.width; 
             
-            const radius = (size / 2) - 1; // 1px inside the edge to perfectly overlap the 2px border
+            const center = size / 2;
+            const radius = center - 1; // Snaps to exactly cover the 2px border inside out
             const circumference = 2 * Math.PI * radius;
             
-            orbCircle.setAttribute('cx', size / 2);
-            orbCircle.setAttribute('cy', size / 2);
-            orbCircle.setAttribute('r', radius);
+            [orbCircle, orbCircleGlow].forEach(c => {
+                c.setAttribute('cx', center);
+                c.setAttribute('cy', center);
+                c.setAttribute('r', radius);
+                c.style.strokeDasharray = circumference;
+                c.style.strokeDashoffset = circumference * (1 - pct);
+                c.style.stroke = color;
+            });
             
-            orbCircle.style.strokeDasharray = circumference;
-            orbCircle.style.strokeDashoffset = circumference * (1 - pct);
-            orbCircle.style.stroke = color;
+            orbCircle.style.filter = `drop-shadow(0 0 3px rgba(255,255,255,0.6))`;
             
-            // Restore native border styles so the white glass border remains visible under the empty part of the timeline
-            orb.style.boxShadow = 'inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2)';
-            orb.style.borderColor = 'var(--glass-border)'; 
-            
-            // Apply a strong drop-shadow filter ONLY to the SVG stroke, making the timeline itself glow!
-            orbCircle.style.filter = `drop-shadow(0 0 6px rgba(${rgbColor}, 0.9)) drop-shadow(0 0 14px rgba(${rgbColor}, 0.6))`;
+            // Pulse the glow intensity dynamically based on time when low
+            if (pct < 0.25) {
+                orbCircleGlow.style.opacity = (Math.sin(now / 150) * 0.3 + 0.7); 
+            } else {
+                orbCircleGlow.style.opacity = 0.7;
+            }
+
+            orb.style.boxShadow = `inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2), 0 0 30px rgba(${rgbColor}, 0.25)`;
+            orb.style.borderColor = `rgba(${rgbColor}, 0.3)`; // Blend the rest of the border to let the SVG pop
         }
     }
 
@@ -1058,7 +1050,6 @@
         const actionInput = document.getElementById('qnaActionInput');
         const btnSubmit = document.getElementById('btnQnaActionSubmit');
 
-        // Reset to safely start
         actionArea.classList.add('hidden');
         standardChat.classList.remove('hidden');
         inputWrap.classList.add('hidden');
@@ -1101,7 +1092,6 @@
                 voteWrap.classList.remove('hidden');
                 statusEl.innerHTML = `🎯 Based on the answer, guess ${targetName}'s fruit!`;
                 
-                // Render fruit buttons directly in chat action area
                 voteWrap.innerHTML = items.map(i => `<div class="fruit-btn" style="background:rgba(255,255,255,0.2);" onclick="submitSequentialVote('${i.e}')">${i.e}</div>`).join('');
             }
         }
@@ -1144,8 +1134,6 @@
         const now = Date.now();
         const isTimeUp = qna.deadline && now >= qna.deadline;
 
-        // Auto-skip logic based strictly on TIMEOUT!
-        // No fast-skips for offline players - they must suffer the full timeline to get 0 points!
         if (isTimeUp) {
             if (qna.status === 'ask') {
                 push(ref(db, `rooms/${roomId}/chat`), { u: 'System', m: `⏳ Time Out! ${globalPlayers[askerId]?.name || 'Asker'} failed to ask.` });
@@ -1179,7 +1167,6 @@
         if (!qna || !qna.askers) return;
 
         const s = gameState;
-        // The game logically only cares about askers who successfully joined the turn order
         const requiredAskers = qna.askers;
         const allVoted = requiredAskers.every(id => s.votes && s.votes[id]);
         
@@ -1203,7 +1190,6 @@
             let newRevealed = { ...(s.revealedFruits || {}) };
             newRevealed[targetId] = targetFruit;
 
-            // Atomic Resolution (The handleGameState func will catch this and boot the transition timers automatically)
             gameState.phase = 'readingResults';
             updateState({ 
                 phase: 'readingResults', 
@@ -1223,7 +1209,6 @@
         
         const nodesContainer = document.getElementById('player-nodes-container');
         
-        // Merge current active players and anyone who was in the turn order so nobody visually disappears
         let activeKeys = Object.keys(globalPlayers);
         if (gameState.phase !== 'login' && gameState.phase !== 'lobby' && gameState.turnOrder) {
             activeKeys = Array.from(new Set([...activeKeys, ...gameState.turnOrder]));
@@ -1277,7 +1262,6 @@
             nodeEl.style.left = `calc(50% + ${Math.cos(angle) * radius}px)`; 
             nodeEl.style.top = `calc(50% + ${Math.sin(angle) * radius}px)`;
             nodeEl.style.borderColor = glowClass ? '' : 'var(--glass-border)';
-            // Crucial Stability Enhancement: gracefully gray out players who drop connection instead of deleting them entirely!
             nodeEl.style.opacity = isOffline ? '0.4' : '1';
             nodeEl.style.filter = isOffline ? 'grayscale(100%)' : 'none';
             nodeEl.innerHTML = `<div class="score-badge">${gameState.scores[pid] || 0}</div><div class="node-color" style="background: ${pColor};"></div><div class="node-name">${pData.name}</div>`;
