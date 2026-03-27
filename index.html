@@ -105,13 +105,21 @@
 
         .board-section {
             flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
-            min-height: 0; 
+            min-height: 240px; 
         }
 
         .chat-section {
-            display: flex; flex-direction: column; flex: 1; min-height: 0;
+            display: flex; flex-direction: column; flex: 1.5; min-height: 0;
             background: rgba(0,0,0,0.15); border-radius: 20px; border: 1px solid var(--glass-border);
             overflow: hidden;
+        }
+
+        @media (min-width: 768px) and (orientation: landscape) { 
+            .board-section { flex: 1; }
+            .chat-section { width: 320px; height: 100%; flex: none; } 
+        }
+        @media (min-width: 1024px) { 
+            .chat-section { width: 380px; height: 100%; flex: none; } 
         }
 
         .chat-scroll {
