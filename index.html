@@ -336,6 +336,14 @@
                     🎯 You Are The Target! Your Fruit: ❓
                 </div>
 
+                <div id="qna-container" class="hidden glass-card" style="width: 100%; max-width: 500px; padding: 12px; margin-bottom: 10px;">
+                    <div id="qna-status" style="font-size: 14px; font-weight: bold; margin-bottom: 8px; color: var(--accent);"></div>
+                    <div id="qna-input-area" class="hidden" style="display: flex; gap: 8px;">
+                        <input type="text" id="qnaInput" placeholder="Type here..." autocomplete="off" style="margin-bottom: 0; padding: 10px; font-size: 14px; border-radius: 12px;">
+                        <button class="btn-accent" style="width: auto; padding: 10px 16px; font-size: 14px; border-radius: 12px;" id="btnSubmitQnA">Send</button>
+                    </div>
+                </div>
+
                 <div id="top-scoreboard" class="hidden"></div>
             </div>
             
@@ -390,6 +398,11 @@
                     </div>
                 </div>
 
+            </div>
+
+            <div id="revealed-list-container" class="hidden" style="margin-top: 15px; padding: 12px; background: rgba(0,0,0,0.25); border-radius: 16px; border: 1px solid var(--glass-border);">
+                <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; text-align: center;">Revealed Fruits</div>
+                <div id="revealed-badges" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;"></div>
             </div>
 
             <div id="zone-result" class="hidden" style="text-align: center; margin: auto 0; animation: popIn 0.5s ease; width:100%; max-width: 600px; margin: 0 auto;">
@@ -451,7 +464,7 @@
     document.getElementById('emojiVaultDisplay').innerHTML = items.map(i => `<span>${i.e}</span>`).join('');
     document.getElementById('lobbyEmojiDisplay').innerHTML = items.map(i => `<span>${i.e}</span>`).join('');
 
-    let myKey = null, myName = "", amIHost = false, globalPlayers = {}, gameState = { phase: 'login', votes: {}, scores: {}, turnOrder: [], turnIndex: 0 };
+    let myKey = null, myName = "", amIHost = false, globalPlayers = {}, gameState = { phase: 'login', votes: {}, scores: {}, turnOrder: [], turnIndex: 0, qna: {}, revealedFruits: {} };
     let lastPhase = '', lastChatCount = 0, pendingVoteFruit = null, activeReply = null; 
 
     // Sound FX
@@ -576,7 +589,12 @@
                 renderBoardNodes(false); 
             }
             
-            if (gameState.phase === 'playing' && amIHost) checkTurnResolution();
+            if (amIHost) {
+                if (gameState.phase === 'qna') {
+                    checkTurnResolution();
+                    checkHostAutoSkip();
+                }
+            }
         });
 
         onValue(ref(db, `rooms/${roomId}/state`), (snap) => {
@@ -591,11 +609,18 @@
                     turnOrder: s.turnOrder || [],
                     turnIndex: s.turnIndex || 0,
                     nextTargetName: s.nextTargetName || '',
-                    lastTargetFruit: s.lastTargetFruit || ''
+                    lastTargetFruit: s.lastTargetFruit || '',
+                    qna: s.qna || {},
+                    revealedFruits: s.revealedFruits || {}
                 };
                 handleGameState(gameState);
                 
-                if (amIHost && gameState.phase === 'playing') checkTurnResolution();
+                if (amIHost) {
+                    if (gameState.phase === 'qna') {
+                        checkTurnResolution();
+                        checkHostAutoSkip();
+                    }
+                }
             }
         });
 
@@ -656,7 +681,9 @@
             votes: null, 
             scores: initScores, 
             turnOrder: keys, 
-            turnIndex: 0 
+            turnIndex: 0,
+            qna: null,
+            revealedFruits: {}
         });
 
         let timer = 5;
@@ -681,8 +708,18 @@
             const targetId = s.turnOrder[s.turnIndex];
             const targetName = globalPlayers[targetId] ? globalPlayers[targetId].name : 'Someone';
             
-            sendSystemMessage(`🔴 Target Acquired: Guess ${targetName}'s fruit!`);
-            updateState({ phase: 'playing', votes: null });
+            sendSystemMessage(`🔴 Target Acquired: ${targetName}! Questioning phase started.`);
+            
+            const askers = s.turnOrder.filter(id => id !== targetId && globalPlayers[id]);
+            if (askers.length > 0) {
+                updateState({ 
+                    phase: 'qna', 
+                    votes: null,
+                    qna: { askers: askers, currentIndex: 0, status: 'ask', currentQuestion: '' }
+                });
+            } else {
+                updateState({ phase: 'readingResults', lastTargetFruit: s.playerItems[targetId]?.e || '❓', scores: s.scores || {} });
+            }
         });
     }
 
@@ -742,7 +779,7 @@
             renderBoardNodes(isNewPhase); 
         }
 
-        if (state.phase === 'playing') {
+        if (state.phase === 'qna') {
             if (isNewPhase) pendingVoteFruit = null; 
             document.getElementById('top-scoreboard').classList.add('hidden');
             document.getElementById('emojiVaultDisplay').classList.add('hidden'); 
@@ -752,7 +789,16 @@
             const curTargetId = state.turnOrder[state.turnIndex];
             document.getElementById('playingTargetName').innerText = globalPlayers[curTargetId] ? globalPlayers[curTargetId].name : 'Offline User';
             
-            renderVotingUI(); renderBoardNodes(isNewPhase); 
+            renderQnAUI();
+            
+            if (myKey === curTargetId) {
+                const myFruit = (state.playerItems && state.playerItems[myKey]) ? state.playerItems[myKey].e : '❓';
+                targetMessage.innerHTML = `🎯 You Are The Target! Your Fruit: <span style="font-size:1.4em; filter:drop-shadow(0 2px 2px rgba(0,0,0,0.4));">${myFruit}</span>`;
+                targetMessage.classList.remove('hidden');
+            } else {
+                targetMessage.classList.add('hidden');
+            }
+            renderBoardNodes(isNewPhase); 
         }
 
         if (state.phase === 'readingResults') {
@@ -795,29 +841,20 @@
             if (lastPhase !== 'finished') { playSfx(sfx.win); playSfx(sfx.cheer); createConfetti(); }
         }
         
+        renderRevealedFruits();
         if (isNewPhase && lastPhase !== '') playSfx(sfx.circlePop);
         lastPhase = state.phase;
     }
 
     function renderVotingUI() {
         const container = document.getElementById('voting-fruits'), btnSubmit = document.getElementById('btnSubmitVote');
-        const targetMsg = document.getElementById('target-message'), votingHeader = document.getElementById('voting-header');
-        const targetId = gameState.turnOrder[gameState.turnIndex];
         
-        if (myKey === targetId) { 
-            const myFruit = (gameState.playerItems && gameState.playerItems[myKey]) ? gameState.playerItems[myKey].e : '❓';
-            targetMsg.innerHTML = `🎯 You Are The Target! Your Fruit: <span style="font-size:1.4em; filter:drop-shadow(0 2px 2px rgba(0,0,0,0.4));">${myFruit}</span>`;
-            votingHeader.classList.add('hidden'); 
-            targetMsg.classList.remove('hidden'); 
-            return; 
-        } 
-        else { 
-            votingHeader.classList.remove('hidden'); 
-            targetMsg.classList.add('hidden'); 
-        }
-
         const hasVoted = gameState.votes && gameState.votes[myKey];
-        if(hasVoted) { container.innerHTML = `<span style="font-weight:bold; color:#ffffff; font-size: 14px;">✅ Locked: ${gameState.votes[myKey]}</span>`; btnSubmit.style.display = 'none'; return; }
+        if(hasVoted) { 
+            container.innerHTML = `<span style="font-weight:bold; color:#ffffff; font-size: 14px;">✅ Locked: ${gameState.votes[myKey]}</span>`; 
+            btnSubmit.style.display = 'none'; 
+            return; 
+        }
 
         container.innerHTML = items.map(i => `<div class="fruit-btn ${pendingVoteFruit === i.e ? 'active-vote' : ''}" onclick="selectVoteFruit('${i.e}')">${i.e}</div>`).join('');
         btnSubmit.style.display = pendingVoteFruit ? 'block' : 'none';
@@ -829,11 +866,46 @@
         if(!pendingVoteFruit) return;
         set(ref(db, `rooms/${roomId}/state/votes/${myKey}`), pendingVoteFruit).then(() => {
             sendSystemMessage(`${myName} locked in their vote! ✅`);
+            
+            // Advance the QnA phase to the next person automatically after the current asker votes
+            if (gameState.phase === 'qna' && gameState.qna.status === 'vote' && myKey === gameState.qna.askers[gameState.qna.currentIndex]) {
+                const nextIndex = gameState.qna.currentIndex + 1;
+                if (nextIndex < gameState.qna.askers.length) {
+                    updateState({ 'qna/status': 'ask', 'qna/currentIndex': nextIndex, 'qna/currentQuestion': '' });
+                }
+            }
         });
     }
 
+    function checkHostAutoSkip() {
+        if (!amIHost || gameState.phase !== 'qna') return;
+        const qna = gameState.qna;
+        if (!qna || !qna.askers) return;
+        
+        const targetId = gameState.turnOrder[gameState.turnIndex];
+        const askerId = qna.askers[qna.currentIndex];
+        
+        // Auto-skip logic in case a player disconnects in the middle of QnA
+        if ((qna.status === 'ask' || qna.status === 'vote') && !globalPlayers[askerId]) {
+            set(ref(db, `rooms/${roomId}/state/votes/${askerId}`), 'Skipped');
+            const nextIndex = qna.currentIndex + 1;
+            if (nextIndex < qna.askers.length) {
+                updateState({ 'qna/status': 'ask', 'qna/currentIndex': nextIndex, 'qna/currentQuestion': '' });
+            }
+        } else if (qna.status === 'answer' && !globalPlayers[targetId]) {
+            // Target left. Skip all remaining votes to trigger resolution
+            let missingVotes = {};
+            qna.askers.forEach(id => {
+                if(!gameState.votes || !gameState.votes[id]) missingVotes[id] = 'Skipped';
+            });
+            if(Object.keys(missingVotes).length > 0) {
+                update(ref(db, `rooms/${roomId}/state/votes`), missingVotes);
+            }
+        }
+    }
+
     function checkTurnResolution() {
-        if (!amIHost || gameState.phase !== 'playing') return;
+        if (!amIHost || gameState.phase !== 'qna') return;
         
         const s = gameState;
         const currentPlayers = Object.keys(globalPlayers);
@@ -844,11 +916,9 @@
         if (activeVotes.length >= requiredVotes && requiredVotes > 0) {
             const targetFruit = s.playerItems[targetId] ? s.playerItems[targetId].e : '❓';
 
-            gameState.phase = 'readingResults'; 
-            updateState({ phase: 'readingResults', lastTargetFruit: targetFruit });
-            
+            // Deep copy to safely calculate before updating Firebase
             let correct = [];
-            let newScores = s.scores || {};
+            let newScores = { ...(s.scores || {}) };
             
             for(let [pid, vote] of Object.entries(s.votes || {})) {
                 if(vote === targetFruit) { 
@@ -860,7 +930,20 @@
             const targetName = globalPlayers[targetId] ? globalPlayers[targetId].name : 'Disconnected User';
             sendSystemMessage(`Target ${targetName} had ${targetFruit}! ` + (correct.length > 0 ? `${correct.join(', ')} guessed correctly (+10)!` : `Nobody guessed correctly (0 pts)!`));
             
-            updateState({ scores: newScores });
+            let newRevealed = { ...(s.revealedFruits || {}) };
+            newRevealed[targetId] = targetFruit;
+
+            // Atomic Update: We update the phase AND the calculated scores in exactly the same payload 
+            // so no player's screen accidentally renders the old scores on the results screen.
+            gameState.phase = 'readingResults';
+            updateState({ 
+                phase: 'readingResults', 
+                lastTargetFruit: targetFruit,
+                scores: newScores,
+                revealedFruits: newRevealed,
+                qna: null
+            });
+            
             playSfx(sfx.alert);
             
             setTimeout(() => {
@@ -873,11 +956,19 @@
                 if (nextIndex >= s.turnOrder.length) {
                     updateState({ phase: 'finished' });
                 } else {
-                    updateState({ turnIndex: nextIndex }).then(() => {
-                        startTurn();
+                    // Activate the transition phase to give players a moment to read the scoreboard properly
+                    const nextTargetName = globalPlayers[s.turnOrder[nextIndex]] ? globalPlayers[s.turnOrder[nextIndex]].name : 'Player';
+                    updateState({ 
+                        phase: 'turnTransition', 
+                        turnIndex: nextIndex,
+                        nextTargetName: nextTargetName
+                    }).then(() => {
+                        setTimeout(() => {
+                            startTurn();
+                        }, 2500); // Brief pause before the next guessing phase
                     });
                 }
-            }, 4000);
+            }, 4500); // Increased wait time on results so players can see the score updates
         }
     }
 
@@ -938,6 +1029,96 @@
         renderTopScoreboard();
     }
 
+    function renderRevealedFruits() {
+        const container = document.getElementById('revealed-list-container');
+        if (!gameState.revealedFruits || Object.keys(gameState.revealedFruits).length === 0 || gameState.phase === 'login' || gameState.phase === 'lobby') {
+            container.classList.add('hidden');
+            return;
+        }
+        container.classList.remove('hidden');
+        
+        const badgesHtml = Object.entries(gameState.revealedFruits).map(([pid, fruit]) => {
+            const pName = globalPlayers[pid]?.name || 'Offline';
+            return `<div style="background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 12px; font-size: 14px; text-shadow:none; border: 1px solid rgba(255,255,255,0.2);"><b>${pName}</b>: ${fruit}</div>`;
+        }).join('');
+        
+        document.getElementById('revealed-badges').innerHTML = badgesHtml;
+    }
+
+    function renderQnAUI() {
+        const container = document.getElementById('qna-container');
+        const votingHeader = document.getElementById('voting-header');
+        
+        if (gameState.phase !== 'qna') {
+            container.classList.add('hidden');
+            votingHeader.classList.add('hidden');
+            return;
+        }
+        container.classList.remove('hidden');
+        
+        const qna = gameState.qna;
+        const targetId = gameState.turnOrder[gameState.turnIndex];
+        const askerId = qna.askers[qna.currentIndex];
+        const targetName = globalPlayers[targetId]?.name || 'Target';
+        const askerName = globalPlayers[askerId]?.name || 'Player';
+        
+        const statusEl = document.getElementById('qna-status');
+        const inputArea = document.getElementById('qna-input-area');
+        const inputEl = document.getElementById('qnaInput');
+        const btnSubmit = document.getElementById('btnSubmitQnA');
+        
+        inputArea.classList.add('hidden');
+        votingHeader.classList.add('hidden');
+        btnSubmit.onclick = null;
+        
+        if (qna.status === 'ask') {
+            if (myKey === askerId) {
+                statusEl.innerHTML = `Your turn to ask ${targetName} a question!`;
+                inputArea.classList.remove('hidden');
+                inputEl.placeholder = `Ask ${targetName} something...`;
+                inputEl.value = '';
+                btnSubmit.onclick = () => {
+                    if(!inputEl.value.trim()) return;
+                    updateState({ 'qna/status': 'answer', 'qna/currentQuestion': inputEl.value.trim() });
+                };
+            } else {
+                statusEl.innerHTML = `Waiting for ${askerName} to ask a question...`;
+            }
+        } else if (qna.status === 'answer') {
+            if (myKey === targetId) {
+                statusEl.innerHTML = `<span style="color:#fff;">${askerName} asks:</span> "${qna.currentQuestion}"`;
+                inputArea.classList.remove('hidden');
+                inputEl.placeholder = `Answer ${askerName}...`;
+                inputEl.value = '';
+                btnSubmit.onclick = () => {
+                    if(!inputEl.value.trim()) return;
+                    const answerText = inputEl.value.trim();
+                    push(ref(db, `rooms/${roomId}/chat`), { u: 'System', m: `💬 ${askerName}: ${qna.currentQuestion}\n🗣️ ${targetName}: ${answerText}` });
+                    // Transition straight to the voting step for the current asker
+                    updateState({ 'qna/status': 'vote' });
+                };
+            } else {
+                statusEl.innerHTML = `<span style="color:#fff;">${askerName} asked:</span> "${qna.currentQuestion}"<br><span style="font-size:12px; margin-top:4px; display:block;">Waiting for ${targetName} to answer...</span>`;
+            }
+        } else if (qna.status === 'vote') {
+            if (myKey === askerId) {
+                statusEl.innerHTML = `Time to guess! What fruit does ${targetName} have?`;
+                votingHeader.classList.remove('hidden');
+                renderVotingUI(); 
+            } else {
+                statusEl.innerHTML = `Waiting for ${askerName} to lock in their guess...`;
+            }
+        }
+    }
+
+    document.getElementById("qnaInput").addEventListener("keypress", function(e) { 
+        if (e.key === "Enter") { 
+            e.preventDefault(); 
+            const btn = document.getElementById('btnSubmitQnA');
+            if (btn.onclick) btn.onclick();
+        } 
+    });
+
     function renderTopScoreboard() {
         const container = document.getElementById('top-scoreboard');
         if(!container) return;
@@ -950,7 +1131,12 @@
             const pColor = getUserColorByName(pData.name);
             const score = gameState.scores[pid] || 0;
             const votedFruit = (gameState.votes && gameState.votes[pid]) ? `<span style="font-size: 18px; margin-left: 6px;">${gameState.votes[pid]}</span>` : '';
-            return `<div class="score-pill"><div class="node-color" style="background: ${pColor}; width: 14px; height: 14px; margin-bottom: 0;"></div><span style="color: #fff; text-shadow:none; display: flex; align-items: center; font-size: 15px;">${pData.name}${votedFruit}</span><span style="color: var(--success); text-shadow:none; font-size: 16px; margin-left: 4px;">${score}</span></div>`;
+            
+            const currentTurnId = (gameState.turnOrder && gameState.turnOrder.length > gameState.turnIndex) ? gameState.turnOrder[gameState.turnIndex] : null;
+            const isActiveTarget = pid === currentTurnId && (gameState.phase === 'qna' || gameState.phase === 'readingResults');
+            let highlightStyle = isActiveTarget ? 'border-color: var(--primary); box-shadow: 0 0 10px rgba(255, 59, 48, 0.5);' : '';
+
+            return `<div class="score-pill" style="${highlightStyle}"><div class="node-color" style="background: ${pColor}; width: 14px; height: 14px; margin-bottom: 0;"></div><span style="color: #fff; text-shadow:none; display: flex; align-items: center; font-size: 15px;">${pData.name}${votedFruit}</span><span style="color: var(--success); text-shadow:none; font-size: 16px; margin-left: 4px;">${score}</span></div>`;
         }).join('');
     }
 
