@@ -85,8 +85,9 @@
         }
         
         #view-game { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-        #view-game > .game-wrapper { flex: 1; display: flex; flex-direction: column; padding: 15px; min-height: 0; }
-        @media (min-width: 768px) { #view-game > .game-wrapper { padding: 24px; } }
+        
+        /* Removed inner padding on the wrapper so UI sits perfectly aligned to the top */
+        #view-game > .game-wrapper { flex: 1; display: flex; flex-direction: column; padding: 0; min-height: 0; }
 
         .game-content-split {
             display: flex; flex-direction: column; flex: 1; gap: 12px; min-height: 0;
@@ -154,9 +155,10 @@
         .chat-input-area textarea { height: 60px; min-height: 60px; max-height: 60px; resize: none; overflow-y: auto; line-height: 1.4; scrollbar-width: thin; }
         .chat-input-area button { padding: 12px 18px; font-size: 14px; border-radius: 12px; height: 60px; }
 
+        /* Modified status container to pack tightly upwards */
         #status-container { 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; min-height: 48px; margin-bottom: 8px; flex-shrink: 0; 
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            text-align: center; margin-bottom: 8px; flex-shrink: 0; 
         }
         @media (min-width: 768px) { #status-container { margin-bottom: 12px; } }
 
@@ -231,13 +233,14 @@
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
         .emoji-row {
-            display: flex; justify-content: center; align-items: center; gap: 8px;
+            display: flex; justify-content: center; align-items: flex-start; gap: 8px;
             font-size: clamp(24px, 7vw, 32px); flex-wrap: nowrap; white-space: nowrap;
             margin-bottom: 10px; text-shadow: none; width: 100%; overflow: hidden;
         }
 
+        /* Top scoreboard flex adjustments */
         #top-scoreboard {
-            display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; width: 100%;
+            display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 8px; width: 100%;
             transition: all 0.3s ease;
         }
 
@@ -296,12 +299,12 @@
             <div id="status-container">
                 <div id="gameStatus" class="hidden" style="font-weight: 700; color: var(--accent); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">System Ready</div>
                 
-                <div id="voting-header" class="hidden" style="display:flex; flex-direction:row; align-items:center; justify-content:center; gap:12px;">
+                <div id="voting-header" class="hidden" style="display:flex; flex-direction:row; align-items:flex-start; justify-content:center; gap:12px; margin-bottom: 6px;">
                     <div id="voting-fruits" style="display:flex; gap:6px; flex-wrap:nowrap; justify-content:center;"></div>
                     <button id="btnSubmitVote" class="btn-accent" style="padding: 10px 20px; font-size:14px; width:auto; border-radius: 14px; display:none; flex-shrink:0;" onclick="submitVote()">VOTE</button>
                 </div>
                 
-                <div id="target-message" class="hidden" style="color:var(--primary); font-weight:bold; font-size:15px;">🎯 You are the Target! Answer their questions.</div>
+                <div id="target-message" class="hidden" style="color:var(--primary); font-weight:bold; font-size:15px; margin-bottom: 6px;">🎯 You are the Target! Answer their questions.</div>
 
                 <div id="top-scoreboard" class="hidden"></div>
             </div>
