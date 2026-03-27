@@ -95,6 +95,7 @@
             border: 1px solid var(--glass-border); border-radius: 14px; 
             padding: 12px; text-align: center; font-weight: 600; font-size: 14px; 
             animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: opacity 0.4s ease, filter 0.4s ease;
         }
         
         #view-game { flex: 1; display: flex; flex-direction: column; min-height: 0; }
@@ -207,7 +208,7 @@
             background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
             border: 2px solid var(--glass-border); display: flex; flex-direction: column; align-items: center; justify-content: center;
             transform: translate(-50%, -50%); z-index: 5; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            transition: opacity 0.4s ease, filter 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, width 0.3s, height 0.3s;
+            transition: opacity 0.6s ease, filter 0.6s ease, border-color 0.4s ease, box-shadow 0.4s ease, width 0.3s, height 0.3s;
         }
         @media (min-width: 768px) { .player-node { width: 80px; height: 80px; } }
         @media (min-width: 1024px) { .player-node { width: 100px; height: 100px; } }
@@ -240,7 +241,7 @@
 
         .center-orb {
             position: relative; width: 150px; height: 150px; border-radius: 50%; background: rgba(255, 255, 255, 0.15);
-            background-clip: padding-box; /* Ensures the white glass background stays completely inside the border area */
+            background-clip: padding-box;
             backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 2px solid var(--glass-border);
             z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2);
@@ -329,7 +330,6 @@
                     
                     <div id="center-glass-orb" class="center-orb">
                         
-                        <!-- NEW PRECISION SVG TIMELINE (Fully covers underlying border box area, matching the transparent edge seamlessly) -->
                         <svg id="orb-timer-svg" class="hidden" viewBox="0 0 100 100" style="position:absolute; top:-2px; left:-2px; width:calc(100% + 4px); height:calc(100% + 4px); transform:rotate(-90deg); z-index:1; pointer-events:none; border-radius: 50%; overflow: visible;">
                             <circle id="orb-timer-circle" cx="50" cy="50" r="49" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear;"></circle>
                         </svg>
@@ -439,16 +439,6 @@
             console.warn("Cannot rewrite URL in this sandboxed environment. Using memory roomId.");
         }
     }
-    
-    const storedSessionData = sessionStorage.getItem(`iogame_user_${roomId}`);
-    if (storedSessionData) {
-        try {
-            const parsedSession = JSON.parse(storedSessionData);
-            if (parsedSession && parsedSession.name) {
-                document.getElementById('userName').value = parsedSession.name;
-            }
-        } catch(e) {}
-    }
 
     const items = [ {e:"🍎", n:"Apple"}, {e:"🥭", n:"Mango"}, {e:"🍉", n:"Watermelon"}, {e:"🍇", n:"Grapes"}, {e:"🍓", n:"Strawberry"}, {e:"🍊", n:"Orange"} ];
     document.getElementById('lobbyEmojiDisplay').innerHTML = items.map(i => `<span>${i.e}</span>`).join('');
@@ -462,6 +452,7 @@
     let hostQnaTimer = null;
 
     let musicPlaying = false;
+    let autoJoinedThisSession = false;
     const bgm = document.getElementById('bgMusic'); bgm.volume = 0.15; 
     const sfx = {
         pop: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'), circlePop: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'), 
@@ -520,14 +511,29 @@
         }
     }
 
-    window.joinGame = function() {
+    window.joinGame = function(isAutoJoin = false) {
         let rawName = document.getElementById('userName').value.trim(); 
         if(!rawName) return;
         
         myName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
-        playSfx(sfx.pop); if(!musicPlaying) toggleMusic();
         
-        let storedData = sessionStorage.getItem(`iogame_user_${roomId}`);
+        if (!isAutoJoin) {
+            playSfx(sfx.pop); 
+            if(!musicPlaying) toggleMusic();
+        } else {
+            autoJoinedThisSession = true;
+            // Listen for the very first interaction to start music since browser blocks autoplay
+            document.body.addEventListener('click', function initAudio() {
+                if (!musicPlaying) {
+                    bgm.play().catch(()=>{});
+                    musicPlaying = true;
+                }
+                document.body.removeEventListener('click', initAudio);
+            }, { once: true });
+        }
+        
+        // Use localStorage so it survives tab closes and refreshes
+        let storedData = localStorage.getItem(`iogame_user_${roomId}`);
         let joinedTime = Date.now();
         if (storedData) {
             try {
@@ -542,7 +548,8 @@
         } else {
             myKey = 'user_' + Math.random().toString(36).substr(2, 9);
         }
-        sessionStorage.setItem(`iogame_user_${roomId}`, JSON.stringify({ key: myKey, name: myName, joinedAt: joinedTime }));
+        
+        localStorage.setItem(`iogame_user_${roomId}`, JSON.stringify({ key: myKey, name: myName, joinedAt: joinedTime }));
         
         let displayUrl = window.location.href;
         try {
@@ -646,7 +653,28 @@
             renderChat(Object.values(chats));
         });
 
-        switchView('view-lobby'); setupSwipeToReply();
+        if (!isAutoJoin || gameState.phase === 'login' || gameState.phase === 'lobby') {
+            switchView('view-lobby'); 
+        }
+        setupSwipeToReply();
+    }
+
+    // Auto-Join Check using localStorage
+    const storedAutoJoinData = localStorage.getItem(`iogame_user_${roomId}`);
+    let shouldAutoJoin = false;
+    if (storedAutoJoinData) {
+        try {
+            const parsedSession = JSON.parse(storedAutoJoinData);
+            if (parsedSession && parsedSession.name) {
+                document.getElementById('userName').value = parsedSession.name;
+                shouldAutoJoin = true;
+            }
+        } catch(e) {}
+    }
+
+    if (shouldAutoJoin) {
+        document.getElementById('view-login').classList.add('hidden'); // Instantly hide to prevent flash
+        setTimeout(() => joinGame(true), 50); // Start the join process invisibly
     }
 
     function updateState(updates) {
@@ -681,7 +709,6 @@
         const onlineKeys = keys.filter(k => globalPlayers[k].online !== false);
         const hostKey = onlineKeys.length > 0 ? onlineKeys.sort((a,b) => globalPlayers[a].joinedAt - globalPlayers[b].joinedAt)[0] : null;
 
-        // Sort keys so the host always appears first
         const sortedKeys = keys.sort((a, b) => {
             if (a === hostKey) return -1;
             if (b === hostKey) return 1;
@@ -694,7 +721,8 @@
             grid.innerHTML += `<div class="p-badge" style="${style}">${globalPlayers[id].name} ${id === hostKey ? '👑' : ''}</div>`;
         });
         
-        playSfx(sfx.pop); 
+        if (!autoJoinedThisSession) playSfx(sfx.pop); 
+        
         const btnStart = document.getElementById('btnStartGame');
         const statusText = document.getElementById('lobbyStatusText');
 
