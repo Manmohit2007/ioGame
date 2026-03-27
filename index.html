@@ -331,10 +331,10 @@
                         
                         <!-- NEW PRECISION SVG TIMELINE -->
                         <svg id="orb-timer-svg" class="hidden" style="position:absolute; top:0; left:0; width:100%; height:100%; transform:rotate(-90deg); z-index:1; pointer-events:none; overflow:visible;">
-                            <!-- Blurred Glow Layer -->
-                            <circle id="orb-timer-circle-glow" fill="none" stroke-width="8" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease; filter: blur(8px); opacity: 0.7;"></circle>
-                            <!-- Sharp Solid Stroke Layer -->
-                            <circle id="orb-timer-circle" fill="none" stroke-width="4" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease;"></circle>
+                            <!-- Faint Track Layer -->
+                            <circle id="orb-timer-track" fill="none" stroke="rgba(255, 255, 255, 0.1)" stroke-width="4"></circle>
+                            <!-- Sharp Solid Progress Layer -->
+                            <circle id="orb-timer-circle" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear;"></circle>
                         </svg>
 
                         <div id="center-countdown" class="countdown-view hidden" style="z-index: 2;">
@@ -896,15 +896,34 @@
             const sortedPlayers = Object.keys(globalPlayers).sort((a, b) => (state.scores[b] || 0) - (state.scores[a] || 0));
             const maxScore = state.scores[sortedPlayers[0]] || 0;
             const winners = sortedPlayers.filter(p => (state.scores[p] || 0) === maxScore).map(p => globalPlayers[p].name);
+            
             let chartHtml = `<div style="text-align:left; background:rgba(255, 255, 255, 0.15); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border: 1px solid var(--glass-border); padding:15px; border-radius:16px; margin-bottom:20px; font-size:15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-shadow: none;">`;
+            
             sortedPlayers.forEach((p, i) => { 
+                const score = state.scores[p] || 0;
                 const isLast = i === sortedPlayers.length - 1;
                 const borderStyle = isLast ? '' : 'border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:8px; padding-bottom:8px;';
-                chartHtml += `<div style="display:flex; justify-content:space-between; ${borderStyle}"><span><b>#${i+1}</b> ${globalPlayers[p].name}</span><span style="color:var(--success); font-weight:bold;">${state.scores[p] || 0} pts</span></div>`; 
+                
+                // Color names with 0 points red ("inked")
+                const nameColor = score === 0 ? 'var(--primary)' : 'inherit';
+                
+                chartHtml += `<div style="display:flex; justify-content:space-between; ${borderStyle}">
+                    <span style="color: ${nameColor};"><b>#${i+1}</b> ${globalPlayers[p].name}</span>
+                    <span style="color:var(--success); font-weight:bold;">${score} pts</span>
+                </div>`; 
             });
+            chartHtml += `</div>`;
             
+            const resultEmojiEl = document.getElementById('resultEmoji');
             const resultTitle = maxScore === 0 ? "LOSER!" : "WINNER!";
-            document.getElementById('resultText').innerHTML = `<div style="font-size: 38px; font-weight: 900; color: #FFD700; text-shadow: 0 0 25px rgba(255,215,0,0.6); margin-bottom: 5px;">${winners.join(' & ')}</div><div style="font-size: 18px; font-weight: 800; color: #ffffff; letter-spacing: 2px; margin-bottom: 20px;">${resultTitle}</div>${chartHtml}</div>`;
+
+            if (maxScore === 0) {
+                resultEmojiEl.innerText = "👎";
+                document.getElementById('resultText').innerHTML = `<div style="font-size: 38px; font-weight: 900; color: var(--primary); text-shadow: 0 0 25px rgba(255,59,48,0.6); margin-bottom: 5px;">${winners.join(' & ')}</div><div style="font-size: 18px; font-weight: 800; color: #ffffff; letter-spacing: 2px; margin-bottom: 20px;">${resultTitle}</div>${chartHtml}`;
+            } else {
+                resultEmojiEl.innerText = "🎉";
+                document.getElementById('resultText').innerHTML = `<div style="font-size: 38px; font-weight: 900; color: #FFD700; text-shadow: 0 0 25px rgba(255,215,0,0.6); margin-bottom: 5px;">${winners.join(' & ')}</div><div style="font-size: 18px; font-weight: 800; color: #ffffff; letter-spacing: 2px; margin-bottom: 20px;">${resultTitle}</div>${chartHtml}`;
+            }
             
             const btnPlayAgain = document.getElementById('btnPlayAgain');
             const totalCount = Object.keys(globalPlayers).length;
@@ -918,7 +937,14 @@
             } else { 
                 btnPlayAgain.className = "btn-disabled"; btnPlayAgain.innerText = "Waiting for Host..."; btnPlayAgain.disabled = true;
             }
-            if (lastPhase !== 'finished') { playSfx(sfx.win); playSfx(sfx.cheer); createConfetti(); }
+            
+            if (lastPhase !== 'finished') { 
+                if (maxScore > 0) {
+                    playSfx(sfx.win); playSfx(sfx.cheer); createConfetti(); 
+                } else {
+                    playSfx(sfx.alert);
+                }
+            }
         }
         
         if (amIHost) {
@@ -953,7 +979,7 @@
         const bar = document.getElementById('qna-timer-bar');
         const orbSvg = document.getElementById('orb-timer-svg');
         const orbCircle = document.getElementById('orb-timer-circle');
-        const orbCircleGlow = document.getElementById('orb-timer-circle-glow');
+        const orbTrack = document.getElementById('orb-timer-track');
         const orb = document.getElementById('center-glass-orb');
 
         if (gameState.phase !== 'qna' || !gameState.qna || !gameState.qna.deadline) {
@@ -975,50 +1001,35 @@
         let totalTime = (gameState.qna.status === 'vote') ? 15000 : 30000;
         let pct = (timeLeft / totalTime);
         
-        // Default color (Blue)
+        // Professional Blue Timeline Configuration
         let color = 'var(--accent)';
-        let rgbColor = '0, 122, 255';
-
-        // Turn Red if time is running out (< 25%)
-        if (pct < 0.25) {
-            color = 'var(--primary)';
-            rgbColor = '255, 59, 48';
-        }
 
         if (bar) {
             bar.style.width = (pct * 100) + '%';
             bar.style.backgroundColor = color;
         }
 
-        if (orbCircle && orbCircleGlow && orb && orbSvg) {
-            // Precise width measurement
+        if (orbCircle && orbTrack && orb && orbSvg) {
+            // Precise width measurement for perfect alignment
             const rect = orb.getBoundingClientRect();
             const size = rect.width; 
             
             const center = size / 2;
-            const radius = center - 1; // Snaps to exactly cover the 2px border inside out
+            const radius = center - 2; // Snaps to sit perfectly clean just inside the border
             const circumference = 2 * Math.PI * radius;
             
-            [orbCircle, orbCircleGlow].forEach(c => {
+            [orbCircle, orbTrack].forEach(c => {
                 c.setAttribute('cx', center);
                 c.setAttribute('cy', center);
                 c.setAttribute('r', radius);
-                c.style.strokeDasharray = circumference;
-                c.style.strokeDashoffset = circumference * (1 - pct);
-                c.style.stroke = color;
             });
             
-            orbCircle.style.filter = `drop-shadow(0 0 3px rgba(255,255,255,0.6))`;
-            
-            // Pulse the glow intensity dynamically based on time when low
-            if (pct < 0.25) {
-                orbCircleGlow.style.opacity = (Math.sin(now / 150) * 0.3 + 0.7); 
-            } else {
-                orbCircleGlow.style.opacity = 0.7;
-            }
+            orbCircle.style.strokeDasharray = circumference;
+            orbCircle.style.strokeDashoffset = circumference * (1 - pct);
+            orbCircle.style.stroke = color;
 
-            orb.style.boxShadow = `inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2), 0 0 30px rgba(${rgbColor}, 0.25)`;
-            orb.style.borderColor = `rgba(${rgbColor}, 0.3)`; // Blend the rest of the border to let the SVG pop
+            orb.style.boxShadow = `inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2)`;
+            orb.style.borderColor = `var(--glass-border)`; 
         }
     }
 
