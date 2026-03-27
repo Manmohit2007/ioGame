@@ -8,7 +8,7 @@
         :root {
             --primary: #FF3B30; --success: #34C759; --accent: #007AFF;
             --glass-bg: rgba(255, 255, 255, 0.22); --glass-border: rgba(255, 255, 255, 0.3);
-            --text-main: #E5E5EA; --text-muted: #AEAEB2;
+            --text-main: #FFFFFF; --text-muted: #FFFFFF;
             --text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85), 0 0 2px rgba(0, 0, 0, 0.5);
         }
 
@@ -103,7 +103,7 @@
         @media (min-width: 768px) { #view-game > .game-wrapper { padding: 24px; } }
 
         .game-content-split {
-            display: flex; flex-direction: column; flex: 1; gap: 6px; min-height: 0;
+            display: flex; flex-direction: column; flex: 1; gap: 12px; min-height: 0;
         }
 
         @media (min-width: 768px) and (orientation: landscape), (min-width: 1024px) {
@@ -111,12 +111,12 @@
         }
 
         .board-section {
-            flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
-            min-height: 230px; max-height: 35vh;
+            flex: 1.2; position: relative; display: flex; align-items: center; justify-content: center;
+            min-height: 320px; margin-top: 15px; flex-shrink: 0;
         }
 
         .chat-section {
-            display: flex; flex-direction: column; flex: 1.5; min-height: 0;
+            display: flex; flex-direction: column; flex: 1.5; min-height: 200px; flex-shrink: 0;
             background: rgba(0,0,0,0.25); backdrop-filter: blur(25px) saturate(120%); -webkit-backdrop-filter: blur(25px) saturate(120%);
             border-radius: 20px; border: 1px solid var(--glass-border);
             overflow: hidden;
@@ -124,11 +124,11 @@
         }
 
         @media (min-width: 768px) and (orientation: landscape) { 
-            .board-section { flex: 1; max-height: none; }
+            .board-section { flex: 1; margin-top: 0; }
             .chat-section { width: 320px; height: 100%; flex: none; } 
         }
         @media (min-width: 1024px) { 
-            .board-section { max-height: none; }
+            .board-section { margin-top: 0; }
             .chat-section { width: 380px; height: 100%; flex: none; } 
         }
 
@@ -246,10 +246,10 @@
         }
 
         .score-pill {
-            background: rgba(0,0,0,0.25); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border); border-radius: 12px;
-            padding: 4px 10px; font-size: 12px; font-weight: 700;
-            display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background: rgba(0,0,0,0.3); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border); border-radius: 14px;
+            padding: 8px 14px; font-size: 15px; font-weight: 700;
+            display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
     </style>
 </head>
@@ -286,7 +286,7 @@
             <div class="player-grid" id="lobbyPlayers"></div>
             
             <button id="btnStartGame" class="btn-disabled" onclick="hostStartGame()">Waiting for Host...</button>
-            <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room 🚪</button>
+            <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room</button>
         </div>
     </div>
 
@@ -346,7 +346,7 @@
                         <div id="reply-indicator" class="hidden" style="background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); padding: 5px 10px; margin-bottom: 8px; border-radius: 6px; display:flex; justify-content:space-between; align-items:center; font-size: 11px; text-shadow: none;">
                             <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:85%;">
                                 <b id="reply-user" style="color:var(--accent);"></b><br>
-                                <span id="reply-text" style="color:#aaa;"></span>
+                                <span id="reply-text" style="color:#ffffff;"></span>
                             </div>
                             <button onclick="clearReply()" style="background:none; border:none; color:white; width:auto; padding:0; font-size:18px; text-shadow:none;">×</button>
                         </div>
@@ -365,8 +365,8 @@
                 <h2 id="resultText" style="margin-bottom: 20px; font-size: 24px; font-weight: 800; line-height: 1.2;"></h2>
                 
                 <div id="end-controls">
-                    <button id="btnPlayAgain" class="btn-primary" onclick="hostStartGame()">Play Again 🚀</button>
-                    <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room 🚪</button>
+                    <button id="btnPlayAgain" class="btn-primary" onclick="hostStartGame()">Play Again</button>
+                    <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room</button>
                 </div>
             </div>
         </div>
@@ -576,7 +576,7 @@
 
         if (amIHost) {
             statusText.innerText = "You are the Host! 👑";
-            btnStart.className = "btn-primary"; btnStart.innerText = "Start Game 🚀"; 
+            btnStart.className = "btn-primary"; btnStart.innerText = "Start Game"; 
             btnStart.disabled = false;
         } else {
             statusText.innerText = "Waiting for Host to start...";
@@ -727,7 +727,7 @@
             
             const btnPlayAgain = document.getElementById('btnPlayAgain');
             if (amIHost) { 
-                btnPlayAgain.className = "btn-primary"; btnPlayAgain.innerText = "Play Again 🚀"; btnPlayAgain.disabled = false;
+                btnPlayAgain.className = "btn-primary"; btnPlayAgain.innerText = "Play Again"; btnPlayAgain.disabled = false;
             } else { 
                 btnPlayAgain.className = "btn-disabled"; btnPlayAgain.innerText = "Waiting for Host..."; btnPlayAgain.disabled = true;
             }
@@ -804,9 +804,10 @@
                 if (nextIndex >= s.turnOrder.length) {
                     updateState({ phase: 'finished' });
                 } else {
-                    const nextTargetName = globalPlayers[s.turnOrder[nextIndex]].name;
-                    updateState({ phase: 'turnTransition', nextTargetName: nextTargetName, turnIndex: nextIndex, votes: null });
-                    setTimeout(() => startTurn(), 3000);
+                    // Skip the transition phase entirely and jump straight into the next turn
+                    updateState({ turnIndex: nextIndex }).then(() => {
+                        startTurn();
+                    });
                 }
             }, 4000);
         }
@@ -881,8 +882,8 @@
             const pData = globalPlayers[pid];
             const pColor = getUserColorByName(pData.name);
             const score = gameState.scores[pid] || 0;
-            const votedFruit = (gameState.votes && gameState.votes[pid]) ? `<span style="font-size: 15px; margin-left: 4px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">${gameState.votes[pid]}</span>` : '';
-            return `<div class="score-pill"><div class="node-color" style="background: ${pColor}; width: 10px; height: 10px; margin-bottom: 0;"></div><span style="color: #fff; text-shadow:none; display: flex; align-items: center;">${pData.name}${votedFruit}</span><span style="color: var(--success); text-shadow:none;">${score}</span></div>`;
+            const votedFruit = (gameState.votes && gameState.votes[pid]) ? `<span style="font-size: 18px; margin-left: 6px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">${gameState.votes[pid]}</span>` : '';
+            return `<div class="score-pill"><div class="node-color" style="background: ${pColor}; width: 14px; height: 14px; margin-bottom: 0;"></div><span style="color: #fff; text-shadow:none; display: flex; align-items: center; font-size: 15px;">${pData.name}${votedFruit}</span><span style="color: var(--success); text-shadow:none; font-size: 16px; margin-left: 4px;">${score}</span></div>`;
         }).join('');
     }
 
