@@ -56,7 +56,7 @@
             font-family: inherit;
         }
         
-        input:focus, textarea:focus { border-color: var(--accent); background: rgba(255, 255, 255, 0.18); }
+        input:focus, textarea:focus { border-color: rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.15); }
         
         input::placeholder, textarea::placeholder { color: #ffffff; opacity: 1; font-weight: 600; }
 
@@ -98,13 +98,12 @@
         }
 
         .board-section {
-            flex: 0.8; /* Reduced flex ratio to give more space to chat */
+            flex: 0.8; 
             position: relative; display: flex; align-items: center; justify-content: center;
             min-height: 260px; margin-top: 0; flex-shrink: 0;
-            z-index: 10; /* Added to ensure circle appears above chat on mobile */
+            z-index: 10; 
         }
 
-        /* Push the board section slightly down exclusively on mobile portrait without altering flex height */
         @media (max-width: 767px) and (orientation: portrait) {
             .board-section {
                 transform: translateY(15px);
@@ -113,9 +112,9 @@
 
         .chat-section {
             position: relative;
-            z-index: 5; /* Keep chat below the board section */
-            display: flex; flex-direction: column; flex: 1.5; /* Increased flex ratio */
-            min-height: 250px; max-height: none; /* Removed max-height on mobile to expand */
+            z-index: 5; 
+            display: flex; flex-direction: column; flex: 1.5; 
+            min-height: 250px; max-height: none; 
             flex-shrink: 0;
             background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(25px) saturate(120%); -webkit-backdrop-filter: blur(25px) saturate(120%);
             border-radius: 20px; border: 1px solid var(--glass-border);
@@ -123,21 +122,10 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         }
 
-        /* Tablet Portrait Specific Optimization */
         @media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
-            .game-content-split {
-                gap: 20px; 
-                margin-top: 1vh; /* Move split upwards */
-            }
-            .board-section {
-                flex: 0.8;
-                min-height: 380px; /* Slightly reduced to give chat space */
-                transform: translateY(-2pt); /* Shift circle upwards by 2pt */
-            }
-            .chat-section {
-                flex: 1.5; /* Increased flex to expand chat area */
-                min-height: 450px; /* Taller min height for chat box */
-            }
+            .game-content-split { gap: 20px; margin-top: 1vh; }
+            .board-section { flex: 0.8; min-height: 380px; transform: translateY(-2pt); }
+            .chat-section { flex: 1.5; min-height: 450px; }
         }
 
         @media (min-width: 768px) and (orientation: landscape) { 
@@ -170,8 +158,8 @@
         }
         
         .chat-reply-quote {
-            background: rgba(0,0,0,0.2); border-left: 3px solid; padding: 4px 8px;
-            border-radius: 4px; margin-bottom: 4px; font-size: 11px; color: var(--text-muted); text-shadow: none;
+            background: rgba(255, 255, 255, 0.1); border-left: 3px solid; padding: 4px 8px;
+            border-radius: 4px; margin-bottom: 4px; font-size: 11px; color: rgba(255, 255, 255, 0.95); text-shadow: none;
         }
         .chat-system { 
             margin: 4px auto; font-size: 11px; font-weight: 600; color: var(--text-muted); 
@@ -206,7 +194,7 @@
             background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
             border: 2px solid var(--glass-border); display: flex; flex-direction: column; align-items: center; justify-content: center;
             transform: translate(-50%, -50%); z-index: 5; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            transition: border-color 0.4s ease, box-shadow 0.4s ease, width 0.3s, height 0.3s;
+            transition: opacity 0.4s ease, filter 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, width 0.3s, height 0.3s;
         }
         @media (min-width: 768px) { .player-node { width: 80px; height: 80px; } }
         @media (min-width: 1024px) { .player-node { width: 100px; height: 100px; } }
@@ -265,11 +253,6 @@
             margin-bottom: 10px; text-shadow: none; width: 100%; overflow: hidden;
         }
 
-        #top-scoreboard {
-            display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 8px; width: 100%;
-            transition: all 0.3s ease;
-        }
-
         .score-pill {
             background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border); border-radius: 14px;
@@ -278,9 +261,9 @@
         }
 
         .revealed-badge {
-            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; padding: 4px 10px;
-            font-size: 12px; text-shadow: none; display: flex; align-items: center; gap: 6px;
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 4px 10px;
+            font-size: 12px; text-shadow: none; display: flex; align-items: center; gap: 4px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1); white-space: nowrap; color: #fff;
         }
         @media (min-width: 768px) { .revealed-badge { font-size: 13px; padding: 6px 12px; } }
@@ -380,12 +363,12 @@
 
                     <!-- STANDARD CHAT INPUT AREA -->
                     <div id="standard-chat-input-area" class="chat-input-area">
-                        <div id="reply-indicator" class="hidden" style="background: rgba(0,0,0,0.3); padding: 5px 10px; margin-bottom: 8px; border-radius: 6px; display:flex; justify-content:space-between; align-items:center; font-size: 11px; text-shadow: none;">
+                        <div id="reply-indicator" class="hidden" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); padding: 8px 12px; margin-bottom: 10px; border-radius: 12px; display:flex; justify-content:space-between; align-items:center; font-size: 12px; text-shadow: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
                             <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:85%;">
                                 <b id="reply-user"></b><br>
-                                <span id="reply-text" style="color:#ffffff;"></span>
+                                <span id="reply-text" style="color:rgba(255,255,255,0.85);"></span>
                             </div>
-                            <button onclick="clearReply()" style="background:none; border:none; color:white; width:auto; padding:0; font-size:18px; text-shadow:none;">×</button>
+                            <button onclick="clearReply()" style="background:rgba(255,255,255,0.2); border-radius:50%; border:none; color:white; width:24px; height:24px; display:flex; align-items:center; justify-content:center; padding:0; font-size:16px; text-shadow:none; cursor:pointer; transition: 0.2s;">×</button>
                         </div>
 
                         <div style="display: flex; gap: 8px;">
@@ -397,13 +380,15 @@
 
             </div>
 
-            <div id="zone-result" class="hidden" style="text-align: center; margin: auto 0; animation: popIn 0.5s ease; width:100%; max-width: 600px; margin: 0 auto;">
-                <div id="resultEmoji" style="font-size: 70px; margin-bottom: 10px; animation: float 2s infinite;">🎉</div>
-                <h2 id="resultText" style="margin-bottom: 20px; font-size: 24px; font-weight: 800; line-height: 1.2;"></h2>
-                
-                <div id="end-controls">
-                    <button id="btnPlayAgain" class="btn-primary" onclick="hostStartGame()">Play Again</button>
-                    <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room</button>
+            <div id="zone-result" class="view-centered-wide hidden" style="margin-top: 10vh; animation: popIn 0.5s ease;">
+                <div class="glass-card" style="text-align: center;">
+                    <div id="resultEmoji" style="font-size: 70px; margin-bottom: 10px; animation: float 2s infinite;">🎉</div>
+                    <div id="resultText" style="margin-bottom: 20px; font-size: 24px; font-weight: 800; line-height: 1.2;"></div>
+                    
+                    <div id="end-controls">
+                        <button id="btnPlayAgain" class="btn-primary" onclick="hostStartGame()">Play Again</button>
+                        <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -456,6 +441,7 @@
 
     let myKey = null, myName = "", amIHost = false, globalPlayers = {}, gameState = { phase: 'login', votes: {}, scores: {}, turnOrder: [], turnIndex: 0, qna: {}, revealedFruits: {} };
     let lastPhase = '', lastChatCount = 0, activeReply = null; 
+    let skipTimers = {}; // Professional delay for reconnects
 
     // Sound FX
     let musicPlaying = false;
@@ -552,13 +538,18 @@
         }
         document.getElementById('lobbyLinkInput').value = displayUrl;
         
+        // PROFESSIONAL CONNECTION STABILITY SYSTEM:
+        // Uses a soft presence flag instead of brutally deleting users when connection fluctuates
         if (!window.connectionListenerAdded) {
             window.connectionListenerAdded = true;
             onValue(ref(db, ".info/connected"), (snap) => {
                 if (snap.val() === true && myKey) {
                     const playerRef = ref(db, `rooms/${roomId}/players/${myKey}`);
-                    onDisconnect(playerRef).remove().then(() => {
-                        set(playerRef, { name: myName, joinedAt: joinedTime });
+                    const onlineRef = ref(db, `rooms/${roomId}/players/${myKey}/online`);
+                    
+                    onDisconnect(playerRef).cancel(); // Ensure hard remove is disabled
+                    onDisconnect(onlineRef).set(false).then(() => {
+                        update(playerRef, { name: myName, joinedAt: joinedTime, online: true });
                     });
                 }
             });
@@ -568,9 +559,13 @@
             globalPlayers = snap.val() || {};
             const pKeys = Object.keys(globalPlayers);
             
-            if (pKeys.length > 0) {
-                const oldestKey = pKeys.sort((a,b) => globalPlayers[a].joinedAt - globalPlayers[b].joinedAt)[0];
+            // Only assign host to a currently online player
+            const onlineKeys = pKeys.filter(k => globalPlayers[k].online !== false);
+            if (onlineKeys.length > 0) {
+                const oldestKey = onlineKeys.sort((a,b) => globalPlayers[a].joinedAt - globalPlayers[b].joinedAt)[0];
                 amIHost = (oldestKey === myKey);
+            } else {
+                amIHost = false;
             }
             
             renderLobby();
@@ -628,10 +623,14 @@
     function renderLobby() {
         const grid = document.getElementById('lobbyPlayers'); grid.innerHTML = "";
         const keys = Object.keys(globalPlayers);
-        const hostKey = keys.sort((a,b) => globalPlayers[a].joinedAt - globalPlayers[b].joinedAt)[0];
+        
+        const onlineKeys = keys.filter(k => globalPlayers[k].online !== false);
+        const hostKey = onlineKeys.length > 0 ? onlineKeys.sort((a,b) => globalPlayers[a].joinedAt - globalPlayers[b].joinedAt)[0] : null;
 
         keys.forEach(id => {
-            grid.innerHTML += `<div class="p-badge">${globalPlayers[id].name} ${id === hostKey ? '👑' : ''}</div>`;
+            const isOffline = globalPlayers[id].online === false;
+            const style = isOffline ? 'opacity: 0.5;' : '';
+            grid.innerHTML += `<div class="p-badge" style="${style}">${globalPlayers[id].name} ${id === hostKey ? '👑' : ''}</div>`;
         });
         
         playSfx(sfx.pop); 
@@ -762,14 +761,14 @@
             document.getElementById('center-playing').classList.remove('hidden');
             
             const curTargetId = state.turnOrder[state.turnIndex];
-            const currentTargetData = globalPlayers[curTargetId];
+            const currentTargetData = globalPlayers[curTargetId] || { name: 'Player' };
             
             // Update Center Orb text to show Target and Current Asker
             const qna = state.qna;
-            let orbHTML = currentTargetData ? currentTargetData.name : 'Offline User';
+            let orbHTML = currentTargetData.name;
             if (qna && qna.askers && qna.askers[qna.currentIndex]) {
                 const aName = globalPlayers[qna.askers[qna.currentIndex]]?.name || 'Player';
-                orbHTML += `<br><span style="font-size: 14px; color: var(--text-muted); font-weight: 600;">Asker: ${aName}</span>`;
+                orbHTML += `<br><span style="font-size: 14px; color: var(--text-muted); font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">Asker: ${aName}</span>`;
             }
             document.getElementById('playingTargetName').innerHTML = orbHTML;
             
@@ -926,26 +925,37 @@
         const targetId = gameState.turnOrder[gameState.turnIndex];
         const askerId = qna.askers[qna.currentIndex];
         
-        // Target Disconnects = Skip everyone else
-        if (!globalPlayers[targetId]) {
-            let missingVotes = {};
-            qna.askers.forEach(id => {
-                if(!gameState.votes || !gameState.votes[id]) missingVotes[id] = 'Skipped';
-            });
-            if(Object.keys(missingVotes).length > 0) update(ref(db, `rooms/${roomId}/state/votes`), missingVotes);
-            updateState({ 'qna/status': 'resolving' });
-            return;
+        // Target Offline = Grace period of 5s before skipping everyone else
+        if (!globalPlayers[targetId] || globalPlayers[targetId].online === false) {
+            if (!skipTimers[targetId]) {
+                skipTimers[targetId] = setTimeout(() => {
+                    let missingVotes = {};
+                    qna.askers.forEach(id => {
+                        if(!gameState.votes || !gameState.votes[id]) missingVotes[id] = 'Skipped';
+                    });
+                    if(Object.keys(missingVotes).length > 0) update(ref(db, `rooms/${roomId}/state/votes`), missingVotes);
+                    updateState({ 'qna/status': 'resolving' });
+                }, 5000);
+            }
+        } else {
+            if (skipTimers[targetId]) { clearTimeout(skipTimers[targetId]); skipTimers[targetId] = null; }
         }
 
-        // Asker Disconnects = Auto-Skip them
-        if (!globalPlayers[askerId] && (qna.status === 'ask' || qna.status === 'vote')) {
-            set(ref(db, `rooms/${roomId}/state/votes/${askerId}`), 'Skipped');
-            const nextIndex = qna.currentIndex + 1;
-            if (nextIndex < qna.askers.length) {
-                updateState({ 'qna/status': 'ask', 'qna/currentIndex': nextIndex, 'qna/currentQuestion': '' });
-            } else {
-                updateState({ 'qna/status': 'resolving' });
+        // Asker Offline = Auto-Skip them after a 5s grace period
+        if ((!globalPlayers[askerId] || globalPlayers[askerId].online === false) && (qna.status === 'ask' || qna.status === 'vote')) {
+            if (!skipTimers[askerId]) {
+                skipTimers[askerId] = setTimeout(() => {
+                    set(ref(db, `rooms/${roomId}/state/votes/${askerId}`), 'Skipped');
+                    const nextIndex = qna.currentIndex + 1;
+                    if (nextIndex < qna.askers.length) {
+                        updateState({ 'qna/status': 'ask', 'qna/currentIndex': nextIndex, 'qna/currentQuestion': '' });
+                    } else {
+                        updateState({ 'qna/status': 'resolving' });
+                    }
+                }, 5000);
             }
+        } else {
+            if (skipTimers[askerId]) { clearTimeout(skipTimers[askerId]); skipTimers[askerId] = null; }
         }
     }
 
@@ -956,8 +966,8 @@
         if (!qna || !qna.askers) return;
 
         const s = gameState;
-        const currentPlayers = Object.keys(globalPlayers);
-        const requiredAskers = qna.askers.filter(id => currentPlayers.includes(id));
+        // The game logically only cares about askers who successfully joined the turn order
+        const requiredAskers = qna.askers;
         const allVoted = requiredAskers.every(id => s.votes && s.votes[id]);
         
         if (qna.status === 'resolving' || allVoted) {
@@ -974,7 +984,7 @@
                 }
             }
             
-            const targetName = globalPlayers[targetId] ? globalPlayers[targetId].name : 'Disconnected User';
+            const targetName = globalPlayers[targetId] ? globalPlayers[targetId].name : 'Offline Target';
             sendSystemMessage(`Target ${targetName} had ${targetFruit}! ` + (correct.length > 0 ? `${correct.join(', ')} guessed correctly (+10)!` : `Nobody guessed correctly (0 pts)!`));
             
             let newRevealed = { ...(s.revealedFruits || {}) };
@@ -1015,7 +1025,14 @@
         if(!board || board.offsetParent === null) return; 
         
         const nodesContainer = document.getElementById('player-nodes-container');
-        const keys = Object.keys(globalPlayers);
+        
+        // Merge current active players and anyone who was in the turn order so nobody visually disappears
+        let activeKeys = Object.keys(globalPlayers);
+        if (gameState.phase !== 'login' && gameState.phase !== 'lobby' && gameState.turnOrder) {
+            activeKeys = Array.from(new Set([...activeKeys, ...gameState.turnOrder]));
+        }
+        
+        const keys = activeKeys;
         const N = keys.length;
         if (N === 0) return;
 
@@ -1036,7 +1053,9 @@
 
         keys.forEach((pid, index) => {
             const angle = startAngle + (index * angleStep);
-            const pData = globalPlayers[pid];
+            
+            const pData = globalPlayers[pid] || { name: 'Player' };
+            const isOffline = pData.online === false;
             const pColor = getUserColorByName(pData.name);
             
             const currentTurnId = (gameState.turnOrder && gameState.turnOrder.length > gameState.turnIndex) ? gameState.turnOrder[gameState.turnIndex] : null;
@@ -1061,6 +1080,9 @@
             nodeEl.style.left = `calc(50% + ${Math.cos(angle) * radius}px)`; 
             nodeEl.style.top = `calc(50% + ${Math.sin(angle) * radius}px)`;
             nodeEl.style.borderColor = glowClass ? '' : 'var(--glass-border)';
+            // Crucial Stability Enhancement: gracefully gray out players who drop connection instead of deleting them entirely!
+            nodeEl.style.opacity = isOffline ? '0.4' : '1';
+            nodeEl.style.filter = isOffline ? 'grayscale(100%)' : 'none';
             nodeEl.innerHTML = `<div class="score-badge">${gameState.scores[pid] || 0}</div><div class="node-color" style="background: ${pColor};"></div><div class="node-name">${pData.name}</div>`;
         });
     }
@@ -1075,7 +1097,7 @@
         
         const badgesHtml = Object.entries(gameState.revealedFruits).map(([pid, fruit]) => {
             const pName = globalPlayers[pid]?.name || 'Offline';
-            return `<div class="revealed-badge"><b>${pName}</b>: <span style="font-size: 1.2em; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));">${fruit}</span></div>`;
+            return `<div class="revealed-badge"><b>${pName}:</b> <span style="font-size: 1.2em; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));">${fruit}</span></div>`;
         }).join('');
         
         document.getElementById('revealed-badges').innerHTML = badgesHtml;
