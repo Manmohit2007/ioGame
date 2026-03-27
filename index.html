@@ -241,9 +241,9 @@
 
         .center-orb {
             position: relative; width: 150px; height: 150px; border-radius: 50%; background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid var(--glass-border);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 2px solid var(--glass-border);
             z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2); overflow: hidden; 
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2);
             animation: popIn 0.5s ease; transition: width 0.3s, height 0.3s;
         }
         @media (min-width: 768px) { .center-orb { width: 200px; height: 200px; } }
@@ -275,10 +275,11 @@
         }
 
         .revealed-badge {
-            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 4px 10px;
+            background: rgba(255, 255, 255, 0.15); 
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            border-radius: 12px; padding: 4px 10px;
             font-size: 12px; text-shadow: none; display: flex; align-items: center; gap: 4px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1); white-space: nowrap; color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1); white-space: nowrap; color: #fff;
         }
         @media (min-width: 768px) { .revealed-badge { font-size: 13px; padding: 6px 12px; } }
     </style>
@@ -328,9 +329,9 @@
                     
                     <div id="center-glass-orb" class="center-orb">
                         
-                        <!-- DYNAMIC CIRCULAR TIMELINE (Thinner and fused to outline) -->
-                        <svg id="orb-timer-svg" class="hidden" style="position:absolute; top:0; left:0; width:100%; height:100%; transform:rotate(-90deg); z-index:1; pointer-events:none;" viewBox="0 0 200 200">
-                            <circle id="orb-timer-circle" cx="100" cy="100" r="99" fill="none" stroke="var(--success)" stroke-width="2" stroke-dasharray="622.04" stroke-dashoffset="0" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease;"></circle>
+                        <!-- DYNAMIC CIRCULAR TIMELINE (Matched to 2px node outlines with glow) -->
+                        <svg id="orb-timer-svg" class="hidden" style="position:absolute; top:-2px; left:-2px; width:calc(100% + 4px); height:calc(100% + 4px); transform:rotate(-90deg); z-index:1; pointer-events:none; overflow:visible;" viewBox="0 0 200 200">
+                            <circle id="orb-timer-circle" cx="100" cy="100" r="100" fill="none" stroke="var(--success)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-dasharray="628.32" stroke-dashoffset="0" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease, filter 0.3s ease; filter: drop-shadow(0 0 8px var(--success));"></circle>
                         </svg>
 
                         <div id="center-countdown" class="countdown-view hidden" style="z-index: 2;">
@@ -947,8 +948,9 @@
         }
 
         if (orbCircle) {
-            orbCircle.style.strokeDashoffset = 622.04 * (1 - pct);
+            orbCircle.style.strokeDashoffset = 628.32 * (1 - pct);
             orbCircle.style.stroke = color;
+            orbCircle.style.filter = `drop-shadow(0 0 8px ${color})`;
         }
     }
 
