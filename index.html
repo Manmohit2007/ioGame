@@ -126,17 +126,17 @@
         /* Tablet Portrait Specific Optimization */
         @media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
             .game-content-split {
-                gap: 30px; 
-                margin-top: 3vh;
+                gap: 20px; 
+                margin-top: 1vh; /* Move split upwards */
             }
             .board-section {
-                flex: 1;
-                min-height: 400px; /* Give much more space to the circle so it doesn't overlap at all */
-                transform: none;
+                flex: 0.8;
+                min-height: 380px; /* Slightly reduced to give chat space */
+                transform: translateY(-20px); /* Shift circle upwards */
             }
             .chat-section {
-                flex: 1;
-                min-height: 350px;
+                flex: 1.5; /* Increased flex to expand chat area */
+                min-height: 450px; /* Taller min height for chat box */
             }
         }
 
