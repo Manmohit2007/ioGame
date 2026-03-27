@@ -329,8 +329,8 @@
                     
                     <div id="center-glass-orb" class="center-orb">
                         
-                        <!-- DYNAMIC CIRCULAR TIMELINE (Responsive & geometrically fused to outline) -->
-                        <svg id="orb-timer-svg" class="hidden" style="position:absolute; top:-2px; left:-2px; transform:rotate(-90deg); z-index:1; pointer-events:none; overflow:visible;">
+                        <!-- DYNAMIC CIRCULAR TIMELINE (Perfectly bound to border-box) -->
+                        <svg id="orb-timer-svg" class="hidden" style="position:absolute; top:0; left:0; width:100%; height:100%; transform:rotate(-90deg); z-index:1; pointer-events:none; overflow:visible;">
                             <circle id="orb-timer-circle" fill="none" stroke-width="2" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease, filter 0.3s ease;"></circle>
                         </svg>
 
@@ -987,43 +987,40 @@
         let totalTime = (gameState.qna.status === 'vote') ? 15000 : 30000;
         let pct = (timeLeft / totalTime);
         
-        let color = 'var(--success)';
-        let rgbColor = '52, 199, 89';
-        if (pct <= 0.2) {
-            color = 'var(--primary)'; // Red
-            rgbColor = '255, 59, 48';
-        } else if (pct <= 0.5) {
-            color = '#FFD700'; // Yellow
-            rgbColor = '255, 215, 0';
-        }
+        // Set fixed Blue Accent Color for timeline
+        let color = 'var(--accent)';
+        let rgbColor = '0, 122, 255';
 
         if (bar) {
             bar.style.width = (pct * 100) + '%';
             bar.style.backgroundColor = color;
         }
 
+        // Dynamically calculate radius so it perfectly overlaps the 2px border at ANY screen size
         if (orbCircle && orb && orbSvg) {
             const size = orb.offsetWidth; 
-            orbSvg.style.width = (size + 4) + 'px';
-            orbSvg.style.height = (size + 4) + 'px';
+            orbSvg.style.width = '100%';
+            orbSvg.style.height = '100%';
+            orbSvg.style.top = '0';
+            orbSvg.style.left = '0';
             
-            const radius = size / 2; // Matches exact edge since svg is larger
+            const radius = (size / 2) - 1; // 1px inside the edge to perfectly overlap the 2px border
             const circumference = 2 * Math.PI * radius;
             
-            orbCircle.setAttribute('cx', (size / 2) + 2);
-            orbCircle.setAttribute('cy', (size / 2) + 2);
+            orbCircle.setAttribute('cx', size / 2);
+            orbCircle.setAttribute('cy', size / 2);
             orbCircle.setAttribute('r', radius);
             
             orbCircle.style.strokeDasharray = circumference;
             orbCircle.style.strokeDashoffset = circumference * (1 - pct);
             orbCircle.style.stroke = color;
             
-            // EXACT matching glow applied to the orb itself
-            orb.style.boxShadow = `0 0 20px 5px rgba(${rgbColor}, 0.6), inset 0 0 10px rgba(${rgbColor}, 0.4), inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2)`;
-            orb.style.borderColor = 'transparent'; // Hide native border so SVG ring takes over completely
+            // Restore native border styles so the white glass border remains visible under the empty part of the timeline
+            orb.style.boxShadow = 'inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2)';
+            orb.style.borderColor = 'var(--glass-border)'; 
             
-            // Add a slight drop shadow to the SVG itself so the tip of the line glows
-            orbCircle.style.filter = `drop-shadow(0 0 4px rgba(${rgbColor}, 0.8))`;
+            // Apply a strong drop-shadow filter ONLY to the SVG stroke, making the timeline itself glow!
+            orbCircle.style.filter = `drop-shadow(0 0 6px rgba(${rgbColor}, 0.9)) drop-shadow(0 0 14px rgba(${rgbColor}, 0.6))`;
         }
     }
 
