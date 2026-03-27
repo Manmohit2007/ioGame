@@ -56,7 +56,21 @@
             font-family: inherit;
         }
         
-        input:focus, textarea:focus { border-color: transparent; background: rgba(255, 255, 255, 0.15); outline: none !important; box-shadow: none !important; }
+        input:focus, textarea:focus { 
+            border-color: var(--accent); 
+            background: rgba(255, 255, 255, 0.15); 
+            outline: none !important; 
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.25) !important; 
+        }
+        
+        /* Fix for Android/Webkit Autofill turning inputs solid white */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active {
+            transition: background-color 5000s ease-in-out 0s;
+            -webkit-text-fill-color: white !important;
+        }
         
         input::placeholder, textarea::placeholder { color: #ffffff; opacity: 1; font-weight: 600; }
 
@@ -261,10 +275,10 @@
         }
 
         .revealed-badge {
-            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 4px 10px;
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 4px 10px;
             font-size: 12px; text-shadow: none; display: flex; align-items: center; gap: 4px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1); white-space: nowrap; color: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1); white-space: nowrap; color: rgba(255, 255, 255, 0.95);
         }
         @media (min-width: 768px) { .revealed-badge { font-size: 13px; padding: 6px 12px; } }
     </style>
@@ -301,7 +315,6 @@
             <div class="player-grid" id="lobbyPlayers"></div>
             
             <button id="btnStartGame" class="btn-disabled" onclick="hostStartGame()">Waiting for Host...</button>
-            <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room</button>
         </div>
     </div>
 
@@ -314,23 +327,28 @@
                     <div id="player-nodes-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>
                     
                     <div id="center-glass-orb" class="center-orb">
-                        <div id="center-countdown" class="countdown-view hidden">
+                        
+                        <!-- DYNAMIC CIRCULAR TIMELINE -->
+                        <svg id="orb-timer-svg" class="hidden" style="position:absolute; top:0; left:0; width:100%; height:100%; transform:rotate(-90deg); z-index:1; pointer-events:none;" viewBox="0 0 200 200">
+                            <circle id="orb-timer-circle" cx="100" cy="100" r="96" fill="none" stroke="var(--success)" stroke-width="8" stroke-dasharray="603.19" stroke-dashoffset="0" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease;"></circle>
+                        </svg>
+
+                        <div id="center-countdown" class="countdown-view hidden" style="z-index: 2;">
                             <p style="font-size: 13px; font-weight: 700; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-bottom: 2px; text-transform: uppercase;">Your Fruit</p>
                             <div id="bigEmoji" style="font-size: 55px; line-height: 1.1; text-shadow: 0 5px 15px rgba(0,0,0,0.3);">❓</div>
                             <div id="countdownDisplay" style="font-size: 18px; font-weight: 900; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.9); margin-top:5px;">5...</div>
                         </div>
 
-                        <div id="center-transition" class="countdown-view hidden">
+                        <div id="center-transition" class="countdown-view hidden" style="z-index: 2;">
                             <p style="font-size: 13px; font-weight: 700; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-bottom: 5px; text-transform: uppercase;">Next Turn</p>
                             <div id="transitionPlayerName" style="font-size: 26px; font-weight: 900; color: var(--accent); text-shadow: none; text-transform: uppercase;">Player</div>
                         </div>
 
-                        <div id="center-playing" class="countdown-view hidden">
-                            <p style="font-size: 13px; font-weight: 700; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-bottom: 5px; text-transform: uppercase;">Current Target</p>
+                        <div id="center-playing" class="countdown-view hidden" style="z-index: 2;">
                             <div id="playingTargetName" style="font-size: 24px; font-weight: 900; color: var(--accent); text-shadow: none; text-transform: uppercase; text-align: center; line-height: 1.1;">Name</div>
                         </div>
 
-                        <div id="center-results" class="countdown-view hidden">
+                        <div id="center-results" class="countdown-view hidden" style="z-index: 2;">
                             <p style="font-size: 13px; font-weight: 700; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-bottom: 5px; text-transform: uppercase;">Target's Fruit</p>
                             <div id="revealedFruit" style="font-size: 55px; line-height: 1.1; text-shadow: 0 5px 15px rgba(0,0,0,0.3);">❓</div>
                             <div id="revealedText" style="font-size: 15px; font-weight: 900; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.9); margin-top:5px;">Scores Updated!</div>
@@ -391,7 +409,6 @@
                     
                     <div id="end-controls">
                         <button id="btnPlayAgain" class="btn-primary" onclick="hostStartGame()">Play Again</button>
-                        <button class="btn-danger" style="margin-top: 12px;" onclick="leaveRoom()">Leave Room</button>
                     </div>
                 </div>
             </div>
@@ -489,16 +506,6 @@
         ['view-login', 'view-lobby', 'view-game'].forEach(id => document.getElementById(id).classList.add('hidden'));
         document.getElementById(viewId).classList.remove('hidden');
         if(viewId === 'view-game') setTimeout(() => renderBoardNodes(false), 100); 
-    }
-
-    window.leaveRoom = function() { 
-        playSfx(sfx.pop); 
-        sessionStorage.removeItem(`iogame_user_${roomId}`);
-        if (myKey) {
-            remove(ref(db, `rooms/${roomId}/players/${myKey}`)).then(() => window.location.reload());
-        } else {
-            window.location.reload();
-        }
     }
 
     function createConfetti() {
@@ -825,10 +832,17 @@
             const currentTargetData = globalPlayers[curTargetId] || { name: 'Player' };
             
             const qna = state.qna;
-            let orbHTML = currentTargetData.name;
+            let orbHTML = `<span style="font-size:13px; font-weight:700; color:#fff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-bottom: 2px;">TARGET:</span><br>${currentTargetData.name}`;
+            
             if (qna && qna.askers && qna.askers[qna.currentIndex]) {
                 const aName = globalPlayers[qna.askers[qna.currentIndex]]?.name || 'Player';
-                orbHTML += `<br><span style="font-size: 14px; color: var(--text-muted); font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">Asker: ${aName}</span>`;
+                
+                let statusMsg = '';
+                if (qna.status === 'ask') statusMsg = `<span style="color:#FFD700;">${aName} is Asking...</span>`;
+                else if (qna.status === 'answer') statusMsg = `<span style="color:var(--success);">${currentTargetData.name} is Answering...</span>`;
+                else if (qna.status === 'vote') statusMsg = `<span style="color:var(--accent);">${aName} is Guessing...</span>`;
+
+                orbHTML += `<br><span style="font-size: 14px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.8); display:block; margin-top:8px;">${statusMsg}</span>`;
             }
             document.getElementById('playingTargetName').innerHTML = orbHTML;
             
@@ -905,22 +919,36 @@
 
     function updateTimelineUI() {
         const bar = document.getElementById('qna-timer-bar');
-        if (!bar || gameState.phase !== 'qna' || !gameState.qna || !gameState.qna.deadline) return;
+        const orbCircle = document.getElementById('orb-timer-circle');
+        const orbSvg = document.getElementById('orb-timer-svg');
+
+        if (gameState.phase !== 'qna' || !gameState.qna || !gameState.qna.deadline) {
+            if (bar) bar.style.width = '0%';
+            if (orbSvg) orbSvg.classList.add('hidden');
+            return;
+        }
+
+        if (orbSvg) orbSvg.classList.remove('hidden');
 
         const now = Date.now();
         let timeLeft = gameState.qna.deadline - now;
         if (timeLeft < 0) timeLeft = 0;
         
         let totalTime = (gameState.qna.status === 'vote') ? 15000 : 30000;
-        let pct = (timeLeft / totalTime) * 100;
-        bar.style.width = pct + '%';
+        let pct = (timeLeft / totalTime);
+        
+        let color = 'var(--success)';
+        if (pct <= 0.2) color = 'var(--primary)'; // Red
+        else if (pct <= 0.5) color = '#FFD700'; // Yellow
 
-        if (pct > 50) {
-            bar.style.backgroundColor = 'var(--success)';
-        } else if (pct > 20) {
-            bar.style.backgroundColor = '#FFD700'; // Yellow
-        } else {
-            bar.style.backgroundColor = 'var(--primary)'; // Red
+        if (bar) {
+            bar.style.width = (pct * 100) + '%';
+            bar.style.backgroundColor = color;
+        }
+
+        if (orbCircle) {
+            orbCircle.style.strokeDashoffset = 603.19 * (1 - pct);
+            orbCircle.style.stroke = color;
         }
     }
 
@@ -1041,6 +1069,7 @@
         // Auto-skip logic based on TIMEOUT
         if (isTimeUp) {
             if (qna.status === 'ask') {
+                push(ref(db, `rooms/${roomId}/chat`), { u: 'System', m: `⏳ Time Out! ${globalPlayers[askerId]?.name || 'Asker'} failed to ask.` });
                 set(ref(db, `rooms/${roomId}/state/votes/${askerId}`), 'Skipped');
                 const nextIndex = qna.currentIndex + 1;
                 if (nextIndex < qna.askers.length) {
@@ -1049,9 +1078,10 @@
                     updateState({ 'qna/status': 'resolving' });
                 }
             } else if (qna.status === 'answer') {
-                push(ref(db, `rooms/${roomId}/chat`), { u: 'System', m: `⏳ Time's up for ${globalPlayers[targetId]?.name || 'Target'} to answer!` });
+                push(ref(db, `rooms/${roomId}/chat`), { u: 'System', m: `⏳ Time Out! ${globalPlayers[targetId]?.name || 'Target'} didn't answer.` });
                 updateState({ 'qna/status': 'vote', 'qna/deadline': now + 15000 });
             } else if (qna.status === 'vote') {
+                push(ref(db, `rooms/${roomId}/chat`), { u: 'System', m: `⏳ Time Out! ${globalPlayers[askerId]?.name || 'Asker'} failed to guess.` });
                 set(ref(db, `rooms/${roomId}/state/votes/${askerId}`), 'Skipped');
                 const nextIndex = qna.currentIndex + 1;
                 if (nextIndex < qna.askers.length) {
