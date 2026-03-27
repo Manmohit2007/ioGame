@@ -117,7 +117,7 @@
 
         .chat-section {
             display: flex; flex-direction: column; flex: 1.5; min-height: 200px; flex-shrink: 0;
-            background: rgba(0,0,0,0.25); backdrop-filter: blur(25px) saturate(120%); -webkit-backdrop-filter: blur(25px) saturate(120%);
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(25px) saturate(120%); -webkit-backdrop-filter: blur(25px) saturate(120%);
             border-radius: 20px; border: 1px solid var(--glass-border);
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
@@ -246,7 +246,7 @@
         }
 
         .score-pill {
-            background: rgba(0,0,0,0.3); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border); border-radius: 14px;
             padding: 8px 14px; font-size: 15px; font-weight: 700;
             display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
@@ -554,7 +554,8 @@
     }
 
     function updateState(updates) {
-        update(ref(db, `rooms/${roomId}/state`), updates);
+        // ADDED RETURN: This fixes the progression bug by returning the promise so .then() works
+        return update(ref(db, `rooms/${roomId}/state`), updates);
     }
 
     function sendSystemMessage(msg) {
@@ -720,7 +721,7 @@
             
             const sortedPlayers = Object.keys(globalPlayers).sort((a, b) => (state.scores[b] || 0) - (state.scores[a] || 0));
             const winners = sortedPlayers.filter(p => (state.scores[p] || 0) === (state.scores[sortedPlayers[0]] || 0)).map(p => globalPlayers[p].name);
-            let chartHtml = `<div style="text-align:left; background:rgba(0,0,0,0.25); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border: 1px solid var(--glass-border); padding:15px; border-radius:16px; margin-bottom:20px; font-size:15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">`;
+            let chartHtml = `<div style="text-align:left; background:rgba(255, 255, 255, 0.15); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border: 1px solid var(--glass-border); padding:15px; border-radius:16px; margin-bottom:20px; font-size:15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">`;
             sortedPlayers.forEach((p, i) => { chartHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;"><span><b>#${i+1}</b> ${globalPlayers[p].name}</span><span style="color:var(--accent); font-weight:bold;">${state.scores[p] || 0} pts</span></div>`; });
             
             document.getElementById('resultText').innerHTML = `<div style="font-size: 38px; font-weight: 900; color: #FFD700; text-shadow: 0 0 25px rgba(255,215,0,0.6); margin-bottom: 5px;">${winners.join(' & ')}</div><div style="font-size: 18px; font-weight: 800; color: var(--success); letter-spacing: 2px; margin-bottom: 20px;">WINNER!</div>${chartHtml}</div>`;
@@ -824,7 +825,9 @@
         if (N === 0) return;
 
         const angleStep = (Math.PI * 2) / N;
-        const startAngle = (N === 2) ? Math.PI : -Math.PI / 2; 
+        let startAngle = -Math.PI / 2; 
+        if (N === 2) startAngle = Math.PI;
+        else if (N === 4) startAngle = -Math.PI / 4; // Places 4 players diagonally in corners
 
         const minDimension = Math.min(board.clientWidth, board.clientHeight);
         const orbRadius = window.innerWidth >= 1024 ? 130 : (window.innerWidth >= 768 ? 100 : 75);
