@@ -89,21 +89,25 @@
         /* Removed inner padding on the wrapper so UI sits perfectly aligned to the top */
         #view-game > .game-wrapper { flex: 1; display: flex; flex-direction: column; padding: 0; min-height: 0; }
 
+        /* Modified to push the board downwards a bit from the top header */
         .game-content-split {
-            display: flex; flex-direction: column; flex: 1; gap: 12px; min-height: 0;
+            display: flex; flex-direction: column; flex: 1; gap: 16px; min-height: 0;
+            margin-top: 3vh; 
         }
 
         @media (min-width: 768px) and (orientation: landscape), (min-width: 1024px) {
-            .game-content-split { flex-direction: row; gap: 20px; }
+            .game-content-split { flex-direction: row; gap: 24px; margin-top: 4vh; }
         }
 
+        /* Increased flex on mobile so the board gets more space, pushing it down to center visually */
         .board-section {
-            flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
-            min-height: 260px; margin-top: 0; flex-shrink: 0;
+            flex: 1.3; position: relative; display: flex; align-items: center; justify-content: center;
+            min-height: 300px; margin-top: 0; flex-shrink: 0;
         }
 
+        /* Decreased flex on mobile so chat doesn't push the board all the way up */
         .chat-section {
-            display: flex; flex-direction: column; flex: 3; min-height: 260px; flex-shrink: 0;
+            display: flex; flex-direction: column; flex: 1; min-height: 220px; max-height: 45vh; flex-shrink: 0;
             background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(25px) saturate(120%); -webkit-backdrop-filter: blur(25px) saturate(120%);
             border-radius: 20px; border: 1px solid var(--glass-border);
             overflow: hidden;
@@ -111,12 +115,12 @@
         }
 
         @media (min-width: 768px) and (orientation: landscape) { 
-            .board-section { flex: 1; margin-top: 0; }
-            .chat-section { width: 320px; height: 100%; flex: none; } 
+            .board-section { flex: 1; }
+            .chat-section { width: 320px; height: 100%; max-height: none; flex: none; } 
         }
         @media (min-width: 1024px) { 
             .board-section { margin-top: 0; }
-            .chat-section { width: 380px; height: 100%; flex: none; } 
+            .chat-section { width: 380px; height: 100%; max-height: none; flex: none; } 
         }
 
         .chat-scroll {
@@ -155,7 +159,6 @@
         .chat-input-area textarea { height: 60px; min-height: 60px; max-height: 60px; resize: none; overflow-y: auto; line-height: 1.4; scrollbar-width: thin; }
         .chat-input-area button { padding: 12px 18px; font-size: 14px; border-radius: 12px; height: 60px; }
 
-        /* Modified status container to pack tightly upwards */
         #status-container { 
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
             text-align: center; margin-bottom: 8px; flex-shrink: 0; 
@@ -238,7 +241,6 @@
             margin-bottom: 10px; text-shadow: none; width: 100%; overflow: hidden;
         }
 
-        /* Top scoreboard flex adjustments */
         #top-scoreboard {
             display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 8px; width: 100%;
             transition: all 0.3s ease;
@@ -818,7 +820,6 @@
         }
     }
 
-    // Bug Fix: Dynamic node syncing specifically prevents UI rendering glitches with missing/ghost player cards
     function renderBoardNodes(isNewPhase = false) {
         const board = document.getElementById('zone-circular-board');
         if(!board || board.offsetParent === null) return; 
@@ -831,14 +832,13 @@
         const angleStep = (Math.PI * 2) / N;
         let startAngle = -Math.PI / 2; 
         if (N === 2) startAngle = Math.PI;
-        else if (N === 4) startAngle = -Math.PI / 4; // Places 4 players diagonally in corners
+        else if (N === 4) startAngle = -Math.PI / 4; 
 
         const minDimension = Math.min(board.clientWidth, board.clientHeight);
         const orbRadius = window.innerWidth >= 1024 ? 130 : (window.innerWidth >= 768 ? 100 : 75);
         const nodeRadiusOffset = window.innerWidth >= 1024 ? 65 : (window.innerWidth >= 768 ? 55 : 42);
         const radius = Math.max(orbRadius + nodeRadiusOffset, (minDimension / 2) - nodeRadiusOffset - 10);
 
-        // Strict cleanup strictly enforces UI mapping with Database state
         Array.from(nodesContainer.children).forEach(child => {
             const id = child.id.replace('node-', '');
             if (!keys.includes(id)) child.remove();
@@ -850,14 +850,12 @@
             const pColor = getUserColorByName(pData.name);
             
             const currentTurnId = (gameState.turnOrder && gameState.turnOrder.length > gameState.turnIndex) ? gameState.turnOrder[gameState.turnIndex] : null;
-            // Updated to retain the glowing target indicator during the score update phase
             const isActiveTarget = pid === currentTurnId && (gameState.phase === 'playing' || gameState.phase === 'readingResults');
             const hasVoted = gameState.votes && gameState.votes[pid];
             
             let glowClass = isActiveTarget ? 'active-target-glow' : (hasVoted ? 'voted-glow' : '');
             let nodeEl = document.getElementById(`node-${pid}`);
             
-            // Re-create node entirely dynamically if missing
             if (!nodeEl) { 
                 nodeEl = document.createElement('div'); 
                 nodeEl.id = `node-${pid}`; 
