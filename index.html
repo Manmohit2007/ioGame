@@ -329,9 +329,9 @@
                     
                     <div id="center-glass-orb" class="center-orb">
                         
-                        <!-- DYNAMIC CIRCULAR TIMELINE (Matched to 2px node outlines with glow) -->
-                        <svg id="orb-timer-svg" class="hidden" style="position:absolute; top:-2px; left:-2px; width:calc(100% + 4px); height:calc(100% + 4px); transform:rotate(-90deg); z-index:1; pointer-events:none; overflow:visible;" viewBox="0 0 200 200">
-                            <circle id="orb-timer-circle" cx="100" cy="100" r="100" fill="none" stroke="var(--success)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-dasharray="628.32" stroke-dashoffset="0" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease, filter 0.3s ease; filter: drop-shadow(0 0 8px var(--success));"></circle>
+                        <!-- DYNAMIC CIRCULAR TIMELINE (Responsive & geometrically fused to outline) -->
+                        <svg id="orb-timer-svg" class="hidden" style="position:absolute; top:-2px; left:-2px; transform:rotate(-90deg); z-index:1; pointer-events:none; overflow:visible;">
+                            <circle id="orb-timer-circle" fill="none" stroke-width="2" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease, filter 0.3s ease;"></circle>
                         </svg>
 
                         <div id="center-countdown" class="countdown-view hidden" style="z-index: 2;">
@@ -346,7 +346,7 @@
                         </div>
 
                         <div id="center-playing" class="countdown-view hidden" style="z-index: 2;">
-                            <div id="playingTargetName" style="font-size: 24px; font-weight: 900; color: var(--accent); text-shadow: none; text-transform: uppercase; text-align: center; line-height: 1.1;">Name</div>
+                            <div id="playingTargetName" style="font-size: 24px; font-weight: 900; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); text-transform: uppercase; text-align: center; line-height: 1.1;">Name</div>
                         </div>
 
                         <div id="center-results" class="countdown-view hidden" style="z-index: 2;">
@@ -587,6 +587,23 @@
             }
             
             renderLobby();
+            
+            // Dynamically update the Play Again button if players join/leave during the results screen
+            if (gameState.phase === 'finished') {
+                const btnPlayAgain = document.getElementById('btnPlayAgain');
+                if (btnPlayAgain) {
+                    if (amIHost) { 
+                        if (onlineKeys.length >= 2) {
+                            btnPlayAgain.className = "btn-primary"; btnPlayAgain.innerText = "Play Again"; btnPlayAgain.disabled = false;
+                        } else {
+                            btnPlayAgain.className = "btn-disabled"; btnPlayAgain.innerText = "Need 2+ Players to Replay"; btnPlayAgain.disabled = true;
+                        }
+                    } else { 
+                        btnPlayAgain.className = "btn-disabled"; btnPlayAgain.innerText = "Waiting for Host..."; btnPlayAgain.disabled = true;
+                    }
+                }
+            }
+
             if(gameState.phase !== 'login' && gameState.phase !== 'lobby') {
                 renderBoardNodes(false); 
             }
@@ -680,9 +697,15 @@
         const statusText = document.getElementById('lobbyStatusText');
 
         if (amIHost) {
-            statusText.innerText = "You are the Host! 👑";
-            btnStart.className = "btn-primary"; btnStart.innerText = "Start Game"; 
-            btnStart.disabled = false;
+            if (onlineKeys.length >= 2) {
+                statusText.innerText = "You are the Host! 👑";
+                btnStart.className = "btn-primary"; btnStart.innerText = "Start Game"; 
+                btnStart.disabled = false;
+            } else {
+                statusText.innerText = "Need at least 2 players to start! 👑";
+                btnStart.className = "btn-disabled"; btnStart.innerText = "Waiting for players..."; 
+                btnStart.disabled = true;
+            }
         } else {
             statusText.innerText = "Waiting for Host to start...";
             btnStart.className = "btn-disabled"; btnStart.innerText = "Waiting for Host..."; 
@@ -692,11 +715,15 @@
 
     window.hostStartGame = function() {
         if (!amIHost) return;
+        
+        const onlineKeys = Object.keys(globalPlayers).filter(k => globalPlayers[k].online !== false);
+        if (onlineKeys.length < 2) return; // Safety check: strictly prevent 1-player starts
+        
         playSfx(sfx.start); clearReply();
-        const keys = Object.keys(globalPlayers);
+        
         let shuffledItems = [...items].sort(() => 0.5 - Math.random());
         let playerItems = {}, initScores = {};
-        keys.forEach((k, i) => { playerItems[k] = shuffledItems[i % shuffledItems.length]; initScores[k] = 0; });
+        onlineKeys.forEach((k, i) => { playerItems[k] = shuffledItems[i % shuffledItems.length]; initScores[k] = 0; });
         
         sendSystemMessage(`🍎 Game started! Memorize your secret fruit.`);
 
@@ -706,7 +733,7 @@
             countdown: 5, 
             votes: null, 
             scores: initScores, 
-            turnOrder: keys, 
+            turnOrder: onlineKeys, 
             turnIndex: 0,
             qna: null,
             revealedFruits: {}
@@ -880,8 +907,14 @@
             document.getElementById('resultText').innerHTML = `<div style="font-size: 38px; font-weight: 900; color: #FFD700; text-shadow: 0 0 25px rgba(255,215,0,0.6); margin-bottom: 5px;">${winners.join(' & ')}</div><div style="font-size: 18px; font-weight: 800; color: #ffffff; letter-spacing: 2px; margin-bottom: 20px;">WINNER!</div>${chartHtml}</div>`;
             
             const btnPlayAgain = document.getElementById('btnPlayAgain');
+            const onlineCount = Object.keys(globalPlayers).filter(k => globalPlayers[k].online !== false).length;
+            
             if (amIHost) { 
-                btnPlayAgain.className = "btn-primary"; btnPlayAgain.innerText = "Play Again"; btnPlayAgain.disabled = false;
+                if (onlineCount >= 2) {
+                    btnPlayAgain.className = "btn-primary"; btnPlayAgain.innerText = "Play Again"; btnPlayAgain.disabled = false;
+                } else {
+                    btnPlayAgain.className = "btn-disabled"; btnPlayAgain.innerText = "Need 2+ Players to Replay"; btnPlayAgain.disabled = true;
+                }
             } else { 
                 btnPlayAgain.className = "btn-disabled"; btnPlayAgain.innerText = "Waiting for Host..."; btnPlayAgain.disabled = true;
             }
@@ -922,10 +955,12 @@
         const bar = document.getElementById('qna-timer-bar');
         const orbCircle = document.getElementById('orb-timer-circle');
         const orbSvg = document.getElementById('orb-timer-svg');
+        const orb = document.getElementById('center-glass-orb');
 
         if (gameState.phase !== 'qna' || !gameState.qna || !gameState.qna.deadline) {
             if (bar) bar.style.width = '0%';
             if (orbSvg) orbSvg.classList.add('hidden');
+            if (orb) orb.style.boxShadow = 'inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2)';
             return;
         }
 
@@ -939,18 +974,42 @@
         let pct = (timeLeft / totalTime);
         
         let color = 'var(--success)';
-        if (pct <= 0.2) color = 'var(--primary)'; // Red
-        else if (pct <= 0.5) color = '#FFD700'; // Yellow
+        let rgbColor = '52, 199, 89';
+        if (pct <= 0.2) {
+            color = 'var(--primary)'; // Red
+            rgbColor = '255, 59, 48';
+        } else if (pct <= 0.5) {
+            color = '#FFD700'; // Yellow
+            rgbColor = '255, 215, 0';
+        }
 
         if (bar) {
             bar.style.width = (pct * 100) + '%';
             bar.style.backgroundColor = color;
         }
 
-        if (orbCircle) {
-            orbCircle.style.strokeDashoffset = 628.32 * (1 - pct);
+        // Dynamically calculate radius so it perfectly overlaps the border at ANY screen size
+        if (orbCircle && orb && orbSvg) {
+            const size = orb.offsetWidth; 
+            orbSvg.style.width = size + 'px';
+            orbSvg.style.height = size + 'px';
+            
+            const radius = (size / 2) - 1; // 1px inset to center stroke perfectly over 2px border
+            const circumference = 2 * Math.PI * radius;
+            
+            orbCircle.setAttribute('cx', size / 2);
+            orbCircle.setAttribute('cy', size / 2);
+            orbCircle.setAttribute('r', Math.max(0, radius));
+            
+            orbCircle.style.strokeDasharray = circumference;
+            orbCircle.style.strokeDashoffset = circumference * (1 - pct);
             orbCircle.style.stroke = color;
-            orbCircle.style.filter = `drop-shadow(0 0 8px ${color})`;
+            
+            // Dual drop-shadow creates the exact intense neon glow effect
+            orbCircle.style.filter = `drop-shadow(0 0 6px rgba(${rgbColor}, 0.8)) drop-shadow(0 0 12px rgba(${rgbColor}, 0.6))`;
+            
+            // Subtle inner glow matching the smaller nodes
+            orb.style.boxShadow = `inset 0 0 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.2), inset 0 0 15px rgba(${rgbColor}, 0.3)`;
         }
     }
 
